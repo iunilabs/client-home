@@ -1,6 +1,6 @@
 # Recorrido móvil: selección, tarjetas y logos
 
-Estado aprobado el 1 de octubre de 2026: **Puntoes → BBVA → Naturgy → Banco Sabadell → obra**. Esta configuración se aplica a anchuras inferiores a 700 px. El ordenador conserva la ciudad explorable y sus fichas modales.
+Recorrido configurado: **Puntoes → BBVA → Naturgy → Banco Sabadell → obra**. Esta configuración se aplica a anchuras inferiores a 700 px. El ordenador conserva la ciudad explorable y sus fichas modales.
 
 ## Cambiar las empresas y su orden
 
@@ -10,7 +10,7 @@ Editar únicamente `mobileTourOrder` en [mobile-tour-config.js](mobile-tour-conf
 export const mobileTourOrder = ['bbva', 'naturgy', 'sabadell', 'collaborate'];
 ```
 
-La entrada en Puntoes es independiente de esa lista: no añadir `puntoes`. `collaborate` representa la obra y puede conservarse al final, moverse o retirarse. No es una empresa del carrusel. La duración de la sección y la numeración de las tarjetas se recalculan automáticamente; la transición desde la mano no cambia.
+La entrada en Puntoes es independiente de esa lista: no añadir `puntoes`. `collaborate` representa la obra y puede conservarse al final, moverse o retirarse. No es una empresa del carrusel. La numeración y los destinos de los controles se recalculan automáticamente; la transición desde la mano no cambia.
 
 Identificadores disponibles:
 
@@ -30,23 +30,39 @@ Identificadores disponibles:
 
 Usar identificadores válidos, una sola vez cada uno. Por ejemplo, `['bbva', 'cepsa', 'mediaset', 'collaborate']` sustituye las tres empresas manteniendo la obra. **La lista no filtra el carrusel**: los diez clientes siguen disponibles y tienen su propia tarjeta aunque se excluyan del recorrido.
 
-## Entrada de tarjetas y movimiento de cámara
+## Cursor, gestos y cámara
 
-`mobileTourTiming`, en el mismo archivo, controla la coreografía. `intro`, `stop` y `outro` se miden en alturas de pantalla. Cada parada ocupa `1.45` pantallas de scroll; la primera pausa en Puntoes ocupa `0.8`.
+El cursor móvil es explícito y no se calcula a partir de coordenadas de scroll. La entrada desde las manos conserva sus anclas; el tramo de ciudad es un ancla de capítulo compacta. La rueda o el touch que cruza la entrada termina en Puntoes (o en colaboración al volver desde la sección 3). Su cola no avanza edificios. Un gesto vertical deliberado de al menos 60 px avanza una parada. Se descartan swipes cortos, diagonales/horizontales, multitouch y gestos que empiezan junto al borde de la pantalla.
 
-`travelUntil: .42` significa que la cámara termina su viaje al 42 % del tramo. `cardFrom: .04` y `cardUntil: .48` hacen que la tarjeta comience poco después de arrancar el mapa y termine de entrar al 48 %. Para una pantalla de 844 px, comienza tras unos 49 px de scroll dentro del tramo. La aceleración y el frenado usan una curva con velocidad y aceleración nulas en los extremos.
+Una ráfaga de rueda acumula 60 px normalizados y acepta una sola parada. Todos los eventos siguientes pertenecen a la misma ráfaga hasta 240 ms de silencio, aunque la cámara ya haya llegado. Una cola decreciente o de amplitud residual sigue vinculada durante pausas de hasta 900 ms para tolerar eventos demorados por el pintado; una subida deliberada, un cambio de dirección o una liberación más larga inicia otra ráfaga. No se acepta otro paso durante una transición. Los controles persistentes «Anterior» y «Siguiente» muestran sus destinos, funcionan con teclado y permiten salir en los extremos. Anterior desde Puntoes vuelve al encuentro completo, en el ancla original de las manos. El contador de coordenadas de scroll se oculta solo en la ciudad móvil; la numeración de tarjeta y los destinos visibles describen el cursor. ArrowUp/Down, PageUp/Down y espacio funcionan sobre la escena; Tab conserva su función nativa; Home y End sincronizan el salto al inicio/final del documento con Lenis para evitar que un elemento fijo enfocado atrape esas teclas.
 
-Las tarjetas anteriores permanecen debajo. Su separación visual se limita a cuatro niveles, 28 px y menos de 1.2 grados, para que no invadan el encuadre. Hay una sola tarjeta DOM por empresa; el contenido procede de [case-studies.js](case-studies.js), también usado en las fichas de escritorio. «Ver más» permite leer el relato completo sin detener el scroll de la página.
+`mobileTourTiming.logoTravel` controla el viaje en milisegundos (1050); `logoCardUntil` controla la entrada de tarjeta (650). La curva de cámara tiene velocidad y aceleración nulas en los extremos. La tarjeta del destino comienza durante el viaje. Solo un artículo es visible/focusable; se reutilizan los once artículos existentes, sin una pila de textos. `prefers-reduced-motion` coloca la cámara directamente en destino y abrevia el fundido a 100 ms, mediante la preferencia local de ciudad; las manos no se modifican.
 
-## Visitas desde el footer
+## Lectura y visitas manuales
 
-El footer es transparente, con logos blancos de proporciones originales. Avanza despacio y permite desplazarse horizontalmente con el dedo; una intención vertical conserva el scroll de la página. El teclado puede recorrer todos los botones y pausa el avance automático.
+La tarjeta completa tiene scroll propio y contención de overscroll. Abrir «Ver más» bloquea los gestos del recorrido también fuera del texto del relato. Leer, arrastrar desde el encabezado o llegar al final del contenido mantiene el edificio y el detalle abierto. Cerrar el detalle permite continuar; un control explícito o un logo puede cambiar de visita y cerrar la lectura.
 
-Tocar un logo lleva la cámara desde su posición visible al edificio en `logoTravel: 1250` ms. La tarjeta comienza a entrar a los `logoCardFrom: 80` ms y termina a los `logoCardUntil: 650` ms. Si ya había aparecido, la misma tarjeta vuelve a lo alto de la pila con un fundido, conservando las demás; no se crean duplicados.
+Los diez logos permanecen en el carrusel, que conserva su swipe horizontal, tap y navegación de teclado. Un logo de la ruta confirma su cursor; un cliente externo cambia la cámara y la tarjeta conservando los destinos pendientes de ese cursor:
 
-Si el cliente pertenece al recorrido, Lenis sitúa el scroll en el tramo correspondiente mientras la cámara realiza su viaje independiente. Al continuar bajando, se visita la siguiente parada de la lista. Si el cliente está fuera de la lista, se conserva el scroll; el siguiente desplazamiento vertical retoma el recorrido mediante una transición desde la cámara visible. La recuperación manual conserva el historial de tarjetas. Si se avanza desde la introducción tras visitar un logo, la tarjeta permanece mientras se retoma el recorrido. Al retroceder a Puntoes, la pila se retira suavemente desde su opacidad visible; solo se vacía cuando ya es invisible. Se desactiva el foco antes de llegar a ese punto. Un regreso rápido no presenta fugazmente tarjetas de edificios intermedios. Sin visitas manuales, subir el scroll invierte el recorrido normal.
+| Visita externa desde | Anterior | Siguiente |
+| --- | --- | --- |
+| Puntoes | El encuentro (sección 1) | BBVA |
+| BBVA | Puntoes | Naturgy |
+| Naturgy | BBVA | Banco Sabadell |
+| Banco Sabadell | Naturgy | Colaboración |
+| Colaboración | Banco Sabadell | Lo que hacemos posible (sección 3) |
 
-La unión con Lenis está en el callback `onNavigate` de `main.js`: solo sincroniza el scroll y su progreso visual para evitar que el suavizado anterior cancele la visita recién solicitada. No cambia las poses ni los tiempos de la mano.
+Así, BBVA → Cepsa → siguiente visita Naturgy; colaboración → Cepsa → siguiente sale directamente. Ninguna coordenada recupera la tarjeta anterior. Una nueva selección parte de la cámara renderizada, incluso durante otra visita manual. Los links de capítulo y el historial reinician explícitamente la entrada; el regreso por scroll desde la sección 3 empieza en colaboración.
+
+`__puntoes.getState().city.tour` expone `currentId`, `guidedCursor`, `nextId`, `previousId`, `transition`, `reading` y `active`. Los datasets `cityStop`, `cityCard`, `cityCursor`, `cityNext`, `cityTransition` y `cityReading` describen la misma visita. La tarjeta actual conserva `.is-current`. Lenis sincroniza las anclas de entrada/salida; no controla destinos del cursor. Mientras el cursor está activo, `anchorScroll` reconcilia cualquier delta de scroll nativo con el ancla antes de evaluar los límites, incluso si la entrada táctil ya había iniciado el desplazamiento del navegador. Las salidas explícitas y los resets de enlaces/historial liberan la sujeción; fuera de la ciudad se conserva el scroll nativo.
+
+## Movimiento opcional del mapa
+
+El control «Activar movimiento» aparece solo en móvil compatible, con contexto seguro y sin preferencia de movimiento reducido. Se pide permiso dentro del toque si existe `DeviceOrientationEvent.requestPermission`; en los demás navegadores la activación habilita la escucha sin solicitud. Denegación y errores muestran un estado persistente y permiten reintentar. Sin API, permiso o lecturas válidas se conserva la navegación normal.
+
+«Recentrar» calibra la próxima lectura como neutral y «Desactivar movimiento» retira los listeners. `city-perspective.js` normaliza beta/gamma, remapea la orientación de pantalla y limita cada eje a ±2 unidades angulares. En `city.js`, gamma remapeado produce traslación horizontal y beta remapeado, vertical, con signo positivo del eje remapeado hacia derecha/abajo (beta físico positivo se remapea a vertical negativo). La amplitud por unidad es `.008 × min(anchoViewport, altoViewport)`; el desplazamiento máximo de cada eje es el doble (1,6 % del lado menor), dentro de la reserva de encuadre de 2,5 %. Solo se transforma `.city-world`, que contiene mapa, detalle, puntos y agua. Copy, control, tarjetas y logos quedan fijos.
+
+El sensor se pausa durante el viaje, al ocultarse la página y fuera de la ciudad; al reanudarse recalibra con la primera muestra. Movimiento reducido devuelve los offsets a cero y oculta el control. La rotación de pantalla también recalibra. El contador de scroll permanece disponible en sección 1 y escritorio, y se oculta en la ciudad móvil. Los mensajes del control solo modifican el DOM cuando cambia su valor. Permisos, orientación y estabilidad se verifican con simulación; sensor y rendimiento físicos siguen sin verificar.
 
 ## Encuadres y nitidez
 
@@ -58,4 +74,4 @@ La imagen global conserva su resolución nativa. Las capas añaden detalle gener
 
 ## Comprobaciones al modificar la lista
 
-Ejecutar `npm test` y `npm run build -- --base=/client-home/`. Revisar en 320 × 568, 390 × 844 y 430 × 932: entrada desde Puntoes, encuadre de cada parada, tarjeta durante el viaje, scroll inverso, toque de un logo excluido y recuperación de uno ya visto. Comprobar que sigue habiendo diez logos y once tarjetas únicas, que la obra conserva «Hablemos», que no abre un modal móvil y que el footer no tapa las tarjetas.
+Ejecutar `npm test`, `npm run build -- --base=/client-home/` y, con la compilación servida en 4303, `PUNTOES_URL=http://127.0.0.1:4303/client-home/ node tests/mobile-navigation.mjs` , `node tests/mobile-motion.mjs` y `node tests/mobile-entry.mjs`. El harness de navegador admite `PUNTOES_URL`, `PUNTOES_EVIDENCE_DIR` y `CHROME_PATH`. Revisar en 320 × 568, 390 × 844 y 430 × 932: entrada desde Puntoes, encuadre de cada parada, tarjeta durante el viaje, scroll inverso, toque de un logo excluido y recuperación de uno ya visto. Comprobar que sigue habiendo diez logos y once tarjetas únicas, que la obra conserva «Hablemos», que no abre un modal móvil y que el footer no tapa las tarjetas.

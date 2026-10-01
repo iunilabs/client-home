@@ -12,6 +12,7 @@ import {cityExtent} from './city-extent.js';
 import {mobileTourRoute, mobileTourBuildings} from './mobile-tour-config.js';
 import {mobileTourGeometry, mobileTourState} from './mobile-tour.js';
 import {createMobileTourDeck} from './mobile-tour-deck.js';
+import {createMobileTourInput} from './mobile-tour-input.js';
 import {createMobileTourNavigation} from './mobile-tour-navigation.js';
 import {createCityDetail} from './city-detail.js';
 
@@ -50,14 +51,56 @@ export function createCity(section, options = {}) {
   });
   const pan = createCityPan(section);
   const perspective = createCityPerspective();
+  const perspectiveControl = document.createElement('div');
+  perspectiveControl.className = 'city-perspective-control';
+  perspectiveControl.setAttribute('role', 'group');
+  perspectiveControl.setAttribute('aria-label', 'Movimiento del mapa');
+  const perspectiveButton = document.createElement('button');
+  perspectiveButton.type = 'button';
+  perspectiveButton.className = 'city-perspective-toggle';
+  const recenterButton = document.createElement('button');
+  recenterButton.type = 'button';
+  recenterButton.className = 'city-perspective-recenter';
+  recenterButton.textContent = 'Recentrar';
+  const perspectiveStatus = document.createElement('span');
+  perspectiveStatus.className = 'city-perspective-status';
+  perspectiveStatus.setAttribute('role', 'status');
+  perspectiveControl.append(perspectiveButton, recenterButton, perspectiveStatus);
+  frame.append(perspectiveControl);
+  function renderPerspectiveControl(state = 'inactive') {
+    // Keep the live region quiet while an unchanged state is rendered each frame.
+    function set(element, property, value) {if (element[property] !== value) element[property] = value}
+    set(perspectiveControl, 'hidden', !perspective.available || innerWidth >= 700 || matchMedia('(prefers-reduced-motion: reduce)').matches);
+    set(perspectiveButton, 'textContent', perspective.enabled ? 'Desactivar movimiento' :
+      state === 'requesting-permission' ? 'Esperando permiso…' :
+      state === 'denied' ? 'Reintentar permiso' : state === 'error' ? 'Reintentar movimiento' : 'Activar movimiento');
+    set(perspectiveButton, 'disabled', state === 'requesting-permission');
+    set(recenterButton, 'disabled', !perspective.enabled);
+    set(recenterButton, 'hidden', !perspective.enabled);
+    set(perspectiveStatus, 'textContent', state === 'denied' ? 'Permiso de orientación denegado.' :
+      state === 'error' ? 'No se pudo activar el sensor.' :
+      state === 'awaiting-sensor' ? 'Inclina suavemente el móvil.' : '');
+  }
+  perspectiveButton.addEventListener('click', async () => {
+    // activate() calls requestPermission immediately in this trusted tap.
+    const state = await perspective.activate();
+    renderPerspectiveControl(state);
+  });
+  recenterButton.addEventListener('click', () => {perspective.recenter(); renderPerspectiveControl('awaiting-sensor')});
+  renderPerspectiveControl();
   let loading = false, ready = false, geometry, lastWidth = 0, lastHeight = 0, water = null, waterSources = '', tourViewport = innerHeight;
 
   const invitation = {id: 'collaborate', name: '¿Quieres colaborar?', invitation: true};
-  const deck = createMobileTourDeck(section, mobileTourRoute, [...cityClients, invitation]);
+  const deck = createMobileTourDeck(section, mobileTourRoute, [...cityClients, invitation], {
+    onStep: direction => navigation.step(direction, {explicit: true}),
+    onReading: value => navigation.setReading(value),
+  });
+  const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
   const navigation = createMobileTourNavigation({onNavigate: top => {
     if (options.onNavigate) options.onNavigate(top);
     else window.scrollTo({top, behavior: 'instant'});
   }});
+  const input = createMobileTourInput(frame, navigation);
   const detail = createCityDetail(core);
   for (const client of [...cityClients, invitation]) {
     const site = sites[client.id];
@@ -190,6 +233,7 @@ export function createCity(section, options = {}) {
     if (!geometry || lastWidth !== innerWidth || lastHeight !== innerHeight) resize();
     if (scroll > geometry.start - innerHeight * 2) load();
     const portrait = innerWidth < 700;
+    if (portrait) scroll = navigation.anchorScroll(scroll, geometry);
     const state = portrait ? mobileTourState({scroll, geometry}) : cityState(scroll, geometry, reduced);
     frame.style.opacity = ready ? state.opacity : 0;
     frame.style.visibility = state.active ? 'visible' : 'hidden';
@@ -198,32 +242,52 @@ export function createCity(section, options = {}) {
     const mobile = innerWidth < 700 || matchMedia('(pointer: coarse)').matches;
     let position, tour;
     if (portrait) {
-      tour = navigation.update(state, {scroll, now, layout: {width: parseFloat(world.style.width), height: parseFloat(world.style.height),
+      tour = navigation.update(state, {scroll, now, geometry, reduced: reduced || motionPreference.matches, layout: {width: parseFloat(world.style.width), height: parseFloat(world.style.height),
         viewportWidth: document.documentElement.clientWidth, viewportHeight: innerHeight}});
       position = tour.camera;
       state.zoom = position.zoom;
+      state.current = tour.current;
+      state.stopIndex = tour.guidedCursor;
+      state.cardProgress = tour.entry?.progress ?? 0;
+      state.travel = tour.moving ? 0 : 1;
       pan.update(world, state.zoom, reduced, false);
       world.style.transformOrigin = `${position.focusX * 100}% ${position.focusY * 100}%`;
       deck.update(state, ready && interactive, tour);
       section.dataset.cityStop = tour.current.id;
-      section.dataset.cityCard = String(state.stopIndex);
+      section.dataset.cityCard = tour.entry?.id ?? '';
+      section.dataset.cityCursor = String(tour.guidedCursor);
+      section.dataset.cityNext = tour.nextId;
+      section.dataset.cityTransition = String(tour.moving);
+      section.dataset.cityReading = String(tour.reading);
+      state.copyOpacity = tour.copyOpacity;
+      input.update(ready && tour.active, geometry, ready);
+      state.tour = {currentId: tour.currentId, guidedCursor: tour.guidedCursor, nextId: tour.nextId,
+        previousId: tour.previousId, transition: tour.moving, reading: tour.reading, active: tour.active};
       detail.update({active: interactive, camera: position, current: tour.current.id,
-        next: mobileTourRoute[state.stopIndex + 1]?.id});
+        next: tour.nextId});
     }
-    const view = perspective.update(now, {active: interactive && mobile, reduced,
+    const view = perspective.update(now, {active: interactive && portrait, reduced,
       paused: dialog.isOpen || pan.isDragging || (portrait && tour.moving)});
+    renderPerspectiveControl(view.state);
     const reserve = Math.max(Math.abs(view.x), Math.abs(view.y)) * .0085;
     if (!portrait) {
       position = pan.update(world, state.zoom, reduced, interactive && !dialog.isOpen, reserve);
       deck.hide();
+      input.update(false);
       delete section.dataset.cityStop;
       delete section.dataset.cityCard;
+      for (const key of ['cityCursor', 'cityNext', 'cityTransition', 'cityReading']) delete section.dataset[key];
       navigation.reset();
       detail.update({active: false, camera: {zoom: 1}});
     }
-    const depth = Math.max(parseFloat(world.style.width), parseFloat(world.style.height)) * 2.5;
-    const tilt = view.hasReading ? ` perspective(${depth}px) rotateX(${view.x}deg) rotateY(${view.y}deg)` : '';
-    world.style.transform = `translate3d(calc(-50% + ${position.x}px),calc(-50% + ${position.y}px),0) scale(${state.zoom})${tilt}`;
+    // Base the travel on the viewport so the most zoomed-in building still
+    // stays inside the tour camera's 2.5% edge reserve.
+    const safeTravel = Math.min(document.documentElement.clientWidth, innerHeight) * .008;
+    // Gamma/rotateY tracks lateral tilt; beta/rotateX tracks front/back tilt.
+    // Positive mapped readings move the artwork right/down, within its reserve.
+    const shiftX = view.y * safeTravel;
+    const shiftY = view.x * safeTravel;
+    world.style.transform = `translate3d(calc(-50% + ${position.x + shiftX}px),calc(-50% + ${position.y + shiftY}px),0) scale(${state.zoom})`;
     section.dataset.cityPerspective = view.state;
     copy.style.opacity = state.copyOpacity;
     copy.setAttribute('aria-hidden', String(state.copyOpacity < .1));
@@ -249,5 +313,5 @@ export function createCity(section, options = {}) {
   }
 
   resize();
-  return {update, resize, load, dialog, dispose() {water?.dispose(); pan.dispose(); perspective.dispose()}, scrollAt: progress => geometry.revealed + Math.max(0, Math.min(1, progress)) * (geometry.end - geometry.revealed)};
+  return {update, resize, load, dialog, resetTour(suspend = false) {navigation.reset({suspend})}, dispose() {water?.dispose(); pan.dispose(); perspective.dispose(); input.dispose()}, scrollAt: progress => geometry.revealed + Math.max(0, Math.min(1, progress)) * (geometry.end - geometry.revealed)};
 }

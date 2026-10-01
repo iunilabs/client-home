@@ -1,9 +1,7 @@
 import {getCaseStudy, collaborationStory} from './case-studies.js';
-import {mobileCardStack} from './mobile-tour.js';
 
-// Non-modal cards: the page keeps scrolling while the next building is framed.
-// Each client's full existing story stays available under its explicit Ver más.
-export function createMobileTourDeck(section, route, clients) {
+// Reuse every case; only the current article is visible and focusable.
+export function createMobileTourDeck(section, route, clients, {onStep, onReading} = {}) {
   const deck = document.createElement('div');
   deck.className = 'city-tour-deck';
   deck.setAttribute('role', 'region');
@@ -15,6 +13,7 @@ export function createMobileTourDeck(section, route, clients) {
     const card = document.createElement('article');
     card.className = 'city-tour-card';
     card.dataset.client = client.id;
+    card.setAttribute('data-lenis-prevent', '');
     card.id = `tour-card-${client.id}`;
     card.setAttribute('aria-labelledby', `tour-client-${client.id}`);
     card.innerHTML = '<div class="tour-card-brand"><img alt="" /><span class="tour-card-count"></span></div><h3 class="tour-card-client"></h3><h4 class="tour-card-heading"></h4><p class="tour-card-intro"></p>';
@@ -42,6 +41,7 @@ export function createMobileTourDeck(section, route, clients) {
         heading.textContent = label; paragraph.textContent = story[field];
         details.querySelector('.tour-card-story').append(heading, paragraph);
       }
+      details.addEventListener('toggle', () => {if (card.classList.contains('is-current')) onReading?.(details.open)});
       card.append(details);
       const draft = document.createElement('p');
       draft.className = 'tour-card-draft'; draft.textContent = 'Caso ilustrativo · texto de muestra';
@@ -50,38 +50,63 @@ export function createMobileTourDeck(section, route, clients) {
     deck.append(card);
     return card;
   });
-  section.querySelector('.trust-frame').append(deck);
+  const controls = document.createElement('nav');
+  controls.className = 'city-tour-controls';
+  controls.setAttribute('aria-label', 'Navegar por el recorrido');
+  const previous = document.createElement('button'), next = document.createElement('button');
+  previous.type = next.type = 'button';
+  previous.innerHTML = '<span>← Anterior</span><small></small>';
+  next.innerHTML = '<span>Siguiente →</span><small></small>';
+  previous.addEventListener('click', () => onStep?.(-1));
+  next.addEventListener('click', () => onStep?.(1));
+  const status = document.createElement('span');
+  status.className = 'tour-status'; status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite'); status.setAttribute('aria-atomic', 'true');
+  controls.append(previous, status, next);
+  section.querySelector('.trust-frame').append(deck, controls);
   let previousClient = null;
+  const nameFor = id => id === 'puntoes' ? 'Puntoes' : id === 'section1' ? 'El encuentro' : id === 'section3' ? 'Lo que hacemos posible' : clients.find(c => c.id === id)?.name;
   return {
     load() {for (const logo of deck.querySelectorAll('img[data-src]')) if (!logo.src) logo.src = logo.dataset.src;},
-    update(state, enabled, {order, entry, retreat = 1}) {
-      const showing = enabled && state.active && order.length > 0 && retreat > .03;
-      deck.style.opacity = retreat;
-      deck.style.transform = `translateY(${(1 - retreat) * 36}px)`;
-      deck.inert = !showing;
-      deck.setAttribute('aria-hidden', String(!showing));
-      if (entry?.id !== previousClient) {
-        for (const details of deck.querySelectorAll('details[open]')) details.open = false;
-        previousClient = entry?.id;
+    update(state, enabled, tour) {
+      const {entry, active, currentId, nextId, previousId, moving} = tour;
+      const showing = enabled && active;
+      controls.hidden = !showing;
+      controls.inert = !showing;
+      // Keep keyboard focus stable while a repeated request is ignored.
+      previous.setAttribute('aria-disabled', String(moving));
+      next.setAttribute('aria-disabled', String(moving));
+      previous.setAttribute('aria-label', `Anterior: ${nameFor(previousId)}`);
+      next.setAttribute('aria-label', `Siguiente: ${nameFor(nextId)}`);
+      previous.querySelector('small').textContent = nameFor(previousId);
+      next.querySelector('small').textContent = nameFor(nextId);
+      if (status.dataset.client !== currentId && !moving) {
+        status.dataset.client = currentId; status.textContent = nameFor(currentId);
       }
-      const incomingIndex = order.indexOf(entry?.id);
-      const readable = entry?.progress > .9 ? entry.id : order.at(incomingIndex < 0 ? -1 : -2);
+      deck.inert = !showing || !entry;
+      deck.setAttribute('aria-hidden', String(!showing || !entry));
+      if (currentId !== previousClient) {
+        const outgoing = cards.find(card => card.dataset.client === previousClient);
+        // If an explicit logo changes a focused article, preserve focus on a
+        // stable navigation control before that article becomes inert.
+        if (outgoing?.contains(document.activeElement)) next.focus({preventScroll: true});
+        for (const details of deck.querySelectorAll('details[open]')) details.open = false;
+        const incoming = cards.find(card => card.dataset.client === currentId);
+        if (incoming) incoming.scrollTop = 0;
+        onReading?.(false);
+        previousClient = currentId;
+      }
       for (const card of cards) {
-        const index = order.indexOf(card.dataset.client);
-        const stack = mobileCardStack(index, {stopIndex: incomingIndex < 0 ? order.length : incomingIndex, cardProgress: entry?.progress ?? 0});
-        const visible = showing && index >= 0 && stack.incoming > 0 && !stack.buried;
-        const fade = card.dataset.client === entry?.id && entry.mode === 'fade';
-        card.style.zIndex = index + 1;
+        const visible = showing && card.dataset.client === entry?.id;
         card.style.visibility = visible ? 'visible' : 'hidden';
-        card.style.opacity = fade ? stack.incoming : 1;
-        card.dataset.entrance = fade ? 'fade' : 'slide';
-        card.style.transform = fade ? `translate3d(${stack.offsetX}px,${(1 - stack.incoming) * 4 + stack.offsetY}px,0) rotate(${stack.rotation}deg) scale(${stack.scale})` :
-          `translate3d(${stack.offsetX}px,calc(${(1 - stack.incoming) * 100}% + ${(1 - stack.incoming) * 64 + stack.offsetY}px),0) rotate(${stack.rotation}deg) scale(${stack.scale})`;
-        card.inert = !visible || card.dataset.client !== readable;
+        card.style.opacity = visible ? entry.progress : 0;
+        card.style.transform = `translateY(${visible ? (1 - entry.progress) * 18 : 0}px)`;
+        card.inert = !visible || entry.progress < .1;
+        card.style.pointerEvents = card.inert ? 'none' : 'auto';
         card.setAttribute('aria-hidden', String(card.inert));
-        card.classList.toggle('is-current', card.dataset.client === readable);
+        card.classList.toggle('is-current', visible);
       }
     },
-    hide() {deck.inert = true; deck.setAttribute('aria-hidden', 'true');},
+    hide() {deck.inert = true; deck.setAttribute('aria-hidden', 'true'); controls.hidden = true; controls.inert = true},
   };
 }
