@@ -41,8 +41,9 @@ dialog{border:1px solid #20394f15;border-radius:10px;padding:56px 40px 40px;widt
 .brand-period>span{font-size:0}
 .chapter-copy--intro .eyebrow{margin-bottom:23px}
 .copy-content{animation:copy-load .85s cubic-bezier(.2,.7,.2,1) both}
-.chapter-copy--encounter{top:auto;bottom:21vh;left:50%;width:calc(100% - var(--gutter) * 2);max-width:1100px;text-align:center;transform:translate3d(-50%,var(--copy-y,0px),0)}
+.chapter-copy--encounter{top:auto;bottom:17.5vh;left:50%;width:calc(100% - var(--gutter) * 2);max-width:1100px;text-align:center;transform:translate3d(-50%,var(--copy-y,0px),0)}
 .chapter-copy--encounter h2{font-size:clamp(54px,6vw,96px);line-height:1.04}
+@media(min-width:700px){#encuentro .replay{bottom:10.5vh}}
 #extension .chapter-copy{top:clamp(110px,14vh,140px);width:min(38vw,530px)}
 #extension .chapter-copy h2{font-size:clamp(40px,4vw,58px)}
 @keyframes copy-load{from{opacity:0;transform:translateY(18px);filter:blur(3px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
