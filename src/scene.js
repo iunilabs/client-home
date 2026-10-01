@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {turnState} from './section-two/turn.js';
+import {turnEncounterCamera,turnEncounterHands} from './section-two/encounter-exit.js';
 import {installAssetBase} from './asset-loading.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {createReferenceHand} from './reference-hand.js';
@@ -98,7 +100,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
  calibrateElbowCamera();
  let disposed=false,last=null;
  function project(point){const v=point.clone().project(camera);return [(v.x+1)*innerWidth/2,(1-v.y)*innerHeight/2]}
- function render(progress,pointer,time,reduced=false,scrollRatio,lightPointer=pointer){
+ function render(progress,pointer,time,reduced=false,scrollRatio,lightPointer=pointer,sectionProgress=0){
   if(disposed)return;
   budget.update(time,reduced);
   const pose=choreography(progress,time,reduced,scrollRatio);Object.assign(pose,poseOverride?.(pose)??{});const p=pose.progress,mobile=portraitFraming();
@@ -127,6 +129,8 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
   const px=reduced?0:pointer.x,py=reduced?0:pointer.y;
   view.copy(target).sub(look).applyAxisAngle(up,px*pose.perspective);right.set(view.z,0,-view.x).normalize();view.applyAxisAngle(right,-py*.075*(1-.82*smooth(.75,.80,pose.ratio)*(1-smooth(.85,.9,pose.ratio))));
   target.copy(look).add(view);target.x+=px*.2;look.x+=px*.2;target.y+=py*.1;look.y+=py*.1;
+  const transition=turnState(sectionProgress,time,reduced);
+  if(sectionProgress>0)turnEncounterCamera(target,look,transition);
   camera.position.copy(target);camera.lookAt(look);
   const framing=[...(pose.cameraShift??[0,0])];if(mobile){const compassFrame=smooth(.39,.48,pose.ratio)*(1-smooth(.56,.64,pose.ratio));framing[0]+=.11*compassFrame;framing[1]-=.18*compassFrame}
   const offset=[-framing[0],-framing[1]];if(elbowPin){const v=elbowReach.anchor.clone().project(neutralCamera);offset[0]=mix(offset[0],(v.x-anchorNdc.x)/2,elbowPin);offset[1]=mix(offset[1],(anchorNdc.y-v.y)/2,elbowPin)}
@@ -152,12 +156,13 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
   }
   if(!poseOverride)mobileCompassGesture.apply(pose.ratio,time,reduced);
   if(!poseOverride)humanPregrasp.apply(pose.ratio);
+  if(sectionProgress>0)turnEncounterHands(human,ai,transition);
   // The source projects to the raw cursor, even while the camera orbit eases.
   // Refresh only custom hand skin caches after their final root placements.
   human.root.updateMatrixWorld(true);ai.root.updateMatrixWorld(true);human.skin.onBeforeRender?.();ai.skin.onBeforeRender?.();
   cursorSurfaceLight.update(camera,lightPointer,[human.root,ai.root,...tools.objects.map(s=>s.group)],reduced||coarsePointer.matches);
   renderer.render(scene,camera);
-  last=()=>{const ht=human.tipWorld(),at=ai.tipWorld();return {lighting:{...lighting},elbowReach:elbowReach.getState(),cursorLight:cursorSurfaceLight.getState(),progress:p,time,reduced,intro,humanVisible:human.root.visible,aiVisible:ai.root.visible,humanPosition:human.root.position.toArray(),humanRotation:human.root.rotation.toArray().slice(0,3),humanScale:human.root.scale.toArray(),humanViewDepth:human.root.position.clone().sub(camera.position).dot(camera.getWorldDirection(new THREE.Vector3())),fingerCurls:pose.curls,fingerFlexions:pose.fingerFlexions,fingerGestureWeight:pose.fingerGestureWeight,humanMirror:pose.humanMirror,humanThumbOpposition:pose.humanThumbOpposition,
+  last=()=>{const ht=human.tipWorld(),at=ai.tipWorld();return {transition,cameraDirection:camera.getWorldDirection(new THREE.Vector3()).toArray(),lighting:{...lighting},elbowReach:elbowReach.getState(),cursorLight:cursorSurfaceLight.getState(),progress:p,time,reduced,intro,humanVisible:human.root.visible,aiVisible:ai.root.visible,humanPosition:human.root.position.toArray(),humanRotation:human.root.rotation.toArray().slice(0,3),humanScale:human.root.scale.toArray(),humanViewDepth:human.root.position.clone().sub(camera.position).dot(camera.getWorldDirection(new THREE.Vector3())),fingerCurls:pose.curls,fingerFlexions:pose.fingerFlexions,fingerGestureWeight:pose.fingerGestureWeight,humanMirror:pose.humanMirror,humanThumbOpposition:pose.humanThumbOpposition,
    camera:camera.position.toArray(),aiPosition:ai.root.position.toArray(),aiRotation:ai.root.quaternion.toArray(),aiCurls:pose.aiCurls,contactGap:pose.aiVisible?ht.distanceTo(at):null,
    handDetail:1,handSource:human.source,skinContinuity:skinContinuity?{kind:skinContinuity.kind,wristBlend:skinContinuity.wristBlend,seams:skinContinuity.seams}:null,handTriangles:human.skin.geometry.index.count/3,renderScale:budget.scale,pixelRatio:renderer.getPixelRatio(),padCorrections,
    humanPregrasp:humanPregrasp.getState(),referencePoseWeight:pose.handPoseWeight,screenLandmarks:{foreground:project(ht),second:ai.root.visible?project(at):null,hand:Object.fromEntries(Object.entries(human.jointTips()).map(([role,tip])=>[role,project(human.scene.parent.localToWorld(new THREE.Vector3(...tip)))]))},tools:tools.getState(),poseAuthority:'absolute joint quaternion track',normalisedScroll:pose.ratio,

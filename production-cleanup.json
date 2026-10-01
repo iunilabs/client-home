@@ -378,7 +378,7 @@
       "modelos.html"
     ],
     "manifest": "dist/.vite/manifest.json",
-    "compiledBytes": 20543366,
+    "compiledBytes": 22008091,
     "previousAcceptedCompiledBytes": 23402673,
     "note": "Total build directory sizes, not per-visit downloaded payload. Deleted source bytes are not claimed as runtime transfer savings."
   },

@@ -40,3 +40,11 @@ Para abrir ese estado en otra carpeta sin modificar la versión actual:
     git worktree add ../puntoes-manos-cerradas manos-cerradas-2026-10-01
 
 Los scripts de preparación de fuentes y texturas conservados en tools necesitan los originales TTF/PNG de ese punto de restauración. La web publicada usa las fuentes WOFF2 y las texturas WebP sin pérdida que ya están en public.
+
+## Sección 2: ciudad y clientes
+
+La página principal continúa desde el encuentro hacia la ciudad, con diez puntos y un carrusel de clientes. Cada entrada abre una ficha con «Ver más», cierre con Escape y recuperación del foco. Los relatos están marcados como ejemplos ilustrativos. Los recursos activos son los dos encuadres WebP y el logo de Sabadell en `src/section-two/assets`; los módulos usan los modelos y materiales actuales de la sección 1, sin copiar su antiguo baseline.
+
+`?scroll=0..1000` conserva los marcadores de la sección 1; `#encuentro` muestra su postura final y `?city=0.94` permite revisar la ciudad. El contador vuelve a 0..1000 al empezar la segunda sección. El punto cerrado de la primera sección está en la etiqueta `seccion-1-cerrada-2026-10-01` (`e0d14a3`). La rama de desarrollo de la continuación permanece separada para las siguientes iteraciones.
+
+Validación de la integración: `npm test` (29 pruebas), compilación con `npm run build -- --base=/client-home/` y revisión de la unión, los diez diálogos y el retorno al encuentro en 320, 390 y 1424 px.

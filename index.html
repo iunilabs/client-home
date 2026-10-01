@@ -11,6 +11,7 @@
   <link rel="preload" href="/fonts/DMSerifDisplay-Regular.woff2" as="font" type="font/woff2" crossorigin />
   <title>Puntoes — En tus manos</title>
   <link rel="stylesheet" href="/src/style.css" />
+  <link rel="stylesheet" href="/src/section-two/style.css" />
 </head>
 
 <body>
@@ -73,7 +74,59 @@
       <p class="scene-description">Las manos se acercan y mantienen una pequeña distancia. El recorrido termina en esta
         composición, sin mantener pulsado y con las puntas próximas sin tocarse.</p>
     </section>
+    <section id="confianza" class="trust-section" aria-labelledby="trust-title">
+      <div class="trust-frame" aria-hidden="true">
+        <div class="city-backdrop" aria-hidden="true"></div>
+        <div class="city-drag-surface" aria-hidden="true"></div>
+        <div class="city-world">
+          <picture class="city-picture">
+            <source media="(max-width: 699px)" />
+            <img id="city-image" width="1672" height="941" decoding="async" alt="Una ciudad en miniatura con un parque, un río, casas y una playa. En el centro, la sede de Puntoes brilla en azul, rodeada de edificios que representan a las organizaciones con las que hemos trabajado." />
+          </picture>
+          <div class="city-light" aria-hidden="true">
+            <div class="city-light-beam"></div>
+            <div class="city-light-ground"></div>
+            <div class="city-light-ring"></div>
+            <div class="city-light-ring city-light-ring--second"></div>
+          </div>
+          <ul class="city-buildings" aria-label="Organizaciones con las que hemos trabajado"></ul>
+          <div class="city-hub" aria-hidden="true"><span class="city-hub-dot"></span>Puntoes</div>
+        </div>
+        <div class="city-atmosphere" aria-hidden="true"></div>
+        <div class="city-copy">
+          <p class="eyebrow">02 / UN PUNTO EN COMÚN</p>
+          <h2 id="trust-title">La confianza<br /><em>se construye.</em></h2>
+          <p class="city-intro">Organizaciones distintas.<br />Un mismo punto de encuentro.</p>
+        </div>
+        <nav class="city-carousel" aria-label="Casos de clientes">
+          <div class="city-carousel-viewport"><ul class="city-carousel-track"></ul></div>
+        </nav>
+      </div>
+      <p class="scene-description">La cámara gira hacia la derecha. Las dos manos quedan atrás, a la izquierda, y el recorrido continúa hacia las organizaciones que han trabajado con Puntoes.</p>
+    </section>
+    <section id="posibilidades" class="next-section" aria-labelledby="next-title">
+      <div class="next-copy">
+        <p class="eyebrow"><span class="blue-dot"></span> 03 / LO QUE HACEMOS POSIBLE</p>
+        <h2 id="next-title">La inteligencia,<br /><em>puesta en práctica.</em></h2>
+        <p>Formación y consultoría para convertir la IA en una ventaja real.</p>
+      </div>
+    </section>
   </main>
+  <dialog id="city-case" class="case-dialog" aria-labelledby="case-title" aria-describedby="case-intro" data-lenis-prevent>
+    <button class="case-close" type="button" aria-label="Cerrar caso"><span aria-hidden="true">×</span></button>
+    <div class="case-brand"><img class="case-logo" alt="" /></div>
+    <p class="case-eyebrow"><span class="blue-dot" aria-hidden="true"></span> UN PUNTO EN COMÚN</p>
+    <h2 id="case-title"></h2>
+    <h3 class="case-heading"></h3>
+    <p id="case-intro" class="case-intro"></p>
+    <button class="case-more-button" type="button" aria-expanded="false" aria-controls="case-more"><span>Ver más</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.5" /></svg></button>
+    <div id="case-more" class="case-more" hidden>
+      <div><h4>El punto de partida</h4><p data-case="challenge"></p></div>
+      <div><h4>El recorrido</h4><p data-case="approach"></p></div>
+      <div><h4>Lo que queremos hacer posible</h4><p data-case="goal"></p></div>
+    </div>
+    <p class="case-draft">Caso ilustrativo · texto de muestra</p>
+  </dialog>
   <footer><a href="#inicio">Puntoes · volver al inicio ↑</a>
     <details class="model-credits">
       <summary>Créditos de modelos</summary>
@@ -88,7 +141,7 @@
   <div class="scroll-cue" aria-hidden="true"><span>Scroll</span><span class="scroll-dot"></span></div>
   <div class="chapter-progress" aria-hidden="true"><span id="chapter-label">LA APARICIÓN</span><span
       id="chapter-count">01 / 05</span></div>
-  <aside class="scroll-meter" data-scroll-meter aria-label="Posición del scroll, de 0 a 1000" aria-live="off">
+  <aside class="scroll-meter" data-scroll-meter aria-label="Posición del scroll de la sección, de 0 a 1000" aria-live="off">
     <div class="scroll-meter-heading"><span>SCROLL</span><strong data-scroll-number>0000</strong></div>
     <div class="scroll-meter-details"><span data-scroll-percent>0,0 %</span><span data-scroll-pixels>0 px</span></div>
   </aside>
