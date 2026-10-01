@@ -37,7 +37,7 @@ dialog{border:1px solid #20394f15;border-radius:10px;padding:56px 40px 40px;widt
 .chapter-copy--intro h1 em{font-size:1.04em}
 .chapter-copy em{padding:.08em .16em .12em;margin:-.08em -.16em -.12em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .sentence-ending{white-space:nowrap}
-.brand-period{display:inline-block;width:.24em;height:.24em;margin-left:.14em;vertical-align:-.012em;border-radius:50%;background:var(--blue);color:transparent;-webkit-text-fill-color:transparent;overflow:hidden;letter-spacing:0;line-height:0}
+.brand-period{display:inline-block;width:.24em;height:.24em;margin-left:.22em;vertical-align:baseline;border-radius:50%;background:var(--blue);color:transparent;-webkit-text-fill-color:transparent;overflow:hidden;letter-spacing:0;line-height:0}
 .brand-period>span{font-size:0}
 .chapter-copy--intro .eyebrow{margin-bottom:23px}
 .copy-content{animation:copy-load .85s cubic-bezier(.2,.7,.2,1) both}
