@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><meta name="robots" content="noindex,nofollow" /><title>Puntoes — estudio de la mano</title><link rel="icon" href="/favicon.svg" /></head>
+<body>
+  <header><a href="/"><img src="/images/logo-puntoes.png" alt="Puntoes" /></a><span>LA MANO · ESTUDIO 03</span><a href="/modelos.html">Volver a las piezas ↗</a></header>
+  <main>
+    <div id="hand-viewport" role="img" aria-label="Mano humana en 3D. Arrastra para girar y desplaza para acercarte."></div>
+    <p id="hand-loading" role="status">Preparando la mano…</p>
+    <div class="topline"><div class="hand-models" role="group" aria-label="Modelo de mano"><button data-hand="human" aria-pressed="true">Humana</button><button data-hand="porcelain" aria-pressed="false">Porcelana</button></div><div class="pose-presets" role="group" aria-label="Posiciones de la mano"><button data-pose="open" aria-pressed="true">Abierta</button><button data-pose="fist" aria-pressed="false">Puño</button><button data-pose="point" aria-pressed="false">Señalar</button><button id="hand-reset">Restablecer vista ↺</button></div></div>
+    <div class="title"><p>ANATOMÍA Y SUPERFICIE</p><h1>La mano, <em>de cerca.</em></h1><span id="view-description">Dorso, nudillos y uñas bajo luz neutra.</span></div>
+    <nav class="views" aria-label="Encuadres de la mano"><button data-view="reference" aria-pressed="true">Referencia</button><button data-view="dorsum" aria-pressed="false">Dorso</button><button data-view="palm" aria-pressed="false">Palma</button><button data-view="profile" aria-pressed="false">Perfil</button><button data-view="knuckles" aria-pressed="false">Nudillos</button><button data-view="skin" aria-pressed="false">Piel</button><button data-view="vellus" aria-pressed="false">Vello</button></nav>
+    <aside class="options">
+      <div class="lights" role="group" aria-label="Iluminación"><span>LUZ</span><button data-light="neutral" aria-pressed="true">Neutra</button><button data-light="raking" aria-pressed="false">Rasante</button><button data-light="back" aria-pressed="false">Contraluz</button></div>
+      <div class="details"><label><input id="pores" type="checkbox" checked /> Relieve de la piel</label><label><input id="vellus" type="checkbox" checked /> Vello</label><label>Cierre <input id="gesture" type="range" min="0" max=".9" step=".01" value=".06" /></label></div>
+      <div class="compare-actions"><button id="source-texture" aria-pressed="false">Textura original</button><button id="previous" aria-pressed="false">Comparar con la mano anterior</button></div>
+    </aside>
+    <p class="hint">Arrastra para girar · Desplaza para acercarte</p>
+  </main>
+  <footer><span id="hand-credit">Geometría y UV: <a href="https://libhand.org/" target="_blank" rel="noreferrer">LibHand</a> · Marin Saric / Rizzle Studios · <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a> · Texturas adaptadas con IA</span><span>Estudio local</span></footer>
+  <script type="module" src="/src/hand-studio.js"></script>
+</body>
+</html>

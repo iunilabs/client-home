@@ -1,0 +1,8 @@
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prueba de luz real — cámara fija</title><style>.cursor-light{display:none!important}</style></head><body><div id="scene" aria-hidden="true"></div><script type="module">
+import '/src/style.css';import {createExperience} from '/src/scene.js';
+let marker=820,pointer={x:0,y:0},experience;const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+window.__surfaceLightProbe={set(m,x,y){marker=m;pointer={x,y}},getState(){return experience?.getState()}};
+addEventListener('pointermove',event=>{pointer={x:event.clientX/innerWidth*2-1,y:1-event.clientY/innerHeight*2}});
+experience=await createExperience(document.querySelector('#scene'),{onReady(){document.body.classList.add('scene-ready');document.body.dataset.render='webgl'},onFailure(e){document.body.dataset.render='failed';console.error(e)}});
+function draw(){experience.render(marker/200,{x:0,y:0},0,reduced,marker/1000,pointer);requestAnimationFrame(draw)}draw();
+</script></body></html>

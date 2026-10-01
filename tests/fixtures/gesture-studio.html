@@ -1,0 +1,6 @@
+<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Revisión de gesto</title></head><body><div id="scene"><div class="reveal-field"></div></div><script type="module">
+import '/src/style.css';import {createExperience} from '/src/scene.js';import {createHand} from '/src/hand.js';
+let overrides={},experience,progress=4.75;window.__gestureProbe={setPose(value){overrides=value},setProgress(value){progress=value},getState(){return experience?.getState()}};
+experience=await createExperience(document.querySelector('#scene'),{handFactory:new URLSearchParams(location.search).has('legacy')?()=>Promise.all([createHand('/models/human-right.glb',false,{detail:1}),createHand('/models/ai-left.glb',true,{detail:1})]):undefined,onReady(){document.body.classList.add('scene-ready');document.body.dataset.render='webgl'},onFailure(e){document.body.dataset.render='failed';console.error(e)},poseOverride(){return overrides}});
+function draw(){experience.render(progress,{x:0,y:0},0,true);requestAnimationFrame(draw)}draw();
+</script></body></html>

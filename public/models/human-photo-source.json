@@ -1,0 +1,52 @@
+{
+  "source": "LibHand",
+  "sourceUrl": "https://libhand.org/",
+  "sourceRepository": "https://github.com/libhand/libhand/tree/master/hand_model",
+  "copyright": "Copyright 2011 Marin Saric; model designed by Rizzle Studios",
+  "license": "Creative Commons Attribution 3.0 Unported",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "sourceFiles": {
+    "hand.blend": {
+      "bytes": 10564732,
+      "sha256": "6a4ad9aa78a57fa3c30b3da4c126b66df4dd209d9d2ec201c98b513d93210086"
+    },
+    "hand_texture.png": {
+      "bytes": 2169898,
+      "sha256": "41644727b471ab2f5be7d106002b86062036a61245788586356fdb7129317479"
+    },
+    "hand_model_license.txt": {
+      "bytes": 274,
+      "sha256": "70d72c0b3b34a80840dd4741dc2a3e5c2fa00e8ebd44ff1b78aaac4fe9cf15ba"
+    }
+  },
+  "changes": [
+    "Baked a neutral finger pose while retaining the original skinning and UV layout",
+    "Normalised to metres and the narrative hand coordinate system",
+    "Extended wrist geometry into a continuous forearm",
+    "Created full and simplified glTF versions",
+    "Added runtime epidermal relief, nail roughness, and skinned geometric vellus hair",
+    "Detailed skin UV atlas adapted with built-in imagegen from the original photograph and the user encounter reference",
+    "Separate forearm albedo generated from the user reference; triplanar wrist transition in the runtime material",
+    "Correct LibHand anatomical mapping: thumb 5, index 4, middle 3, ring 2, pinky 1",
+    "Finger-specific flexion limits, thumb CMC opposition, and volume-preserving dual-quaternion deformation",
+    "CPU fingertip evaluation shares the same deformation as the visible mesh"
+  ],
+  "generatedTextures": {
+    "skin-atlas-v3.png": {
+      "bytes": 1900219,
+      "sha256": "0366263e52987a954005cb56d6e5c14037fd7a52c88fa7044ebdb8582c81dacd",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    "forearm-albedo-v1.png": {
+      "bytes": 3171881,
+      "sha256": "5da6d427d7dca71b8791b52451830f8caf7fc41e39b327de595d6e09184b4ead",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    }
+  }
+}

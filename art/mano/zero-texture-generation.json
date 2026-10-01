@@ -1,0 +1,17 @@
+{
+  "tool": "Built-in image_gen.imagegen",
+  "source": "reference-assets/zero-hand/human_hand_1.glb",
+  "originalAtlas": "public/models/zero/human_hands.ktx2",
+  "reference": "public/images/encuentro-fallback.png",
+  "output": "public/textures/mano/zero-skin-albedo-v2.png",
+  "prompts": [
+    "Use case: precise-object-edit. Asset type: flat diffuse albedo UV atlas for an existing rigged 3D human hand and forearm. Image 1 is the EDIT TARGET, an extracted UV tile; image 2 is ONLY the photographic skin quality and mature tan human hand reference (human hand on the left). Change only the skin surface within image 1: remove every baked directional shadow, green cast, white overexposure, red rim light and specular highlight, replacing them with consistent warm natural tan human skin under flat cross-polarized neutral diffuse light. Add photographic pores, delicate irregular fine skin lines, soft anatomical knuckle folds, subtle veins, small freckles, natural translucent beige nail plates with pink beds and cuticles where the source has visible nails. The large upper UV island is the forearm skin; the smaller lower island contains BOTH sides of the hand with all fingers. Keep those UV islands exactly unchanged in position, outline, scale and rotation, including ALL lobes and finger shapes. These are flattened UV surfaces, not a new hand composition. Preserve the exact image framing and black background. Rich real skin detail, soft supple tissue, no carved wood effect, no dark maze of wrinkles, no painted hairs because 3D hair is separate, no objects, no text or watermark. Output the exact same square atlas layout at the largest feasible resolution.",
+    "Use case: precise-object-edit. Image 1 is the EDIT TARGET, a UV skin albedo atlas, not a hand photograph. Make ONLY this correction: the RIGHT-HAND fan of fingers in the LOWER UV island is the PALMAR side, so remove the nail plates from that right-hand fan and replace them with natural soft fingertip-pad skin, fine fingerprint ridges and delicate finger creases. The left-hand fan is the DORSAL side: preserve its visible nail plates unchanged. Preserve ALL UV island outlines, exact positions, scale, rotation, black background, forearm surface, skin hue, skin pores and details unchanged. Do not move, reshape, add, remove or crop any UV island or finger lobe. No directional shadows or text. Output the exact same square atlas."
+  ],
+  "runtime": "src/reference-hand.js",
+  "limits": [
+    "The original 4096 square atlas contains multiple baked lighting variants; each skin tile is 1024 square pixels.",
+    "The adapted albedo is 1254 square pixels and was generated with AI; it is not a scan.",
+    "The viewer rebuilds a wrist-centred rest pose and uses its own articulated closing motion. The original animation remains in the untouched source GLB."
+  ]
+}

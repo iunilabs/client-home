@@ -1,0 +1,89 @@
+{
+  "source_site": "https://why.zero.university/",
+  "retrieved_date": "2026-09-30",
+  "license_status": "The user confirms receiving the permission statement directly from Zero. According to that statement, Zero authorizes free personal and commercial use, modification, adaptation and distribution without prior permission, fees or attribution. The original message and issuer identity were not independently inspected.",
+  "purpose": "Imported into the local mano.html study viewer; original downloaded asset files are preserved.",
+  "notes": [
+    "GreenHand geometry is Draco compressed.",
+    "The model includes a skin and an animation.",
+    "The green appearance is applied using a separate matcap texture; downloading the GLB alone does not reproduce the entire rendered scene.",
+    "HumanHand from the initial two-hand scene includes 24 joints and HumanHandAction animation. Its shared texture atlas is human_hands.ktx2."
+  ],
+  "assets": [
+    {
+      "file": "fancy_hand_2.glb",
+      "source": "https://why.zero.university/assets/models/fancy_hand_2.glb",
+      "bytes": 386196,
+      "content_type": "model/gltf-binary",
+      "sha256": "b1e534645d65573bfda554c73eaf57736333347f8183d5bfe2999c5c86d8fecf",
+      "mesh": "GreenHand",
+      "skins": 1,
+      "animations": [
+        "Animation"
+      ],
+      "extensions": [
+        "KHR_draco_mesh_compression"
+      ],
+      "joint_count": 24
+    },
+    {
+      "file": "matcap-hand.webp",
+      "source": "https://why.zero.university/assets/textures/matcap-hand.webp",
+      "bytes": 7710,
+      "content_type": "image/webp",
+      "sha256": "e658e406d613fb65cf862a62f24379e088b95b81fc4f20a58dd57505e584f098"
+    },
+    {
+      "file": "human_hand_1.glb",
+      "source": "https://why.zero.university/assets/models/human_hand_1.glb",
+      "bytes": 352084,
+      "content_type": "model/gltf-binary",
+      "sha256": "db7ffa89848d505ac247c9db671554e79c6fc9e08a7910272d22aba6d0149604",
+      "mesh": "HumanHand",
+      "skins": 1,
+      "animations": [
+        "HumanHandAction"
+      ],
+      "extensions": [
+        "KHR_draco_mesh_compression"
+      ],
+      "joint_count": 24,
+      "license_in_metadata": null
+    },
+    {
+      "file": "human_hands.ktx2",
+      "source": "https://why.zero.university/assets/atlases/human_hands.ktx2",
+      "bytes": 969162,
+      "content_type": "image/ktx2",
+      "sha256": "f65eb33c4b68ee7d356f45d7cf958ac650d1da28a5809667c837a0c9c701ead9"
+    }
+  ],
+  "license_statement": {
+    "file": "comunicado-uso-aportado.txt",
+    "source": "Statement pasted in this conversation; user confirms it was sent directly to them by Zero.",
+    "received_date": "2026-09-30",
+    "claimed_issuer": "Zero",
+    "independently_verified": false,
+    "permissions": [
+      "download",
+      "use",
+      "modify",
+      "adapt",
+      "distribute",
+      "personal use",
+      "commercial use"
+    ],
+    "requires_attribution": false,
+    "requires_payment": false,
+    "user_confirmed_direct_receipt": true
+  },
+  "local_adaptation": {
+    "entry": "src/reference-hand.js",
+    "units": "wrist-centred metres",
+    "geometry": "UV-preserving Loop subdivision and dual-quaternion skinning",
+    "human_surface": "Original KTX2 atlas available; AI-adapted neutral skin is the default. See art/mano/zero-texture-generation.json.",
+    "porcelain_surface": "Ivory physical material replacing the green matcap",
+    "rig": "Custom open, fist and pointing controls using the supplied 24-joint skeleton",
+    "scope": "Hand study viewer; the production homepage uses its existing hand model."
+  }
+}

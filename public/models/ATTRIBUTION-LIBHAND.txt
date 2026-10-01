@@ -1,0 +1,6 @@
+Human hand model and original photographic texture: LibHand.
+Copyright 2011 Marin Saric; model designed by Rizzle Studios.
+Source: https://libhand.org/ and https://github.com/libhand/libhand/tree/master/hand_model
+Licensed under Creative Commons Attribution 3.0 Unported: https://creativecommons.org/licenses/by/3.0/
+Adapted for Puntoes: neutral pose, glTF conversion, forearm extension, realtime surface and hair.
+See human-photo-source.json for changes and source hashes.

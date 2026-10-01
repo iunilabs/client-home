@@ -1,0 +1,22 @@
+Flint core - mesolithic (S14618)
+Arkeologisk Museum - University of Stavanger
+Model made by Annette G. Øvrelid.
+
+Source: https://sketchfab.com/3d-models/flint-core-mesolithic-3f67d75477fd4e6f8cd8b45c2dba5e75
+Creator: https://sketchfab.com/arkeologiskmuseum
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+
+Modifications, 2026-09-30:
+Joined the 11 scan chunks into one mesh and primitive; welded duplicate
+vertices; simplified geometry with meshoptimizer; centered the pivot and
+normalized the longest dimension to 1 unit; resized the base-color texture
+to JPEG (1K for the shared web/mobile version, 2K for the detail alternative);
+compressed geometry with Draco.
+Original scan normals and material retained. No normal map baked.
+
+Recommended website credit:
+"Flint core - mesolithic", Arkeologisk Museum - University of Stavanger /
+Annette G. Øvrelid, CC BY 4.0. Adapted: simplified geometry, resized texture,
+centered pivot and Draco compression.
+Link the title to the source and CC BY 4.0 to the license above.

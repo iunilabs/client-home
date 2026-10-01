@@ -1,0 +1,10 @@
+PuntoES Cartographic Divider
+Original model created for PuntoES
+Original design inspired by historical brass dividers; no exact historical date claimed
+Source: reference-assets/historical-tools/drafting-compass/source/model-compass.mjs
+License/provenance: Original project asset; no third-party mesh or texture
+
+Modifications (2026-10-01): Revision 4: arm bodies widened by 60%, with graduated scales, decorative borders, guide and arc clamps adjusted to the new width. Crest base remains connected to the upper hinge rim. Sculptural bronze crest and rosette; original vector numerals; large lateral degree arc; knee joint and wing lock. Joined static parts by material for fewer draw calls; retained all modeled detail; centered pivot; normalized longest dimension to 1 unit; welded duplicate vertices; rebuilt MikkTSpace tangents; Draco compression. No image textures or external assets. The original GLB and generator retain separate named parts and arm pivots for future editing.
+
+Center pivot; longest dimension is 1 unit, not a real-world metre.
+Requires KHR_draco_mesh_compression support.

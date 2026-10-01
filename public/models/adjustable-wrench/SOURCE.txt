@@ -1,0 +1,11 @@
+Adjustable Wrench
+Mateusz Sadek / Poly Haven
+Vintage adjustable wrench; no exact manufacture date supplied
+Source: https://polyhaven.com/a/adjustable_wrench
+License/provenance: CC0-1.0
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Modifications (2026-10-01): Preserved all three named tool parts and triangle count; welded duplicate vertices; centered pivot; normalized longest dimension to 1 unit; rebuilt MikkTSpace tangents; resized original PBR maps to 1K; lossy WebP color at quality 90 and data maps at quality 95; Draco compression. Original normals and materials retained; no new normal map baked.
+
+Center pivot; longest dimension is 1 unit, not a real-world metre.
+Requires KHR_draco_mesh_compression and EXT_texture_webp support.

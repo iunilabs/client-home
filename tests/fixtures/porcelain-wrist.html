@@ -1,0 +1,6 @@
+<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Revisión muñeca porcelana</title></head><body><div id="scene"><div class="reveal-field"></div></div><script type="module">
+import '/src/style.css';import {createExperience} from '/src/scene.js';import {aiFrames} from '/src/choreography.js';
+const angle=Number(new URLSearchParams(location.search).get('wrist')??-.25);aiFrames.at(-1).wrist=angle;
+let experience;window.__porcelainProbe={getState:()=>experience?.getState()};experience=await createExperience(document.querySelector('#scene'),{onReady(){document.body.classList.add('scene-ready');document.body.dataset.render='webgl'},onFailure(e){console.error(e)}});
+function draw(){experience.render(5,{x:0,y:0},0,true);requestAnimationFrame(draw)}draw();
+</script></body></html>
