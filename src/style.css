@@ -49,16 +49,15 @@ dialog{border:1px solid #20394f15;border-radius:10px;padding:56px 40px 40px;widt
 @keyframes copy-load{from{opacity:0;transform:translateY(18px);filter:blur(3px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
 @media(max-width:699px){
  .chapter-copy{top:124px;left:24px;width:calc(100% - 48px)}
- .chapter-copy h2{font-size:clamp(42px,11.28vw,67.2px);line-height:1.08}
- #giro .chapter-copy h2{font-size:clamp(38.4px,10.32vw,60px)}
- #giro .chapter-copy{top:104px;width:min(58vw,230px)}
+ .chapter-copy h2{font-size:clamp(28px,9vw,52px);line-height:1.14;white-space:nowrap}
+ #giro .chapter-copy{top:104px;width:calc(100% - 48px)}
  #extension .chapter-copy{top:112px;width:calc(100% - 48px)}
- #extension .chapter-copy h2{font-size:clamp(36px,10.32vw,50.4px)}
+ #extension .chapter-copy h2{font-size:clamp(28px,9vw,52px)}
  .chapter-copy--intro{top:132px;left:50%;max-width:500px}
- .chapter-copy--intro h1{font-size:clamp(43.2px,12.48vw,74.4px);line-height:1.06}
+ .chapter-copy--intro h1{font-size:clamp(43.2px,12.48vw,74.4px);line-height:1.17}
  .chapter-copy--intro .eyebrow{margin-bottom:22px}
  .chapter-copy--encounter{top:124px;bottom:auto;left:50%;max-width:500px}
- .chapter-copy--encounter h2{font-size:clamp(43.2px,12.48vw,74.4px);line-height:1.06}
+ .chapter-copy--encounter h2{font-size:clamp(32px,10vw,56px);line-height:1.14}
 }
 
 @media (hover:none),(pointer:coarse){.cursor-light{display:none}}

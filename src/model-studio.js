@@ -1,4 +1,3 @@
-import './model-studio.css';
 import {installAssetBase} from './asset-loading.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';

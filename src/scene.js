@@ -17,6 +17,7 @@ import {createSkinContinuity} from './skin-continuity.js';
 import {smooth,mix} from './timeline.js';
 import {createFingerGesture} from './finger-gesture.js';
 import {createThumbGesture,createWristGesture} from './wrist-gesture.js';
+import {createMobileCompassGesture,mobileCompassEnvelope} from './mobile-compass-gesture.js';
 
 export async function createExperience(container,{onReady,onFailure,poseOverride,handFactory}){
  installAssetBase();
@@ -61,6 +62,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
  const previewFingers=poseOverride?createFingerGesture(human):null,previewThumb=poseOverride?createThumbGesture(human):null,previewWrist=poseOverride?createWristGesture(human):null;
  const fingerFrames=wrenchHandFrames.map(({at,curls,flexions,spreads,opposition,wrist})=>({...choreography(at*5,0,true,at),at,curls,flexions,spreads,opposition,wrist,tip:undefined}));
  const humanTrack=createPoseTrack(human,humanFrames,{start:.75,end:.9,frames:fingerFrames}),aiTrack=createPoseTrack(ai,aiFrames);
+ const mobileCompassGesture=createMobileCompassGesture(human);
  const tools=await createToolSequence(scene,{deferred:!handFactory}),reveal=createIntroReveal(human),humanFalloff=createHandFalloff(human),aiFalloff=createHandFalloff(ai);
  const target=new THREE.Vector3(),look=new THREE.Vector3(),view=new THREE.Vector3(),right=new THREE.Vector3(),up=new THREE.Vector3(0,1,0),zAxis=new THREE.Vector3(0,0,1),tiltQuaternion=new THREE.Quaternion();
  function portraitFraming(){return innerWidth<700||innerWidth/innerHeight<1}
@@ -126,6 +128,13 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
   camera.position.copy(target);camera.lookAt(look);
   const framing=[...(pose.cameraShift??[0,0])];if(mobile){const compassFrame=smooth(.39,.48,pose.ratio)*(1-smooth(.56,.64,pose.ratio));framing[0]+=.11*compassFrame;framing[1]-=.18*compassFrame}
   const offset=[-framing[0],-framing[1]];if(elbowPin){const v=elbowReach.anchor.clone().project(neutralCamera);offset[0]=mix(offset[0],(v.x-anchorNdc.x)/2,elbowPin);offset[1]=mix(offset[1],(anchorNdc.y-v.y)/2,elbowPin)}
+  // Translate both projections equally; tool scale and the grasp depth stay
+  // intact. The joint gesture supplies the arc rather than rotating the root.
+  if(innerWidth<700&&!poseOverride){
+   const compass=mobileCompassEnvelope(pose.ratio);
+   offset[1]-=.12*compass;
+   offset[0]+=Math.max(0,390-innerWidth)*.65/innerWidth*compass;
+  }
   camera.setViewOffset(innerWidth,innerHeight,offset[0]*innerWidth,offset[1]*innerHeight,innerWidth,innerHeight);camera.updateProjectionMatrix();camera.updateMatrixWorld();
   neutralCamera.setViewOffset(innerWidth,innerHeight,offset[0]*innerWidth,offset[1]*innerHeight,innerWidth,innerHeight);neutralCamera.updateProjectionMatrix();neutralCamera.updateMatrixWorld();
   if(elbowPin){const forward=neutralCamera.getWorldDirection(new THREE.Vector3()),ray=new THREE.Vector3(mobile?.94:.94,mobile?-.76:-.93,.5).unproject(neutralCamera).sub(neutralCamera.position).normalize();tools.setAnchor('llave',neutralCamera.position.clone().addScaledVector(ray,6/ray.dot(forward)))}
@@ -139,6 +148,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
    if(reach){const framedElbow=elbowReach.anchor.clone().project(camera);framedElbow.x-=.12*reach;human.root.position.add(framedElbow.unproject(camera).sub(elbowReach.anchor))}
    if(ai.root.visible){const pivot=ai.tipWorld();ai.root.position.copy(pivot.clone().addScaledVector(ai.root.position.clone().sub(pivot),scale));ai.root.scale.multiplyScalar(scale)}
   }
+  if(!poseOverride)mobileCompassGesture.apply(pose.ratio,time,reduced);
   // The source projects to the raw cursor, even while the camera orbit eases.
   // Refresh only custom hand skin caches after their final root placements.
   human.root.updateMatrixWorld(true);ai.root.updateMatrixWorld(true);human.skin.onBeforeRender?.();ai.skin.onBeforeRender?.();

@@ -1,4 +1,3 @@
-import './style.css';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import {mix,smooth} from './timeline.js';
