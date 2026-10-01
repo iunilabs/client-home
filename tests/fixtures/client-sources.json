@@ -1,0 +1,71 @@
+{
+  "checkedAt": "2026-09-30",
+  "page": "https://www.puntoes.es/",
+  "context": "Nuestros Clientes",
+  "claim": "Relación publicada por .es; no acredita vigencia ni proyecto de IA. Se conserva la identidad mostrada en la fuente, incluso las marcas históricas.",
+  "clients": [
+    {
+      "id": "accenture",
+      "name": "Accenture",
+      "image": "/clients/accenture.jpg",
+      "source": "https://www.puntoes.es/wp-content/uploads/2016/07/accenture.jpg",
+      "bytes": 5821
+    },
+    {
+      "id": "bbva",
+      "name": "BBVA",
+      "image": "/clients/bbva.png",
+      "source": "https://www.puntoes.es/wp-content/uploads/2019/06/bbva-new-logo-400x120.png",
+      "bytes": 13348
+    },
+    {
+      "id": "canal",
+      "name": "Canal de Isabel II",
+      "image": "/clients/canal.jpg",
+      "source": "https://www.puntoes.es/wp-content/uploads/2016/07/canalisabel.jpg",
+      "bytes": 48389
+    },
+    {
+      "id": "cepsa",
+      "name": "Cepsa",
+      "image": "/clients/cepsa.jpg",
+      "source": "https://www.puntoes.es/wp-content/uploads/2016/07/cepsa.jpg",
+      "bytes": 8159
+    },
+    {
+      "id": "mapfre",
+      "name": "MAPFRE",
+      "image": "/clients/mapfre.jpg",
+      "source": "https://www.puntoes.es/wp-content/uploads/2016/07/maphre.jpg",
+      "bytes": 7430
+    },
+    {
+      "id": "mediaset",
+      "name": "Mediaset España",
+      "image": "/clients/mediaset.jpg",
+      "source": "https://www.puntoes.es/wp-content/uploads/2016/07/mediaset.jpg",
+      "bytes": 11107
+    },
+    {
+      "id": "ree",
+      "name": "Red Eléctrica",
+      "image": "/clients/ree.jpg",
+      "source": "https://www.puntoes.es/wp-content/uploads/2016/07/redelectrica.jpg",
+      "bytes": 7915
+    },
+    {
+      "id": "siemens",
+      "name": "Siemens",
+      "image": "/clients/siemens.jpg",
+      "source": "https://www.puntoes.es/wp-content/uploads/2016/07/siemens.jpg",
+      "bytes": 6625
+    },
+    {
+      "id": "naturgy",
+      "name": "Naturgy",
+      "image": "/clients/naturgy.png",
+      "source": "https://www.puntoes.es/wp-content/uploads/2019/06/naturgy.png",
+      "bytes": 1299
+    }
+  ]
+}
