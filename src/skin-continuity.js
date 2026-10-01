@@ -1,9 +1,11 @@
 import * as THREE from 'three';
+import {bakedSkinSeams} from './skin-cache.js';
+import {SKIN_ASSETS} from './skin-assets.js';
 
 // Match both sides of the hand's UV boundaries in linear colour. Corrections
 // travel over each island's surface, fading within 10 mm; palm creases keep
 // their photographed detail. Geometry, UVs, rig and the source atlas stay intact.
-function matchHandSeams(hand){
+export function matchHandSeams(hand){
  const geometry=hand.skin.geometry,{position,uv}=geometry.attributes,map=hand.material.map;
  const canvas=document.createElement('canvas');canvas.width=map.image.width;canvas.height=map.image.height;
  const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(map.image,0,0);
@@ -87,17 +89,19 @@ function matchHandSeams(hand){
 // The supplied arm atlas has separate islands with different baked tones.
 // A continuous photographic projection in rest space removes these seams and
 // follows the rig without texture sliding. Mirrored wrapping avoids tile jumps.
-export async function createSkinContinuity(hand,renderer){
+export async function createSkinContinuity(hand,renderer,preloadedTexture){
  if(hand.skinContinuity)return hand.skinContinuity;
  const material=hand.material,uniforms=material.userData.uniforms;
  if(!uniforms?.forearmBlendEnabled)return null;
- const texture=await new THREE.TextureLoader().loadAsync('/textures/mano/forearm-albedo-v1.png');
+ const texture=preloadedTexture??await new THREE.TextureLoader().loadAsync(SKIN_ASSETS.forearm);
  texture.colorSpace=THREE.SRGBColorSpace;
  texture.wrapS=texture.wrapT=THREE.MirroredRepeatWrapping;
  texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
  uniforms.forearmMap.value=texture;uniforms.forearmBlendEnabled.value=1;
  uniforms.skinContinuityEnabled={value:1};
- const seams=matchHandSeams(hand),previous=material.onBeforeCompile.bind(material),key=material.customProgramCacheKey();
+ const baked=hand.surface==='adapted'?await bakedSkinSeams(hand.skin.geometry):null;
+ if(baked)hand.skin.geometry.setAttribute('skinSeamCorrection',new THREE.BufferAttribute(new Float32Array(baked.correction),3));
+ const seams=baked?baked.seams:matchHandSeams(hand),previous=material.onBeforeCompile.bind(material),key=material.customProgramCacheKey();
  material.onBeforeCompile=(shader,renderer)=>{
   previous(shader,renderer);
   shader.vertexShader='attribute vec3 skinSeamCorrection;\nvarying vec3 vSkinSeamCorrection;\n'+shader.vertexShader;

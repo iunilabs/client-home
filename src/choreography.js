@@ -50,8 +50,7 @@ export function choreography(progress,time=0,reduced=false,scrollRatio){
  const ratio=clamp(scrollRatio??progress/5),p=ratio*5;
  // Only spatial fields interpolate here; joints are authored by the one pose track.
  const spatial=humanFrames.map(({at,h,r,cam,look,fov,curls})=>({at,h,r,cam,look,fov,curls}));
- const excursion=[sampleFrames(spatial,.75),...wrenchHandFrames.map(({at,h,r,cam,look,fov,curls})=>({at,h,r,cam,look,fov,curls})),sampleFrames(spatial,.9)];
- const pose=sampleFrames(ratio>.75&&ratio<.9?excursion:spatial,ratio);
+ const pose=sampleFrames(spatial,ratio);
  const final=smooth(.80,1,ratio),aiApproach=smooth(.90,1,ratio),aiPose=sampleFrames(aiFrames.map(({at,r,tilt,curls})=>({at,r,tilt,curls})),ratio);
  const humanTip=[mix(-.75,-.10,final),mix(1.1,.97,final),.75];
  const depthBreath=handBreath(p,time,reduced)*(1-smooth(.16,.20,ratio));pose.h[2]+=depthBreath;

@@ -16,6 +16,11 @@ try{
    const seams=[...groups.values()].filter(ids=>ids.length>1&&ids.some(i=>Math.abs(g.attributes.uv.getX(i)-g.attributes.uv.getX(ids[0]))+Math.abs(g.attributes.uv.getY(i)-g.attributes.uv.getY(ids[0]))>.001));
    const shaderKey=hand.material.customProgramCacheKey(),padding=artificial?null:correctFingerPads(hand),continuity=artificial?null:await createSkinContinuity(hand,renderer);
    const r={artificial,detail,nails:hand.nails.length,atlas:hand.material.map?.image?{width:hand.material.map.image.width,height:hand.material.map.image.height}:null,idempotent:hand.material.customProgramCacheKey()===shaderKey,skinCorrections:continuity?.seams,pads:padding?.map(p=>({role:p.role,vertices:p.corrected})),poses:[]};
+   if(!artificial){
+    const mask=g.attributes.fingerPadMask,uv=g.attributes.fingerPadUv;
+    r.correctedUv={finite:Array.from(uv.array).every(Number.isFinite),seamPairs:0,maximumSeamDelta:0};
+    for(const ids of seams){const corrected=ids.filter(id=>mask.getX(id)>.99);for(const id of corrected.slice(1)){const first=corrected[0];r.correctedUv.seamPairs++;r.correctedUv.maximumSeamDelta=Math.max(r.correctedUv.maximumSeamDelta,Math.hypot(uv.getX(id)-uv.getX(first),uv.getY(id)-uv.getY(first)))}}
+   }
    const track=createPoseTrack(hand,artificial?aiFrames:humanFrames,!artificial&&wrenchHandFrames?{start:.75,end:.9,frames:wrenchHandFrames}:undefined),markers=artificial?[.9,.92,.935,.95,.97,.985,1]:[.18,.25,.50,.75,.78,.80,.82,.835,.85,.88,.9,1],cases=[{type:'curl',value:0},{type:'curl',value:.5},{type:'curl',value:1},...markers.map(value=>({type:'track',value}))];
    if(artificial){
     const names=bones.filter(b=>b.name.startsWith('DEF-f_index')).map(b=>b.name);
@@ -35,14 +40,21 @@ try{
     for(const nail of hand.nails){
      const boneId=bones.findIndex(b=>nail.name===b.name+'-nail'),triangles=[];
      for(let i=0;i<g.index.count;i+=3){const ids=[g.index.array[i],g.index.array[i+1],g.index.array[i+2]];if(!ids.some(i=>{let weight=0;for(let j=0;j<4;j++)if(g.attributes.skinIndex.array[i*4+j]===boneId)weight+=g.attributes.skinWeight.array[i*4+j];return weight>.25}))continue;triangles.push(new T.Triangle(...ids.map(id=>hand.skin.getVertexPosition(id,new T.Vector3()))))}
-     let minimum=Infinity,maximum=-Infinity,distance=0,finite=true;
-     const p=new T.Vector3(),closest=new T.Vector3(),n=new T.Vector3();
+     let minimum=Infinity,maximum=-Infinity,distance=0,finite=true,interiorMinimum=Infinity,interiorMaxDistance=0,interiorSamples=0;
+     const p=new T.Vector3(),closest=new T.Vector3(),n=new T.Vector3(),vertices=[];
+     function measure(point){let best=Infinity,signed=0;for(const tri of triangles){tri.closestPointToPoint(point,closest);const d=point.distanceToSquared(closest);if(d<best){best=d;signed=p.copy(point).sub(closest).dot(tri.getNormal(n))}}return{signed,distance:Math.sqrt(best)}}
      for(let i=0;i<nail.geometry.attributes.position.count;i++){
-      nail.getVertexPosition(i,p);finite&&=p.toArray().every(Number.isFinite);let best=Infinity,signed=0;
-      for(const tri of triangles){tri.closestPointToPoint(p,closest);const d=p.distanceToSquared(closest);if(d<best){best=d;signed=p.clone().sub(closest).dot(tri.getNormal(n))}}
-      minimum=Math.min(minimum,signed);maximum=Math.max(maximum,signed);distance=Math.max(distance,Math.sqrt(best));
+      const point=nail.getVertexPosition(i,new T.Vector3());vertices.push(point);finite&&=point.toArray().every(Number.isFinite);const sample=measure(point);
+      minimum=Math.min(minimum,sample.signed);maximum=Math.max(maximum,sample.signed);distance=Math.max(distance,sample.distance);
      }
-     nails.push({name:nail.name,vertices:nail.geometry.attributes.position.count,minimum,maximum,maxDistance:distance,finite});
+     // Corner-only tests miss skin ridges breaking through the middle of a
+     // fitted plate. Check every face centre and each shared perimeter edge.
+     const meshIndex=nail.geometry.index.array,uv=nail.geometry.attributes.nailUV,edges=new Set(),samplePoint=new T.Vector3();
+     function interior(point){const sample=measure(point);interiorMinimum=Math.min(interiorMinimum,sample.signed);interiorMaxDistance=Math.max(interiorMaxDistance,sample.distance);interiorSamples++}
+     for(let i=0;i<meshIndex.length;i+=3){const ids=[meshIndex[i],meshIndex[i+1],meshIndex[i+2]];samplePoint.copy(vertices[ids[0]]).add(vertices[ids[1]]).add(vertices[ids[2]]).multiplyScalar(1/3);interior(samplePoint);
+      for(let j=0;j<3;j++){const a=ids[j],b=ids[(j+1)%3],key=a<b?`${a}:${b}`:`${b}:${a}`;if(edges.has(key))continue;edges.add(key);if(uv&&Math.max(Math.abs(uv.getX(a)),Math.abs(uv.getY(a)),Math.abs(uv.getX(b)),Math.abs(uv.getY(b)))<.65)continue;samplePoint.copy(vertices[a]).lerp(vertices[b],.5);interior(samplePoint)}
+     }
+     nails.push({name:nail.name,vertices:nail.geometry.attributes.position.count,minimum,maximum,maxDistance:distance,finite,interiorMinimum,interiorMaxDistance,interiorSamples,fit:nail.userData.fit});
     }
     // Measure articulation in an unmirrored hand frame. Three's signed world
     // scale otherwise reverses the diagnostic's towards-pulp sign when the
@@ -60,8 +72,8 @@ try{
  for(const model of report.models){
   assert.equal(model.nails,5);assert.equal(model.returnDrift,0);assert.ok(model.idempotent);
   if(model.artificial){assert.equal(model.reverseDrift,0);assert.equal(model.indexDuringApproach.length,51);for(const sample of model.indexDuringApproach)for(const joint of sample.joints)assert.ok(joint.extensionDeviation<.035,`${joint.name}: porcelain index must stay extended at ${sample.value}`)}
-  if(!model.artificial){assert.ok(model.skinCorrections.seeds>100);assert.equal(model.pads.length,5)}
-  for(const pose of model.poses){assert.ok(pose.seamGap<.00002,`UV boundaries must remain physically joined: ${pose.seamGap}`);for(const nail of pose.nails){assert.ok(nail.vertices>10&&nail.finite);assert.ok(nail.minimum>-.00008,`${nail.name}: plate must not enter its skin bed`);assert.ok(nail.maxDistance<.0004,`${nail.name}: plate must remain attached to its curved bed`)}if(!model.artificial)for(const joint of pose.thumbMotion){assert.ok(joint.towardsPad>-.0000001,`${joint.joint}: thumb must not flex away from its pulp at ${pose.value}`);assert.ok(joint.lateralDeviation<.000001,`${joint.joint}: thumb must stay in its anatomical flexion plane at ${pose.value}`)}}
+  if(!model.artificial){assert.ok(model.skinCorrections.seeds>100);assert.equal(model.pads.length,5);assert.ok(model.correctedUv.finite);assert.ok(model.correctedUv.seamPairs>10);assert.ok(model.correctedUv.maximumSeamDelta<1e-5,`Corrected fingertip UVs must join across atlas islands: ${model.correctedUv.maximumSeamDelta}`)}
+  for(const pose of model.poses){assert.ok(pose.seamGap<.00002,`UV boundaries must remain physically joined: ${pose.seamGap}`);for(const nail of pose.nails){assert.ok(nail.vertices>10&&nail.finite);assert.ok(nail.fit.continuous,`${nail.name}: continuous outline required`);assert.ok(nail.interiorSamples>nail.vertices);assert.ok(nail.interiorMinimum>0,`${nail.name}: skin must not break through the plate interior: ${nail.interiorMinimum}`);assert.ok(nail.interiorMaxDistance<.0004,`${nail.name}: plate interior must remain attached`);assert.ok(nail.minimum>-.00008,`${nail.name}: plate must not enter its skin bed`);assert.ok(nail.maxDistance<.0004,`${nail.name}: plate must remain attached to its curved bed`)}if(!model.artificial)for(const joint of pose.thumbMotion){assert.ok(joint.towardsPad>-.0000001,`${joint.joint}: thumb must not flex away from its pulp at ${pose.value}`);assert.ok(joint.lateralDeviation<.000001,`${joint.joint}: thumb must stay in its anatomical flexion plane at ${pose.value}`)}}
  }
- console.log('✓ Ambos niveles de geometría: uñas sobre piel curva, costuras sin apertura, retorno reproducible e índice porcelana extendido en 51 muestras de la aproximación');
+ console.log('✓ Ambos niveles: interiores y bordes de uñas sin penetración, UV continuas en los dedos, costuras cerradas, retorno reproducible e índice porcelana extendido');
 }finally{await browser.close()}
