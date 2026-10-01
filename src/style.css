@@ -37,12 +37,12 @@ dialog{border:1px solid #20394f15;border-radius:10px;padding:56px 40px 40px;widt
 .chapter-copy--intro h1 em{font-size:1.04em}
 .chapter-copy em{padding:.08em .16em .12em;margin:-.08em -.16em -.12em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .sentence-ending{white-space:nowrap}
-.brand-period{display:inline-block;width:.24em;height:.24em;margin-left:.065em;vertical-align:.025em;border-radius:50%;background:var(--blue);color:transparent;-webkit-text-fill-color:transparent;overflow:hidden;letter-spacing:0;line-height:0}
+.brand-period{display:inline-block;width:.24em;height:.24em;margin-left:.14em;vertical-align:-.012em;border-radius:50%;background:var(--blue);color:transparent;-webkit-text-fill-color:transparent;overflow:hidden;letter-spacing:0;line-height:0}
 .brand-period>span{font-size:0}
 .chapter-copy--intro .eyebrow{margin-bottom:23px}
 .copy-content{animation:copy-load .85s cubic-bezier(.2,.7,.2,1) both}
 .chapter-copy--encounter{top:auto;bottom:21vh;left:50%;width:calc(100% - var(--gutter) * 2);max-width:1100px;text-align:center;transform:translate3d(-50%,var(--copy-y,0px),0)}
-.chapter-copy--encounter h2{font-size:clamp(38px,3.9vw,62px);line-height:1.12}
+.chapter-copy--encounter h2{font-size:clamp(54px,6vw,96px);line-height:1.04}
 #extension .chapter-copy{top:clamp(110px,14vh,140px);width:min(38vw,530px)}
 #extension .chapter-copy h2{font-size:clamp(40px,4vw,58px)}
 @keyframes copy-load{from{opacity:0;transform:translateY(18px);filter:blur(3px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
@@ -57,7 +57,7 @@ dialog{border:1px solid #20394f15;border-radius:10px;padding:56px 40px 40px;widt
  .chapter-copy--intro h1{font-size:clamp(43.2px,12.48vw,74.4px);line-height:1.06}
  .chapter-copy--intro .eyebrow{margin-bottom:22px}
  .chapter-copy--encounter{top:124px;bottom:auto;left:50%;max-width:500px}
- .chapter-copy--encounter h2{font-size:clamp(32.4px,8.64vw,50.4px);line-height:1.14}
+ .chapter-copy--encounter h2{font-size:clamp(43.2px,12.48vw,74.4px);line-height:1.06}
 }
 
 @media (hover:none),(pointer:coarse){.cursor-light{display:none}}
