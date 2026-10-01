@@ -67,6 +67,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
  function portraitFov(){return innerWidth<360?54:innerWidth<700?50:42}
  let portraitWrenchCenters=[0,0],wrenchViewportShift=new THREE.Vector3();const wrenchReferenceCamera=new THREE.PerspectiveCamera();
  function calibrateTools(){
+  human.root.scale.set(1,-1,1);ai.root.scale.set(1,1,1);
   const c=new THREE.PerspectiveCamera(),layouts=[['piedra',.25,[.72,-.59],6],['compas',.5,[.85,.10],11],['llave',.75,[.91,-.87],6]];
   for(const[id,ratio,ndc,distance]of layouts){const pose=choreography(ratio*5,0,true,ratio);human.root.position.set(...pose.h);human.root.rotation.set(...pose.r);human.root.scale.y=-1;humanTrack.apply(ratio,0,true);human.root.position.add(humanTrack.targetIndex(ratio).sub(human.tipWorld()));
    const from=new THREE.Vector3(...pose.cam),to=new THREE.Vector3(...pose.look);let fov=pose.fov;
@@ -98,7 +99,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
   budget.update(time,reduced);
   const pose=choreography(progress,time,reduced,scrollRatio);Object.assign(pose,poseOverride?.(pose)??{});const p=pose.progress,mobile=portraitFraming();
   lighting=illuminate(pose.ratio,tools.objects);
-  human.root.scale.y=pose.humanMirror??1;ai.root.scale.y=pose.aiMirror??1;
+  human.root.scale.set(1,pose.humanMirror??1,1);ai.root.scale.set(1,pose.aiMirror??1,1);
   human.root.position.set(...pose.h);human.root.rotation.set(...pose.r);human.root.visible=pose.visible;
   if(poseOverride){human.pose(pose.curls);previewFingers.apply(pose.curls,pose.fingerFlexions,pose.fingerSpreads,pose.fingerGestureWeight??1);previewThumb.apply(pose.humanThumbOpposition??0);previewWrist.apply(pose.wristFlex??0)}else humanTrack.apply(pose.ratio,time,reduced);
   const anchored=!poseOverride&&pose.ratio>.63&&pose.ratio<=.835;
@@ -129,6 +130,15 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
   neutralCamera.setViewOffset(innerWidth,innerHeight,offset[0]*innerWidth,offset[1]*innerHeight,innerWidth,innerHeight);neutralCamera.updateProjectionMatrix();neutralCamera.updateMatrixWorld();
   if(elbowPin){const forward=neutralCamera.getWorldDirection(new THREE.Vector3()),ray=new THREE.Vector3(mobile?.94:.94,mobile?-.76:-.93,.5).unproject(neutralCamera).sub(neutralCamera.position).normalize();tools.setAnchor('llave',neutralCamera.position.clone().addScaledVector(ray,6/ray.dot(forward)))}
   humanFalloff.update();aiFalloff.update();tools.render(pose.ratio,time,reduced,camera,neutralCamera,elbowPin?wrenchReferenceCamera:null);
+  // Enlarge only the hands after the shared camera and tool layout are fixed.
+  // The elbow remains the hinge during reach; crop the arm rather than fingers.
+  if(innerWidth<700&&!poseOverride){
+   const scale=1.22,reach=smooth(.59,.63,pose.ratio)*(1-smooth(.835,.9,pose.ratio));
+   const pivot=human.tipWorld().lerp(elbowReach.anchor,reach);
+   human.root.position.copy(pivot.clone().addScaledVector(human.root.position.clone().sub(pivot),scale));human.root.scale.multiplyScalar(scale);
+   if(reach){const framedElbow=elbowReach.anchor.clone().project(camera);framedElbow.x-=.12*reach;human.root.position.add(framedElbow.unproject(camera).sub(elbowReach.anchor))}
+   if(ai.root.visible){const pivot=ai.tipWorld();ai.root.position.copy(pivot.clone().addScaledVector(ai.root.position.clone().sub(pivot),scale));ai.root.scale.multiplyScalar(scale)}
+  }
   // The source projects to the raw cursor, even while the camera orbit eases.
   // Refresh only custom hand skin caches after their final root placements.
   human.root.updateMatrixWorld(true);ai.root.updateMatrixWorld(true);human.skin.onBeforeRender?.();ai.skin.onBeforeRender?.();
