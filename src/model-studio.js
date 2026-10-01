@@ -1,10 +1,12 @@
 import './model-studio.css';
+import {installAssetBase} from './asset-loading.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { createHand } from './hand.js';
 import { createRenderBudget } from './render-budget.js';
 import { createStone,createCompass,createWrench,createMouse,createGear,mesh,materials } from './objects.js';
+installAssetBase();
 
 const entries=[
   {id:'human',name:'Piel humana',finish:'PIEL · MATERIA VIVA',description:'Pliegues, pigmentación, poros y vello sobre una anatomía articulada.'},

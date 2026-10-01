@@ -1,4 +1,13 @@
 node_modules/
 dist/
+dist-*/
 test-results/
 .DS_Store
+docs/
+art/
+archive/
+tools/.font-runtime/
+__pycache__/
+.venv*/
+.env
+.env.*

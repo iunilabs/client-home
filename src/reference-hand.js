@@ -9,6 +9,7 @@ import { refineTexturedSkin } from './textured-skin-geometry.js';
 import { addFittedNails } from './hand-nails.js';
 import {correctFingerPads} from './ventral-skin.js';
 import {createSkinContinuity} from './skin-continuity.js';
+import {SKIN_ASSETS} from './skin-assets.js';
 
 const roles=['thumb','index','middle','ring','pinky'];
 const boneName=(role,joint)=>THREE.PropertyBinding.sanitizeNodeName(`DEF-${role==='thumb'?'thumb':`f_${role}`}.${String(joint).padStart(2,'0')}.L`);
@@ -21,8 +22,8 @@ export async function createReferenceHand(renderer,{artificial=false,detail=2,su
   const draco=new DRACOLoader().setDecoderPath('/decoders/draco/');
   const loader=new GLTFLoader().setDRACOLoader(draco);
   const atlasLoader=new KTX2Loader().setTranscoderPath('/decoders/basis/').detectSupport(renderer);
-  let gltf,atlas;
-  try{[gltf,atlas]=await Promise.all([loader.loadAsync(`/models/zero/${artificial?'fancy_hand_2':'human_hand_1'}.glb`),artificial?Promise.resolve(null):surface==='original'?atlasLoader.loadAsync('/models/zero/human_hands.ktx2'):new THREE.TextureLoader().loadAsync('/textures/mano/zero-skin-albedo-v4.png')])}
+  let gltf,atlas,epidermisMap,forearmMap;
+  try{[gltf,atlas,epidermisMap,forearmMap]=await Promise.all([loader.loadAsync(`/models/zero/${artificial?'fancy_hand_2':'human_hand_1'}-web.glb`),artificial?Promise.resolve(null):surface==='original'?atlasLoader.loadAsync('/models/zero/human_hands.ktx2'):new THREE.TextureLoader().loadAsync(SKIN_ASSETS.albedo),artificial?Promise.resolve(null):new THREE.TextureLoader().loadAsync(SKIN_ASSETS.epidermis),!artificial&&surface==='adapted'?new THREE.TextureLoader().loadAsync(SKIN_ASSETS.forearm):Promise.resolve(null)])}
   finally{draco.dispose();atlasLoader.dispose()}
   gltf.scene.updateMatrixWorld(true);
   let original;gltf.scene.traverse(object=>{if(object.isSkinnedMesh)original=object});
@@ -98,10 +99,15 @@ export async function createReferenceHand(renderer,{artificial=false,detail=2,su
   // The supplied atlas contains four baked lighting versions of the same UV
   // layout. Use its first tile; the green matcap is replaced with porcelain.
   if(atlas){atlas.colorSpace=THREE.SRGBColorSpace;if(surface==='original'){atlas.offset.set(0,1);atlas.repeat.set(.25,-.25);atlas.updateMatrix()}atlas.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy())}
-  const material=artificial?new THREE.MeshPhysicalMaterial({color:'#f2eee4',roughness:.23,metalness:0,ior:1.5,clearcoat:.55,clearcoatRoughness:.18,envMapIntensity:.8}):createHumanSkin(atlas,{blendForearm:false,reliefScale:.3,guidedCreases:true});skin.material=material;
+  if(epidermisMap){epidermisMap.flipY=false;epidermisMap.wrapS=epidermisMap.wrapT=THREE.RepeatWrapping;epidermisMap.minFilter=THREE.LinearMipmapLinearFilter;epidermisMap.magFilter=THREE.LinearFilter;}
+  const material=artificial?new THREE.MeshPhysicalMaterial({color:'#f2eee4',roughness:.23,metalness:0,ior:1.5,clearcoat:.55,clearcoatRoughness:.18,envMapIntensity:.8}):createHumanSkin(atlas,{blendForearm:false,reliefScale:.3,guidedCreases:true,epidermisMap});skin.material=material;
   if(!artificial)material.userData.textureOrigin='Zero supplied UV atlas; AI-adapted neutral skin available alongside the original KTX2 texture';
   const hair=artificial?null:createHandHair(skin,{count:detail>1?2400:900});if(hair)scene.add(hair);
   const nails=addFittedNails(skin,nailBeds,{artificial});
+  // The fitted plates provide their own smooth nail finish. The coarse skin
+  // mask is only needed above to keep hair out of the beds; leaving its glossy
+  // ellipse on the skin creates a second, oversized outline around each nail.
+  if(!artificial){nailMask.fill(0);geometry.attributes.nailMask.needsUpdate=true;}
   const deformation=preserveHandVolume(skin,[hair,...nails]),quaternion=new THREE.Quaternion(),position=new THREE.Vector3();
   const bindings=bones.map(bone=>({bone,q:bone.quaternion.clone(),p:bone.position.clone()}));
   function pose(curls=[.12,.12,.15,.2,.25]){
@@ -137,7 +143,7 @@ export async function createReferenceHand(renderer,{artificial=false,detail=2,su
       try{originalAtlas=await decoder.loadAsync('/models/zero/human_hands.ktx2')}finally{decoder.dispose()}
       originalAtlas.colorSpace=THREE.SRGBColorSpace;originalAtlas.offset.set(0,1);originalAtlas.repeat.set(.25,-.25);originalAtlas.updateMatrix();
     }
-    if(kind==='adapted'&&!adaptedAtlas)adaptedAtlas=await new THREE.TextureLoader().loadAsync('/textures/mano/zero-skin-albedo-v4.png');
+    if(kind==='adapted'&&!adaptedAtlas)adaptedAtlas=await new THREE.TextureLoader().loadAsync(SKIN_ASSETS.albedo);
     const map=kind==='original'?originalAtlas:adaptedAtlas;map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
     material.map=map;const uniforms=material.userData.uniforms;
     if(kind==='adapted'&&!hand.skinContinuity){correctFingerPads(hand);await createSkinContinuity(hand,renderer)}
@@ -149,9 +155,9 @@ export async function createReferenceHand(renderer,{artificial=false,detail=2,su
     uniforms.skinPhotoStep.value.set(1/map.image.width,1/map.image.height);material.needsUpdate=true;surfaceMode=kind;
   }
   pose([0,0,0,0,0]);
-  const hand={root,scene,skin,material,hair,toolAnchor,pose,applyJointPose,tipWorld,jointTips,thumbMotion,setSurface,get surface(){return surfaceMode},detail,metadata,nails,nailCount:nails.length,deformation:deformation.kind,source:'Zero supplied reference',originalAnimation:gltf.animations[0]?.name,textureSize:atlas?[atlas.image.width,atlas.image.height]:null,setDetails({pores=true,vellus=true}={}){if(!artificial)material.userData.uniforms.poreStrength.value=pores?1:0;if(hair)hair.visible=vellus}};
+  const hand={root,scene,skin,material,hair,toolAnchor,pose,applyJointPose,tipWorld,jointTips,thumbMotion,setSurface,get surface(){return surfaceMode},detail,metadata,nails,nailCount:nails.length,deformation:deformation.kind,source:'Zero supplied reference',originalAnimation:gltf.animations[0]?.name??gltf.parser.json.asset.extras?.originalAnimation,textureSize:atlas?[atlas.image.width,atlas.image.height]:null,setDetails({pores=true,vellus=true}={}){if(!artificial)material.userData.uniforms.poreStrength.value=pores?1:0;if(hair)hair.visible=vellus}};
   // The studio and experience use the same finish. Their existing explicit
   // correction calls are idempotent, so no second shader layer is added.
-  if(!artificial&&surface==='adapted'){correctFingerPads(hand);await createSkinContinuity(hand,renderer)}
+  if(!artificial&&surface==='adapted'){correctFingerPads(hand);await createSkinContinuity(hand,renderer,forearmMap)}
   return hand;
 }

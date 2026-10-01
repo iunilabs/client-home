@@ -1,0 +1,373 @@
+{
+  "restoreTag": "manos-cerradas-2026-10-01",
+  "restoreCommit": "2065e0f4733dc4daadf3aa30a17dc74d42951834",
+  "removed": [
+    {
+      "file": "public/.DS_Store",
+      "bytes": 6148,
+      "sha256": "73ce3c3cf6dcab04456e9a26fbc294b9f5a56154bc958c1f21537b6f301231e9",
+      "reason": "not reachable from any of the three active entries or their dynamic loads"
+    },
+    {
+      "file": "public/fonts/DMSerifDisplay-Italic.ttf",
+      "bytes": 71208,
+      "sha256": "df74c0ac387baeaeb0fe4f2324e1668e6a3ed8c09cd9796fe162c71753e19e45",
+      "reason": "replaced by WOFF2 in all three active pages"
+    },
+    {
+      "file": "public/fonts/DMSerifDisplay-Regular.ttf",
+      "bytes": 76580,
+      "sha256": "8cc3643535edf039aa5d95440a8542735e9197e4f4b8d9303e980fefbf5ab616",
+      "reason": "replaced by WOFF2 in all three active pages"
+    },
+    {
+      "file": "public/fonts/Manrope.ttf",
+      "bytes": 164700,
+      "sha256": "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6",
+      "reason": "replaced by WOFF2 in all three active pages"
+    },
+    {
+      "file": "public/models/flint-core/flint-core-detail.glb",
+      "bytes": 1194612,
+      "sha256": "65cae084babd1c0a45aaacf9519d5545f19bce42403804d397c17208ebe7a41a",
+      "reason": "not reachable from any of the three active entries or their dynamic loads"
+    },
+    {
+      "file": "public/models/flint-core/flint-core-mobile.glb",
+      "bytes": 438440,
+      "sha256": "7874ac5052c815e1c9097c054bff638b983445194d130d980a608c5d9977ff39",
+      "reason": "not reachable from any of the three active entries or their dynamic loads"
+    },
+    {
+      "file": "public/models/zero/camera_1.glb",
+      "bytes": 19476,
+      "sha256": "ded901d6295a6b4f03ba0f13966b89dd98a96ec44758078415a62c8252ca58f2",
+      "reason": "not reachable from any of the three active entries or their dynamic loads"
+    },
+    {
+      "file": "public/models/zero/fancy_hand_2.glb",
+      "bytes": 386196,
+      "sha256": "b1e534645d65573bfda554c73eaf57736333347f8183d5bfe2999c5c86d8fecf",
+      "reason": "not reachable from any of the three active entries or their dynamic loads"
+    },
+    {
+      "file": "public/models/zero/human_hand_1.glb",
+      "bytes": 352084,
+      "sha256": "db7ffa89848d505ac247c9db671554e79c6fc9e08a7910272d22aba6d0149604",
+      "reason": "not reachable from any of the three active entries or their dynamic loads"
+    },
+    {
+      "file": "public/models/zero/matcap-hand.webp",
+      "bytes": 7710,
+      "sha256": "e658e406d613fb65cf862a62f24379e088b95b81fc4f20a58dd57505e584f098",
+      "reason": "not reachable from any of the three active entries or their dynamic loads"
+    },
+    {
+      "file": "public/textures/mano/forearm-albedo-v1-web-q90.webp",
+      "bytes": 605592,
+      "sha256": "6bb1a77bb42256e873fc61311590ccebb77145ec8f4a5c7656aeb619596ed05c",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/forearm-albedo-v1-web-q95.webp",
+      "bytes": 831572,
+      "sha256": "a61b96ec6ea66d24e51d6f57016f47d6a3f4c12ebaec27c0bea9099c3c5d4e56",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/forearm-albedo-v1-web-q98.webp",
+      "bytes": 997958,
+      "sha256": "6092a1e7efbf60f54c8ba63032092e9557ca2190fa96621cad2935f18b5dedd2",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/forearm-albedo-v1.png",
+      "bytes": 3171881,
+      "sha256": "5da6d427d7dca71b8791b52451830f8caf7fc41e39b327de595d6e09184b4ead",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/skin-atlas-v2.png",
+      "bytes": 1817610,
+      "sha256": "a611c2f8155dff381ebba20dc4deb8e7adae610158053b89594b163e020316d5",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/skin-atlas-v3.png",
+      "bytes": 1900219,
+      "sha256": "0366263e52987a954005cb56d6e5c14037fd7a52c88fa7044ebdb8582c81dacd",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/skin-seams-web-v1.json",
+      "bytes": 118973,
+      "sha256": "7f207dac0113156a8f422a8e5ef30dff827f2218dc0991c0e3aacb38610f9b9f",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/zero-skin-albedo-v1.png",
+      "bytes": 1838697,
+      "sha256": "c347a908d3e5fa4665e3eda317fbe19b3fdedfdf6160b285bc08ffcfd1f98617",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/zero-skin-albedo-v2.png",
+      "bytes": 1947053,
+      "sha256": "07eac1d5ddb7f1d5c481a92152f56e342f58c2b425100f516a925d157b946f83",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/zero-skin-albedo-v3.png",
+      "bytes": 1672831,
+      "sha256": "d2f83eefa59e29fdf626d266052ac222230f58d70a1d711601ea39d06bdf6ce8",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/zero-skin-albedo-v4-web-q90.webp",
+      "bytes": 135034,
+      "sha256": "55cb2e642f97306e916788fe38edd6e20190f86f09dbdbd28e49e8e0e9c8c4f3",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/zero-skin-albedo-v4-web-q95.webp",
+      "bytes": 256228,
+      "sha256": "98a8ca0e1c0b79450fd91ce479d86013bb8da76092e838ffa7e2f2f119da99c9",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/zero-skin-albedo-v4-web-q98.webp",
+      "bytes": 332690,
+      "sha256": "bf6f3e1f33d933cdd0a04bda0b0e91fc93f205ae8a198f9bafc7053fc39a191d",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "public/textures/mano/zero-skin-albedo-v4.png",
+      "bytes": 1793687,
+      "sha256": "644937d6698cfe307e857281eb3f7a35f545bb0678b66fdb3b9caaccbc940bef",
+      "reason": "obsolete texture encoding; approved lossless WebP and current seam cache retained"
+    },
+    {
+      "file": "src/environment.js",
+      "bytes": 5961,
+      "sha256": "a8f9a75a0f0f6e5743595e02a208e328f4140062c70338f078571694132a5594",
+      "reason": "not reachable from any of the three active entries or their dynamic loads"
+    },
+    {
+      "file": "src/hand-orbits.js",
+      "bytes": 2099,
+      "sha256": "4faa39afc289807ba1fbd693625e374fd391c95700a3b5773f6b84db471f8991",
+      "reason": "not reachable from any of the three active entries or their dynamic loads"
+    },
+    {
+      "file": "art/mano/human-photo.blend",
+      "bytes": 16044704,
+      "sha256": "c3d72ebccd1eef07417872fd638a2b57f561423b755c65f5f5d249a3f63c870f",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "art/mano/texture-generation.json",
+      "bytes": 3620,
+      "sha256": "c9faf9ceedcd207b43d0cbe8b35e9efb030065054cd634bfcf5cefc01b58ee15",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "art/mano/zero-texture-generation.json",
+      "bytes": 2843,
+      "sha256": "cf7ab2fe325a52eda153d3dbdac893742491d6626f23d559cdfa99e922e54f36",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/DECISIONES.md",
+      "bytes": 5937,
+      "sha256": "47cc04c011b39eee63e94a7d69f5a5c5e80deab3e654ba2122e8a78a4249f14a",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/GUION_TECNICO.md",
+      "bytes": 14397,
+      "sha256": "33af01951b81b01978daf48b981dd3552d46a7e87da9fa1d53e683fbf3633fd4",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/README.md",
+      "bytes": 7228,
+      "sha256": "13d36484df633adbaf1eba5d5b2182d3f7ad6b1e381f78b9a3b8434ba9372993",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/VALIDACION.json",
+      "bytes": 484,
+      "sha256": "4c7fb84a89383d623fc8d794f18da6e433243235826decf54e568d4553f7507f",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/VALIDACION.md",
+      "bytes": 5420,
+      "sha256": "9577b7127bb9cba2578330e7ef65d80a3e105980e647aed308fa1b221b90d64f",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/clients.js",
+      "bytes": 7786,
+      "sha256": "eeca38291f2b791f15887b67ab78043d26562eca1391907f55db0f57d1a73009",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/editorial.js",
+      "bytes": 2601,
+      "sha256": "42b369ed5120052aa769b9cf7229da5afb72ecae3fbc3c64f5661e7461f08650",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/index.html",
+      "bytes": 15553,
+      "sha256": "b554ab69466dad87c92e34d9906f47bd242256baa552cf007cf57410bb82f8a3",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/main.js",
+      "bytes": 12006,
+      "sha256": "081d44e23bc82b41b3ed86554255019b988fd9300a5370db27b4133e0b90b19e",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/scene.js",
+      "bytes": 19281,
+      "sha256": "7b8807aba02047dbd497d65e9f4e16087a8c94fa1db40d7d17803e0a25285492",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/style.css",
+      "bytes": 23238,
+      "sha256": "cdfaf665e9fab70474b17cd626f9fda65955bf25eb33d5b90eac8e6f9c003e75",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/tests/browser.mjs",
+      "bytes": 11257,
+      "sha256": "469ec392747e3c37ffe8ec9b6adc5363b8dae0e4236d705ccb535eadc93b6377",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/tests/clients-browser.mjs",
+      "bytes": 7253,
+      "sha256": "3eeada7a2754c2725416dcb66ec374870a5587942d7d3dc49a21c717201ec45b",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/tests/clients.test.js",
+      "bytes": 1453,
+      "sha256": "e189841cfdee016fe2b207d43fc15666c976b6bf760fd64ae1710e3a61805d30",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/tests/editorial-browser.mjs",
+      "bytes": 6856,
+      "sha256": "6cbbe2b4d46a704973ea8156befae6b95d79480639ed08f081bad40430201500",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/tests/editorial.test.js",
+      "bytes": 1726,
+      "sha256": "dd91dbe65391d43103001af19c8fdfe205c66edfeeb38676460997b83c70a175",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/tests/intro-browser.mjs",
+      "bytes": 7027,
+      "sha256": "549ef50b1bfe213859fb8e2af823905f8ec12764a55f42fe532324a1afd6fbfb",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/tests/perspective.mjs",
+      "bytes": 3791,
+      "sha256": "3946f84550b11c20f5101da31830e5372864d77e1f1326ec96cc2a03773303ef",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/tests/timeline.test.js",
+      "bytes": 1445,
+      "sha256": "9c4b1a4156a040d85da552156993ed4a02312fedc18a04e868d2b466efb7a312",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    },
+    {
+      "file": "archive/argumentario-2026-09-30/timeline.js",
+      "bytes": 1418,
+      "sha256": "83d350bb366f453ecadc3f635461283f84b744547ade36d842f4be5d70761f0f",
+      "reason": "retired argumentary or source artwork; independent verified restore point retains it; no active entry imports it"
+    }
+  ],
+  "removedBytes": 36352563,
+  "retainedPublicFiles": [
+    "public/clients/accenture.jpg",
+    "public/clients/bbva.png",
+    "public/clients/canal.jpg",
+    "public/clients/cepsa.jpg",
+    "public/clients/mapfre.jpg",
+    "public/clients/mediaset.jpg",
+    "public/clients/naturgy.png",
+    "public/clients/ree.jpg",
+    "public/clients/siemens.jpg",
+    "public/decoders/basis/README.md",
+    "public/decoders/basis/basis_transcoder.js",
+    "public/decoders/basis/basis_transcoder.wasm",
+    "public/decoders/draco/README.md",
+    "public/decoders/draco/draco_decoder.wasm",
+    "public/decoders/draco/draco_wasm_wrapper.js",
+    "public/favicon.svg",
+    "public/fonts/DMSerifDisplay-Italic.woff2",
+    "public/fonts/DMSerifDisplay-Regular.woff2",
+    "public/fonts/Manrope.woff2",
+    "public/fonts/OFL-DMSerifDisplay.txt",
+    "public/fonts/OFL-Manrope.txt",
+    "public/images/encuentro-fallback.png",
+    "public/images/logo-puntoes.png",
+    "public/licenses/Lenis-MIT.txt",
+    "public/licenses/Three-MIT.txt",
+    "public/models/ATTRIBUTION-LIBHAND.txt",
+    "public/models/LICENSE-LIBHAND.txt",
+    "public/models/LICENSE-webxr.md",
+    "public/models/adjustable-wrench/SOURCE.txt",
+    "public/models/adjustable-wrench/adjustable-wrench-web.glb",
+    "public/models/ai-left.glb",
+    "public/models/drafting-compass/SOURCE.txt",
+    "public/models/drafting-compass/drafting-compass-web.glb",
+    "public/models/flint-core/ATTRIBUTION.txt",
+    "public/models/flint-core/flint-core-web.glb",
+    "public/models/human-photo-rig.json",
+    "public/models/human-photo-source.json",
+    "public/models/human-photo-web.glb",
+    "public/models/human-photo.glb",
+    "public/models/human-right.glb",
+    "public/models/zero/comunicado-uso-aportado.txt",
+    "public/models/zero/fancy_hand_2-web.glb",
+    "public/models/zero/human_hand_1-web.glb",
+    "public/models/zero/human_hands.ktx2",
+    "public/models/zero/provenance.json",
+    "public/textures/mano/epidermis-v1.webp",
+    "public/textures/mano/forearm-albedo-v1-lossless.webp",
+    "public/textures/mano/skin-seams-v1.json",
+    "public/textures/mano/zero-skin-albedo-v4-lossless.webp"
+  ],
+  "runtimeDependencies": [
+    "three@0.186.1",
+    "lenis@1.3.26"
+  ],
+  "devDependencies": [
+    "vite@8.3.1",
+    "@playwright/test@1.58.2"
+  ],
+  "activeEntries": [
+    "index.html",
+    "mano.html",
+    "modelos.html"
+  ],
+  "retainedTestOnlySource": "src/hand-scroll-reference.js",
+  "skinCache": {
+    "key": "bd54fa2e",
+    "sourceHashCount": 9,
+    "mismatches": [],
+    "regenerated": false,
+    "reason": "URL adaptation lives outside every input of the baked skin contract; approved geometry and pixels unchanged"
+  }
+}

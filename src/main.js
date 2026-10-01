@@ -11,7 +11,7 @@ populateClients();
 const updateScrollMeter=createScrollMeter(document.querySelector('[data-scroll-meter]'));
 const chapters=[...document.querySelectorAll('[data-scene]')],copies=chapters.map(c=>c.querySelector('.chapter-copy')),labels=['LA APARICIÓN','LA PIEDRA','EL COMPÁS','LA LLAVE','EL ENCUENTRO'];
 const media=matchMedia('(prefers-reduced-motion: reduce)'),motionButton=document.querySelector('#motion-toggle'),stateElement=document.querySelector('.render-state'),modal=document.querySelector('#clients-dialog');
-const MOUSE_PARALLAX_REDUCTION=1.5;
+const GYROSCOPE_PARALLAX_REDUCTION=1.5;
 history.scrollRestoration='manual';if(!location.hash)window.scrollTo({top:0,behavior:'instant'});
 let reduced=media.matches,lenis=null,experience=null,perspectiveInput=null,offsets=[],scrollLimit=0,pointer={x:0,y:0},smoothPointer={x:0,y:0},renderProgress=0,lastFrame=0,lastScroll=performance.now(),disposed=false,activeIndex=-1;
 function updateOffsets(){scrollLimit=Math.max(0,document.documentElement.scrollHeight-innerHeight);offsets=chapters.map(c=>c.offsetTop);offsets.push(Math.max(chapters.at(-1).offsetTop+1,scrollLimit));lenis?.resize()}
@@ -48,7 +48,7 @@ function frame(now){
   const dt=Math.min((now-lastFrame)/1000,.1),response=perspectiveInput.getResponseRate();lastFrame=now;smoothPointer.x=mix(smoothPointer.x,pointer.x,1-Math.exp(-dt*response));smoothPointer.y=mix(smoothPointer.y,pointer.y,1-Math.exp(-dt*response));
   const target=scrollLimit?5*(lenis?.scroll??scrollY)/scrollLimit:0;renderProgress=reduced?target:mix(renderProgress,target,1-Math.exp(-dt/.09));if(Math.abs(target-renderProgress)<.0001)renderProgress=target;
   activate(renderProgress);const visual=reduced?(activeIndex===0?(renderProgress<.08?0:.68):[0,1.25,2.5,4.1,5][activeIndex]):renderProgress;
-  const parallaxScale=perspectiveInput.getState().source==='orientation'?1:1/MOUSE_PARALLAX_REDUCTION;
+  const parallaxScale=perspectiveInput.getState().source==='orientation'?1/GYROSCOPE_PARALLAX_REDUCTION:1;
   experience?.render(visual,{x:smoothPointer.x*parallaxScale,y:smoothPointer.y*parallaxScale},reduced?0:now/1000,reduced,visual/5,pointer);
   document.querySelector('.scroll-cue').classList.toggle('visible',!reduced&&now-lastScroll>2600&&renderProgress<4.5);
  }

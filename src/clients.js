@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {assetUrl} from './asset-url.js';
 
 // Names and original artwork as published in Puntoes' own client section.
 // This data makes no claim about current contracts or AI engagements.
@@ -19,7 +20,7 @@ export function populateClients(){
     if(list.children.length)continue;
     for(const client of clients){
       const item=document.createElement('li'),image=document.createElement('img');
-      image.src=client.image;image.alt=client.name;image.width=160;image.height=80;image.loading='lazy';image.decoding='async';
+      image.src=assetUrl(client.image);image.alt=client.name;image.width=160;image.height=80;image.loading='lazy';image.decoding='async';
       item.append(image);list.append(item);
     }
   }
@@ -49,7 +50,6 @@ export function logoTexture(client){
       ctx.drawImage(image,left,top,w,h,(512-w*scale)/2,(512-h*scale)/2,w*scale,h*scale);
     }
     texture.needsUpdate=true;
-  };image.src=client.image;
+  };image.src=assetUrl(client.image);
   return texture;
 }
-

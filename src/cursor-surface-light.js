@@ -1,19 +1,24 @@
 import * as THREE from 'three';
 
-const INTENSITY=12;
-const STANDOFF=1.4;
-const RANGE=18;
+const INTENSITY=48;
+const STANDOFF=.7;
+const RANGE=6;
 
 // Call after camera framing and actor poses have been updated. Custom skinned
 // actors must also have their CPU deformation cache current before this call.
 export function createCursorSurfaceLight(light){
  const ndc=new THREE.Vector2(),raycaster=new THREE.Raycaster(),forward=new THREE.Vector3();
  const cameraPosition=new THREE.Vector3(),point=new THREE.Vector3(),projected=new THREE.Vector3();
- const box=new THREE.Box3(),corner=new THREE.Vector3(),clip=new THREE.Matrix4(),frustum=new THREE.Frustum();
+ const box=new THREE.Box3(),corner=new THREE.Vector3(),hit=new THREE.Vector3(),clip=new THREE.Matrix4(),frustum=new THREE.Frustum();
  let state=null,lastTime=null;
  light.distance=RANGE;light.decay=2;light.intensity=0;
 
  function update(camera,pointer,actors,reduced=false,deltaSeconds){
+  if(reduced){
+   light.intensity=0;lastTime=null;
+   state={enabled:false,reduced:true,pointer:[0,0],position:light.position.toArray(),projection:[0,0,0],projectionError:0,frontDepth:null,planeDepth:6,clearance:0,intensity:0,power:0,distance:light.distance,decay:light.decay,actorCount:0,meshCount:0};
+   return getState();
+  }
   const now=performance.now()/1000;
   const dt=THREE.MathUtils.clamp(deltaSeconds??(lastTime===null?1/60:now-lastTime),0,.1);lastTime=now;
   const blend=1-Math.exp(-dt*12);
@@ -21,7 +26,8 @@ export function createCursorSurfaceLight(light){
   camera.updateWorldMatrix(true,false);
   camera.getWorldPosition(cameraPosition);camera.getWorldDirection(forward);
   clip.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);frustum.setFromProjectionMatrix(clip);
-  let frontDepth=Infinity,actorCount=0,meshCount=0;
+  raycaster.setFromCamera(ndc,camera);
+  let frontDepth=Infinity,hoverDepth=Infinity,actorCount=0,meshCount=0;
   const seen=new Set();
   for(const actor of actors??[]){
    if(!actor?.visible)continue;
@@ -43,20 +49,24 @@ export function createCursorSurfaceLight(light){
      nearest=Math.min(nearest,depth);farthest=Math.max(farthest,depth);
     }
     if(farthest<=camera.near||nearest>=camera.far)return;
-    frontDepth=Math.min(frontDepth,Math.max(camera.near,nearest));meshCount++;present=true;
+    frontDepth=Math.min(frontDepth,Math.max(camera.near,nearest));
+    // Follow the depth of the volume beneath the cursor rather than an
+    // unrelated foreground piece. Bounds avoid costly per-frame triangle casts.
+    if(raycaster.ray.intersectBox(box,hit))hoverDepth=Math.min(hoverDepth,Math.max(camera.near,hit.sub(cameraPosition).dot(forward)));
+    meshCount++;present=true;
    });
    if(present)actorCount++;
   }
 
-  // A plane normal to the current camera keeps the single source in front of
-  // every visible actor. Unprojection includes orbit and setViewOffset.
+  if(Number.isFinite(hoverDepth))frontDepth=hoverDepth;
+  // Keep the source in front of the hovered volume. Unprojection includes
+  // orbit and setViewOffset; real material normals shape the illumination.
   const hasActors=Number.isFinite(frontDepth),minimumDepth=camera.near+.05;
   const targetDepth=hasActors?Math.max(minimumDepth,frontDepth-STANDOFF):Math.max(minimumDepth,6);
   const filteredDepth=state&&!reduced?THREE.MathUtils.lerp(state.planeDepth,targetDepth,blend):targetDepth;
   // Ease small depth changes from finger breathing and actor fades. A newly
   // approaching surface still bounds the source immediately on its front side.
   const planeDepth=hasActors?Math.max(minimumDepth,Math.min(filteredDepth,frontDepth-.15)):targetDepth;
-  raycaster.setFromCamera(ndc,camera);
   const ray=raycaster.ray,denominator=ray.direction.dot(forward);
   const originDepth=point.copy(ray.origin).sub(cameraPosition).dot(forward);
   const distance=(planeDepth-originDepth)/Math.max(denominator,.000001);
@@ -64,6 +74,13 @@ export function createCursorSurfaceLight(light){
   light.position.copy(point);
   if(light.parent){light.parent.updateWorldMatrix(true,false);light.parent.worldToLocal(light.position)}
   light.updateWorldMatrix(false,false);
+  if(light.isSpotLight){
+   // A narrow cone aims along the cursor ray into the object. Its footprint
+   // is shaded by the real geometry instead of drawn as a screen-space disk.
+   light.target.position.copy(point).addScaledVector(ray.direction,STANDOFF+1);
+   if(light.target.parent)light.target.parent.worldToLocal(light.target.position);
+   light.target.updateWorldMatrix(false,false);
+  }
 
   // If a foreground actor leaves less than the normal clearance, lower the
   // power with inverse-square attenuation to avoid a very hot local highlight.

@@ -1,11 +1,12 @@
 import * as THREE from 'three';
+import {assetUrl} from './asset-url.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createHumanSkin } from './human-skin.js';
 import { createHandHair } from './hand-hair.js';
 import { preserveHandVolume } from './hand-deformation.js';
 
 export async function createPhotographicHand({detail=2,hair=true}={}){
-  const [gltf,metadata,armMap]=await Promise.all([new GLTFLoader().loadAsync(detail>1?'/models/human-photo.glb':'/models/human-photo-web.glb'),fetch('/models/human-photo-rig.json').then(response=>{if(!response.ok)throw new Error('Hand rig metadata unavailable');return response.json()}),new THREE.TextureLoader().loadAsync('/textures/mano/forearm-albedo-v1.png')]);
+  const [gltf,metadata,armMap]=await Promise.all([new GLTFLoader().loadAsync(detail>1?'/models/human-photo.glb':'/models/human-photo-web.glb'),fetch(assetUrl('/models/human-photo-rig.json')).then(response=>{if(!response.ok)throw new Error('Hand rig metadata unavailable');return response.json()}),new THREE.TextureLoader().loadAsync('/textures/mano/forearm-albedo-v1-lossless.webp')]);
   const scene=gltf.scene,root=new THREE.Group(),orientation=new THREE.Group();orientation.scale.setScalar(18);orientation.add(scene);root.add(orientation);scene.updateMatrixWorld(true);
   const meshes=[];scene.traverse(object=>{if(object.isSkinnedMesh)meshes.push(object)});const skin=meshes.sort((a,b)=>b.geometry.attributes.position.count-a.geometry.attributes.position.count)[0];
   const bones=skin.skeleton.bones,segments=[];

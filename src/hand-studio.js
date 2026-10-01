@@ -1,9 +1,11 @@
 import './hand-studio.css';
+import {installAssetBase} from './asset-loading.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { createPhotographicHand } from './photographic-hand.js';
 import { createReferenceHand } from './reference-hand.js';
+installAssetBase();
 
 const viewport=document.querySelector('#hand-viewport'),main=document.querySelector('main');
 let renderer,scene,camera,controls,human,previousHand,key,fill,rim,ready=false,disposed=false,comparison=false,currentView='dorsum',currentLight='neutral',poseMode='open',referenceHuman,porcelain,currentModel='human';
