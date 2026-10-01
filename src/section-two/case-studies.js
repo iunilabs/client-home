@@ -77,3 +77,6 @@ export function getCaseStudy(id) {
   if (!story) return null;
   return {...story, status: 'illustrative'};
 }
+
+export const collaborationStory = {title: 'El próximo punto puede ser el tuyo.',
+  intro: 'Hay un lugar para las ideas que merecen hacerse realidad. Cuéntanos qué quieres transformar y construyamos el siguiente proyecto juntos.'};

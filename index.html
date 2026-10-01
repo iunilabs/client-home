@@ -79,10 +79,15 @@
         <div class="city-backdrop" aria-hidden="true"></div>
         <div class="city-drag-surface" aria-hidden="true"></div>
         <div class="city-world">
-          <picture class="city-picture">
+          <picture class="city-picture city-extension-picture" aria-hidden="true">
+            <source media="(max-width: 699px)" />
+            <img id="city-extension-image" decoding="async" alt="" />
+          </picture>
+          <picture class="city-picture city-core-picture">
             <source media="(max-width: 699px)" />
             <img id="city-image" width="1672" height="941" decoding="async" alt="Una ciudad en miniatura con parque, río, casas y playa. Puntoes ocupa una pequeña oficina en el centro, entre edificios de clientes. Una obra en la zona superior izquierda representa nuevas colaboraciones." />
           </picture>
+          <div class="city-core">
           <div class="city-light" aria-hidden="true">
             <div class="city-light-beam"></div>
             <div class="city-light-ground"></div>
@@ -91,6 +96,7 @@
           </div>
           <ul class="city-buildings" aria-label="Organizaciones y nuevas colaboraciones"></ul>
           <div class="city-hub" aria-hidden="true"><span class="city-hub-dot"></span>Puntoes</div>
+          </div>
         </div>
         <div class="city-atmosphere" aria-hidden="true"></div>
         <div class="city-copy">

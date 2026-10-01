@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {cityPanBounds, createCityTouchGesture} from '../src/section-two/city-pan.js';
+import {cityExtent} from '../src/section-two/city-extent.js';
 
 const finger = (x, y, id = 1) => ({x, y, id});
 
@@ -75,8 +76,8 @@ test('real artwork covers every viewport corner at both pan limits and maximum t
     const portrait=viewportWidth<700, aspect=portrait?941/1672:1672/941;
     const width=Math.max(viewportWidth,viewportHeight*aspect)*1.04;
     for (const zoom of [1,1.08,1.25,1.5]) for (const angle of [0,1,2]) {
-      const g={width,height:width/aspect,viewportWidth,viewportHeight,zoom,
-        originX:portrait?.56:.52,originY:portrait?.43:.48,reserve:angle*.0085};
+      const extent=cityExtent({width,height:width/aspect,originX:portrait?.56:.52,originY:portrait?.43:.48});
+      const g={...extent,viewportWidth,viewportHeight,zoom,reserve:angle*.0085};
       const b=cityPanBounds(g);
       for (const panX of [b.minX,b.maxX]) for (const panY of [b.minY,b.maxY])
         for (const rx of [-angle,angle]) for (const ry of [-angle,angle]) {

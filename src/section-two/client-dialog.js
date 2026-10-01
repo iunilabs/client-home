@@ -1,4 +1,4 @@
-import {getCaseStudy} from './case-studies.js';
+import {getCaseStudy, collaborationStory} from './case-studies.js';
 
 export function createClientDialog({onOpen = () => {}, onClose = () => {}} = {}) {
   const dialog = document.querySelector('#city-case');
@@ -51,8 +51,8 @@ export function createClientDialog({onOpen = () => {}, onClose = () => {}} = {})
     contact.hidden = false;
     moreButton.hidden = true;
     title.textContent = '¿Quieres colaborar?';
-    dialog.querySelector('.case-heading').textContent = 'El próximo punto puede ser el tuyo.';
-    dialog.querySelector('.case-intro').textContent = 'Hay un lugar para las ideas que merecen hacerse realidad. Cuéntanos qué quieres transformar y construyamos el siguiente proyecto juntos.';
+    dialog.querySelector('.case-heading').textContent = collaborationStory.title;
+    dialog.querySelector('.case-intro').textContent = collaborationStory.intro;
     collapse();
     dialog.showModal();
     trigger.setAttribute('aria-expanded', 'true');

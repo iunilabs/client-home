@@ -1,0 +1,195 @@
+{
+  "generatedWith": "built-in image_gen tool",
+  "date": "2026-10-01",
+  "assets": [
+    {
+      "path": "src/section-two/assets/puntoes-city-v11-expanded.webp",
+      "bytes": 950966,
+      "sha256": "10ab44f195f55ce0e833782a7027dc51ed92caff112fab0b61bd661e5e2e1b3e",
+      "nativeSize": [
+        1672,
+        941
+      ]
+    },
+    {
+      "path": "src/section-two/assets/puntoes-city-mobile-v13-tour.webp",
+      "bytes": 1023844,
+      "sha256": "2133c688ef87ab6ee5e096a00ec4fbd39babd370fff23fff595889fd241c87be",
+      "nativeSize": [
+        941,
+        1672
+      ]
+    }
+  ],
+  "prompts": {
+    "desktop": "# Prompts de ampliación V11 — escritorio\n\n1 de octubre de 2026. Herramienta integrada `image_gen`; sin CLI de generación ni API externa. Los originales se inspeccionaron con `view_image` antes de editarse.\n\nLa ampliación móvil se canceló por una instrucción humana posterior; sus pruebas no se entregan ni se integran. La primera corrección de escritorio llegó a la escala solicitada, pero descentró el núcleo unos 29 px. Se descartó y se volvió al primer resultado con margen adicional para poder registrar el mapa.\n\n## 1. Ampliación inicial — usada\n\n```text\nUse case: compositing — precise canvas outpainting.\nAsset type: seamless extended landscape map for a miniature-city website.\nInput image 1 is the EDIT TARGET, the existing desktop Puntoes city V10. Preserve the existing map; extend its canvas on all four sides.\nGeometry is critical: add a band equal to 25% of the ORIGINAL width at the LEFT and RIGHT, and 25% of the ORIGINAL height at TOP and BOTTOM. The result has 150% of the old width and 150% of the old height. Keep the original image EXACTLY centered, occupying the middle two thirds of both axes: x=16.6667% to 83.3333%, y=16.6667% to 83.3333%. Do not reposition, distort, crop, rotate or redesign its contents. This is a larger map, not different architecture or a changed camera.\nContinue the terrain coherently through the four borders: miniature houses, landscaped parks, footpaths and streets on the land, continue the river where it crosses a border, and the same curving sandy beach and blue ocean wherever the existing shore crosses a border. Continue the same isometric aerial perspective, scale of houses, sun direction, shadows, detailed 3D videogame diorama materials and restrained natural colours. Sharp small detail, with no new haze, vignette or blur. The world continues beyond every new edge; no floating island or visible square platform.\nKeep every existing client building, the modest central Puntoes office, bridges, river, coastal rocks and construction plot in its original location relative to the centered old rectangle. No duplicate client buildings, towers, brands, labels, logos, markers, interface or text in the added bands.\nRequested output: landscape with the same 1672:941 aspect ratio, approximately 2508×1412 pixels or the highest genuine native detail available. The central old map must register with the original perfectly, especially at all four seams. Extend ONLY the surrounding landscape.\n```\n\n## 2. Margen adicional — usada\n\n```text\nUse case: compositing — outpaint additional landscape.\nInput 1 is the EDIT TARGET, the expanded desktop city map. Preserve its buildings, geography, roads, lighting and perspective.\nSingle geometric edit: make the ENTIRE input image uniformly 70% as wide and 70% as tall within the SAME landscape aspect ratio frame, place it in the centre, and seamlessly outpaint all newly exposed space around it. The input top-left lands at output (15%,15%), bottom-right at (85%,85%). Do not redraw or rearrange the old map: treat it as a locked miniature-city photograph pasted centrally at 70% size. Keep all existing architectural proportions and geographic relationships.\nExtend the existing residential landscape and parks at every exposed land edge; continue the winding river exactly where it crosses a boundary; continue the beach and blue ocean where those reach a boundary. There must be continuous image content to all four outer edges, no frame, empty band, haze, blur, island silhouette or platform edge.\nMatch the crisp isometric 3D videogame miniature materials, warm daylight, shadows and natural colours. Only add low-rise houses, greenery, roads, paths and coherent coast/ocean; no duplicate landmark/client buildings, labels, logos, markers, text, UI or new attractions. Landscape aspect 1672:941, highest genuine native detail available. The complete old input must occupy the central 70% of output width AND height, with equal new bands around it.\n```\n\n## 3. Reparación de uniones — prompt final\n\n```text\nUse case: compositing — seamless border repair.\nInput 1 is the EDIT TARGET. It is an already correctly framed expanded landscape miniature city with the original city pasted in its EXACT central rectangle x=16.6667%..83.3333%, y=16.6667%..83.3333%.\nDO NOT zoom, shift, resize, crop, rotate or reframe ANYTHING. Keep the same full canvas and every existing client building, the central office, streets, river and beach at identical coordinates. Preserve the entire central original rectangle exactly, especially its edges and architecture.\nOnly repair the surrounding generated landscape so the pasted rectangle becomes invisible: match the slightly more restrained colours and brightness of the central original, especially the sea's turquoise-blue tone, surface texture, reflections and small wave detail. The original ocean inside the central rectangle is the colour reference; bring the OUTSIDE ocean to it, not the reverse. Join roads, greenery, riverbanks and the coastline continuously across all four rectangle boundaries. Blend only through the newly generated surrounding terrain; never redesign or move an existing central building.\nThe final result is one seamless continuous isometric 3D videogame city map with original central content occupying exactly 2/3 of both axes, not a visible collage. No rectangular seams, no pasted border, no duplicate client buildings, new logos, text, markers, interface, vignette, blur or fog. Preserve current landscape aspect ratio and crisp miniature detail. Single change: repair seams and peripheral colour continuity while geometry stays completely locked.\n```\n\n## Preparación entre los prompts 2 y 3\n\nSe midió el registro con SIFT y RANSAC sobre el V10. El resultado con margen adicional se normalizó mediante una transformación afín y recorte, usando Sharp, sin pintar contenido nuevo ni aumentar las dimensiones de entrega. Todos los vértices de la ventana de recorte quedaban dentro de la imagen generada. Se preparó una superposición de QA con V10 en el rectángulo central exacto y se usó como objetivo de la reparación de uniones del prompt 3. La generación final se copia directamente al máster y se convierte a WebP Q98; no recibe otra transformación geométrica.\n\nLa imagen de QA final superpone de nuevo el V10 en ese rectángulo, con una transición de 48 px hacia dentro de los cuatro bordes. No es una captura de la web ni el archivo WebP de producto. El contrato y las medidas se detallan en `V11-EXPANSION-ENTREGA.md`.\n",
+    "mobile": "# Prompts V12 → V13 — recorrido móvil\n\n1 de octubre de 2026. Se usó la herramienta integrada image_gen, sin CLI/API de generación. El móvil V11 ampliado fue cancelado. V12 es una recomposición para el itinerario y no un outpainting de 25 %. Solo cambia el arte; los módulos de cámara, scroll, tarjetas, puntos y agua se integran por separado.\n\nDavid pidió después reducir el verde porque la imagen parecía poco ciudad. Confirmó «Solo el móvil». Tras ver la versión urbana, pidió aliviar la sensación de casas abarrotadas. La última edición reduce la densidad residencial y abre espacios públicos manteniendo las sedes. Estas instrucciones directas posteriores autorizan las dos revisiones de aspecto.\n\nLos originales y todas las referencias locales se inspeccionaron con view_image. Referencias del primer prompt: BBVA, Canal, la foto de MAPFRE facilitada por David y Sabadell; los demás clientes preservan la arquitectura del mapa V10. La referencia de MAPFRE guía las franjas y la base, sin restaurar su altura anterior: se conserva la torre corta.\n\n## Primera recomposición con referencias\n\n```text\nUse case: compositing — recompose a portrait miniature city for a camera tour.\nAsset type: website city map for mobile scroll travel between client offices.\nInput 1 is the EDIT TARGET: existing portrait Puntoes city V10. Inputs 2–5 are architectural references only: 2 BBVA oval sail-shaped building; 3 Canal brick cylindrical water tower; 4 MAPFRE horizontal-finned tower (keep the SHORTER height already in input 1); 5 Banco Sabadell classical stone façade. Do not insert photos or reference-image text.\nPrimary change: spread the existing corporate buildings farther apart, roughly 20–25% more distance RELATIVE TO THE SIZE OF EACH BUILDING, with believable blocks of small houses, roads, trees and gardens between them. The mobile camera will travel through this city from Puntoes to the clients. Keep each landmark's current approximate visual size and architecture; do NOT achieve separation by simply shrinking every building or zooming the camera out. This is a recomposition within the same portrait canvas, NOT uniform 25% outpainting. Layout coordinates may change.\nKeep EXACTLY these 12 distinct landmarks, one each: modest two-storey L-shaped Puntoes office with a tiny readable \".es\" sign near the middle; Accenture low rectangular blue-glass/white office; BBVA oval sail; Canal brick cylindrical tower with silver dome; Cepsa slender rectangular tower with silver portal-like frame; MAPFRE short dark horizontal-striped tower with its pale pink lower base, no height increase; Mediaset rectangular glass office with red-and-white antenna; Red Eléctrica broad curved glass office; Siemens dark bronze angular U-shaped campus; Naturgy blue-glass rounded rectangular office; Sabadell beige classical stone bank; and one small unfinished two-storey concrete office with crane in the upper-left park. Do not duplicate or remove any.\nDistribute these in city neighbourhoods around Puntoes, allowing continuous residential fabric between each plot. Keep the broad readable arrangement: construction upper-left, BBVA and Cepsa north, Canal northwest, MAPFRE northeast, Accenture west, Mediaset southwest, Red Eléctrica east, Naturgy south, Siemens southeast, Sabadell farther southwest. Extend inhabited land farther down if needed so the lower buildings have breathing room; retain a winding river with believable crossings and a continuous sandy coast and ocean on the right/lower edge. These are moderate city-block distances, not isolated buildings across a huge empty park.\nMatch the same crisp detailed isometric 3D videogame miniature render, materials, daylight and shadows; natural restrained colours. All depths in focus. Resolve roofs, façades, windows, paths and vegetation clearly for a close mobile zoom. No painterly softness, depth-of-field blur, haze, vignette, empty gaps, floating island or platform edge.\nNo new client signage, labels, billboards, markers, UI, text or logos; only the original small \".es\" on Puntoes, spelled dot-e-s. Keep portrait ratio 941:1672; highest genuine native detail available, prefer a larger native render if supported.\n```\n\n## Separación de sedes\n\n```text\nUse case: compositing — increase separation for the mobile city tour.\nInput 1 is the EDIT TARGET. Preserve this crisp miniature-city rendering and exactly the same twelve distinct landmarks, architecture and scale. Change ONLY their layout and the connecting residential streets/landscape.\nThe first version did not spread some offices enough. Reposition the landmarks to approximately the following BUILDING CENTRES, given as [x% of canvas width, y% of canvas height], with houses, gardens, footpaths and streets between the plots:\nPuntoes modest L-shaped two-storey \".es\" office [51,44.5].\nAccenture blue-glass/white rectangular office [16,37].\nCanal brick cylindrical silver-domed water tower [27,27.5].\nBBVA oval sail-shaped glass building [49,22].\nCepsa tall rectangular silver portal-frame glass tower [78,24].\nMAPFRE SHORT dark horizontal-striped tower and pink base [88,34].\nMediaset glass rectangular office with red-white antenna [20,58].\nRed Eléctrica broad curved glass office [86,58.5].\nNaturgy rounded blue-glass rectangular office [49,70].\nSiemens dark bronze angular U-shaped campus [82,70.5].\nBanco Sabadell classical beige stone bank [18,82.5].\nOne unfinished two-storey concrete office with crane [9,16].\nUse these as concrete layout targets, not labels to print. Keep every building wholly within the frame, and retain its current approximate width/height — do NOT shrink landmarks to fake the distance. These moderate neighbourhood distances should be roughly 20–25% greater relative to the office sizes than in original V10. Keep the current short MAPFRE height. All twelve landmarks must remain present exactly once.\nExtend connected inhabited land into the lower-left area for Sabadell, with a few coherent residential blocks, trees and streets between offices. Keep the winding river and bridges, a continuous beach and ocean along the right and lower boundary. Fill all new gaps with believable city fabric, not empty lawns or isolated showcase platforms. No duplicated landmark offices or towers.\nNo change to isometric camera angle, daylight, shadows, style or natural restrained colours. Preserve excellent fully focused façade/roof/window detail for close mobile camera views. No painterly blur, fog, depth of field, vignette, labels, markers, interface or new branding. Keep only the existing tiny readable \".es\" sign on Puntoes.\nThis is a portrait RECOMPOSITION, not outpainting or a zoom-out. Keep canvas aspect 941:1672 and highest available genuine native detail.\n```\n\n## Tejido urbano — responde a «muy verde, muy poco ciudad»\n\n```text\nUse case: precise-object-edit — make the miniature city convincingly urban.\nInput 1 is the EDIT TARGET: the current portrait city-tour map.\nHuman feedback: it looks too green, like a park rather than a city. Change the LANDSCAPE AND ORDINARY RESIDENTIAL FABRIC between the landmarks to solve that. Do not just tint vegetation or lower saturation.\nKeep the same portrait framing, camera perspective, exact twelve landmark buildings, their coordinates, sizes, spacing and architectural identities. Do not zoom out, reframe or move corporate offices. Preserve the modest L-shaped two-storey \".es\" Puntoes office, all ten client buildings and the single construction site; keep MAPFRE short. Preserve river, bridges, beach, sea and the complete coastline.\nReplace most of the loose lawns, dense trees and scattered isolated villas between these sites with coherent inhabited CITY BLOCKS: closely grouped 2–4 storey residential buildings, adjoining houses, courtyard blocks, clearly connected streets, pavements, crossings and small urban squares. Build a recognisable street network between the offices. Streets should follow sensible neighbourhood blocks and connect to the existing bridges and office entrances. Maintain clear visibility of every client landmark from this isometric viewpoint.\nAim for around 65–75% urban built/paved fabric on land, rather than vegetation-dominated terrain. Keep ONE clearly defined neighbourhood park in the upper-left portion, plus modest courtyard planting and trees along pavements. Greenery is an accent, not the filling between every building. Make the riverbanks more urban, with pedestrian promenades and occasional small public plazas, rather than a continuous thick forest. Keep tasteful palms along the beach. The city should feel inhabited and traversable, with houses and streets between partners, not separate offices displayed in huge lawns.\nOrdinary buildings use restrained cream stone, warm pale grey, white plaster, slate-grey roofs and occasional subdued terracotta. Preserve the original sun direction and soft shadows. Keep the same crisp detailed isometric 3D videogame miniature style, all depths in focus, high façade/roof/street detail for mobile close-up views. Natural quiet colours, no excessive saturation.\nNo extra corporate landmarks, logos, labels, blue points, billboards, interface, text, fog, depth-of-field blur, vignette or empty gaps. Keep only the existing tiny \".es\" sign on Puntoes. This is an urban-fabric edit ONLY; retain all twelve landmarks exactly once and their layout. Portrait 941:1672 aspect ratio, highest genuine native detail available.\n```\n\n## Composición más tranquila — responde a «muy abarrotada de casas»\n\n```text\nUse case: precise-object-edit — calm the density of the mobile miniature city.\nInput 1 is the EDIT TARGET: the current urban portrait city map.\nDirect human feedback: too many houses make the city feel overcrowded and stressful. Reduce ordinary residential clutter while retaining an unmistakably urban street structure.\nLOCK every existing client landmark and the central Puntoes office at its exact coordinates, size, footprint, architectural identity and height. Keep all twelve landmarks exactly once: Puntoes, ten client buildings and the unfinished upper-left office. Keep the short MAPFRE, the river and all bridges, coastline, beach and sea. Same portrait frame, isometric camera, lighting and scale; no zoom or reframing.\nChange ONLY ordinary residential infill and public spaces. Remove about HALF of the ordinary residential building volumes. Aim for approximately 40–50 modest residential buildings in the full scene, clustered into a few small coherent neighbourhood blocks, rather than filling every available metre with repeated houses. Retained homes are two or three storeys, with a quieter variety of cream/stone/pale-grey façades and grey or subdued terracotta roofs.\nCreate breathing room using urban spaces: small paved public squares, courtyards, office setbacks, wider pavements, gently curving boulevards and open riverside promenades. Keep the street network connected and believable. Let each landmark have a clear visual pause around it and separate neighbours through a short city block or open square. Retain one defined neighbourhood park and restrained street trees/garden beds. Do not replace the removed homes with a dense forest or endless green lawns. This should be a calm inhabited city, with built neighbourhoods and clearly composed open spaces.\nReduce excessive micro-clutter: fewer cars, no crowded facades, simpler residential window rhythms and quieter paving. Preserve crisp architectural detail of the client landmarks for close mobile camera views. Natural restrained colours and soft shadows, no saturation increase.\nNo new corporate offices, duplicate landmark buildings, extra logos, labels, blue points, UI, signs or text. Keep only the existing tiny \".es\" on Puntoes. No blur, fog, depth of field, vignette or floating platform. Highest genuine native detail available, same 941:1672 portrait aspect ratio. Single change: substantially fewer ordinary houses and a calmer urban composition, while all twelve landmark buildings and geographical anchors stay fixed.\n```\n\n## Exportación\n\nLa generación seleccionada se copia a un PNG versionado dentro del worktree y se convierte a WebP Q98. No se amplía la resolución del archivo ni se da por supuesta una salida 4K. Las medidas y coordenadas reales se documentan en V13-MOVIL-ENTREGA.md y V13-MOVIL-COORDENADAS.json. Los diagramas de puntos y de máscara de agua son comprobaciones de QA; no forman parte del arte de producto.\n"
+  },
+  "layoutRegistration": {
+    "desktop": {
+      "generated": "/Users/daviddavila/.codex/generated_images/01a0f467-7316-7563-bab6-d4fd09ed9786/exec-50d5152e-01c0-4aa7-a171-a885e835b667.png",
+      "size": [
+        1672,
+        941
+      ],
+      "matches": 1715,
+      "inliers": 1686,
+      "measured_original_to_generated": [
+        [
+          0.6665256115103404,
+          -3.29142891737688e-06,
+          278.8309541961502
+        ],
+        [
+          3.29142891737688e-06,
+          0.6665256115103404,
+          156.78695996242638
+        ]
+      ],
+      "expected_original_to_final": [
+        [
+          0.6666666666666666,
+          0,
+          278.6666666666667
+        ],
+        [
+          0,
+          0.6666666666666666,
+          156.83333333333334
+        ]
+      ],
+      "asset": "src/section-two/assets/puntoes-city-v11-expanded.webp",
+      "master": "review-section-two/city-source/puntoes-city-master-v11-expanded.png",
+      "asset_bytes": 950966,
+      "actual_size": [
+        1672,
+        941
+      ],
+      "mobile_status": "Cancelled by later human instruction; exploratory mobile outputs kept privately under node_modules/.city-qa-private and not delivered."
+    },
+    "mobile": {
+      "source": "puntoes-city-mobile-master-v12-tour.png",
+      "target": "puntoes-city-mobile-master-v13-tour.png",
+      "source_size": [
+        941,
+        1672
+      ],
+      "target_size": [
+        941,
+        1672
+      ],
+      "matches": 2265,
+      "inliers": 2094,
+      "measured_transform": [
+        [
+          0.9999847583655519,
+          -0.00010225310586771872,
+          -0.030755590120366057
+        ],
+        [
+          0.00010225310586771872,
+          0.9999847583655519,
+          -0.11857539529912953
+        ]
+      ],
+      "landmarks": {
+        "puntoes": {
+          "inliers": 47,
+          "median_shift_px": [
+            -0.0316162109375,
+            -0.59405517578125
+          ],
+          "p95_displacement_px": 1.4017757177352905
+        },
+        "collaborate": {
+          "inliers": 37,
+          "median_shift_px": [
+            -0.32611846923828125,
+            0.5356292724609375
+          ],
+          "p95_displacement_px": 1.262929081916809
+        },
+        "accenture": {
+          "inliers": 36,
+          "median_shift_px": [
+            -0.2890167236328125,
+            -0.29412841796875
+          ],
+          "p95_displacement_px": 1.190820336341858
+        },
+        "bbva": {
+          "inliers": 34,
+          "median_shift_px": [
+            -0.1992034912109375,
+            0.07122802734375
+          ],
+          "p95_displacement_px": 1.0940253734588623
+        },
+        "canal": {
+          "inliers": 22,
+          "median_shift_px": [
+            -0.2397918701171875,
+            -0.1053466796875
+          ],
+          "p95_displacement_px": 0.7222618460655212
+        },
+        "cepsa": {
+          "inliers": 29,
+          "median_shift_px": [
+            0.18115234375,
+            0.215179443359375
+          ],
+          "p95_displacement_px": 1.137237310409546
+        },
+        "mapfre": {
+          "inliers": 27,
+          "median_shift_px": [
+            0.1578369140625,
+            -0.1004638671875
+          ],
+          "p95_displacement_px": 0.8518031239509583
+        },
+        "mediaset": {
+          "inliers": 52,
+          "median_shift_px": [
+            -0.24334716796875,
+            -0.812591552734375
+          ],
+          "p95_displacement_px": 1.7944740056991577
+        },
+        "ree": {
+          "inliers": 63,
+          "median_shift_px": [
+            0.23309326171875,
+            -0.37249755859375
+          ],
+          "p95_displacement_px": 1.359559178352356
+        },
+        "siemens": {
+          "inliers": 63,
+          "median_shift_px": [
+            -0.0010986328125,
+            0.0540771484375
+          ],
+          "p95_displacement_px": 0.9320957064628601
+        },
+        "naturgy": {
+          "inliers": 36,
+          "median_shift_px": [
+            -0.1367034912109375,
+            -0.5101318359375
+          ],
+          "p95_displacement_px": 1.2724353075027466
+        },
+        "sabadell": {
+          "inliers": 84,
+          "median_shift_px": [
+            -0.28322601318359375,
+            -0.3353271484375
+          ],
+          "p95_displacement_px": 1.0347591638565063
+        }
+      }
+    }
+  }
+}
