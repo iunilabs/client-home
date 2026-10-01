@@ -11,10 +11,21 @@ function coastAt(y, points) {
   for (let i = 1; i < points.length; i++) {
     if (y <= points[i][0]) {
       const [ya, xa] = points[i - 1], [yb, xb] = points[i];
-      return {x: xa + (xb - xa) * (y - ya) / (yb - ya), slope: (xb - xa) / (yb - ya)};
+      const slope = index => {
+        const before = Math.max(0, index - 1), after = Math.min(points.length - 1, index + 1);
+        const left = (points[index][1] - points[before][1]) / (points[index][0] - points[before][0]);
+        const right = (points[after][1] - points[index][1]) / (points[after][0] - points[index][0]);
+        if (!index) return right;
+        if (index === points.length - 1) return left;
+        return left * right <= 0 ? 0 : 2 / (1 / left + 1 / right);
+      };
+      const t = Math.max(0, (y - ya) / (yb - ya)), span = yb - ya;
+      const a = slope(i - 1) * span, b = slope(i) * span;
+      return {x: (2*t**3 - 3*t*t + 1)*xa + (t**3 - 2*t*t + t)*a +
+        (-2*t**3 + 3*t*t)*xb + (t**3 - t*t)*b};
     }
   }
-  return {x: points.at(-1)[1], slope: 0};
+  return {x: points.at(-1)[1]};
 }
 
 function oceanMask(image) {
@@ -26,19 +37,23 @@ function oceanMask(image) {
   context.drawImage(image, 0, 0, width, height);
   const pixels = context.getImageData(0, 0, width, height);
   const outline = coast[portrait ? 'portrait' : 'desktop'];
+  const shoreX = Array.from({length: height}, (_, y) => coastAt(y / height, outline).x * width);
   for (let y = 0; y < height; y++) {
-    const coastLine = coastAt(y / height, outline);
-    const edge = coastLine.x * width;
-    const slope = coastLine.slope * width / height;
+    const edge = shoreX[y];
     for (let x = 0; x < width; x++) {
       const i = y * width + x, n = i * 4;
       const [r, g, b] = pixels.data.subarray(n, n + 3);
       // The coast boundary excludes all buildings. Colour further excludes
       // sand, rocks and boats, while admitting the blue and turquoise water.
       const sea = x >= edge && b - r > 12 && g - r > 5 && b > 70;
-      // Shore distance follows the coast, rather than treating white boats
-      // as islands and creating artificial rings around them.
-      const distance = Math.max(0, (x - edge) / Math.hypot(1, slope));
+      // Distance to a continuous shoreline rounds the bays and headlands.
+      // A local 18-pixel search is sufficient for the entire foam band;
+      // offshore pixels saturate to 1 without an expensive global search.
+      let squared = 18 * 18;
+      if (sea) for (let row = Math.max(0, y - 18); row <= Math.min(height - 1, y + 18); row++) {
+        squared = Math.min(squared, (x - shoreX[row])**2 + (y - row)**2);
+      }
+      const distance = Math.sqrt(squared);
       pixels.data[n] = sea ? Math.min(255, distance * 128) : 0;
       pixels.data[n + 1] = Math.min(255, distance / 18 * 255);
       pixels.data[n + 2] = 0;
@@ -73,7 +88,8 @@ export function createCityWater(world, image) {
   mask.generateMipmaps = false;
   const material = new THREE.ShaderMaterial({
     transparent: true, depthTest: false, depthWrite: false,
-    uniforms: {uPhoto: {value: photo}, uMask: {value: mask}, uTime: {value: 0}},
+    uniforms: {uPhoto: {value: photo}, uMask: {value: mask}, uTime: {value: 0},
+      uMaskStep: {value: new THREE.Vector2(1 / mask.image.width, 1 / mask.image.height)}},
     vertexShader: `
       varying vec2 vUv;
       void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }
@@ -82,22 +98,34 @@ export function createCityWater(world, image) {
       uniform sampler2D uPhoto;
       uniform sampler2D uMask;
       uniform float uTime;
+      uniform vec2 uMaskStep;
       varying vec2 vUv;
       void main() {
         vec2 guide = texture2D(uMask, vUv).rg;
         float alpha = smoothstep(0.1, 0.9, guide.r);
         if (alpha < 0.01) discard;
+        vec2 shoreNormal = normalize(vec2(
+          texture2D(uMask, vUv + vec2(uMaskStep.x, 0.0)).g - guide.g,
+          texture2D(uMask, vUv + vec2(0.0, uMaskStep.y)).g - guide.g
+        ) + vec2(0.00001, 0.0));
+        float phase = guide.g * 23.0 + uTime * 1.6 + sin(vUv.x * 48.0 + vUv.y * 37.0) * 0.8;
+        float shore = (1.0 - smoothstep(0.08, 0.9, guide.g)) * alpha;
         vec2 flow = vec2(
           sin(vUv.y * 112.0 + uTime * 0.72) + sin(vUv.x * 73.0 - uTime * 0.48),
           cos(vUv.x * 96.0 + vUv.y * 42.0 + uTime * 0.62)
-        ) * 0.0015 * alpha;
+        ) * 0.0028 * alpha + shoreNormal * sin(phase) * shore * 0.0035;
+        // Do not pull a boat or a patch of land into the animated water.
+        flow *= smoothstep(0.7, 1.0, texture2D(uMask, vUv + flow).r);
         vec3 colour = texture2D(uPhoto, vUv + flow).rgb;
-        float phase = guide.g * 29.0 + uTime * 1.35 + sin(vUv.x * 48.0 + vUv.y * 37.0) * 0.55;
-        float crest = pow(0.5 + 0.5 * cos(phase), 16.0);
-        float shore = (1.0 - smoothstep(0.08, 0.72, guide.g)) * alpha;
-        colour = mix(colour, vec3(0.82, 0.96, 1.0), crest * shore * 0.08);
-        float glint = pow(0.5 + 0.5 * sin(vUv.x * 241.0 + vUv.y * 193.0 + uTime * 0.95), 22.0);
-        colour += glint * 0.007 * (1.0 - shore);
+        // Advancing crests follow the shore guide. A broken second wave keeps
+        // the visible surf irregular instead of making uniform glowing lines.
+        float crest = pow(0.5 + 0.5 * cos(phase), 8.0);
+        float broken = 0.65 + 0.35 * sin(vUv.x * 147.0 + vUv.y * 111.0 - uTime * 0.45);
+        float foam = crest * shore * broken;
+        colour *= 1.0 + (crest - 0.2) * shore * 0.045;
+        colour = mix(colour, vec3(0.90, 0.97, 1.0), foam * 0.43);
+        float glint = pow(0.5 + 0.5 * sin(vUv.x * 241.0 + vUv.y * 193.0 + uTime * 1.15), 22.0);
+        colour += glint * 0.022 * (1.0 - shore);
         gl_FragColor = vec4(colour, alpha);
         #include <colorspace_fragment>
       }

@@ -1,6 +1,6 @@
 /* A short, camera-led city reveal after the accepted hand transition. */
 .trust-section{height:245svh;min-height:1500px;position:relative;z-index:3}
-.trust-frame{position:fixed;inset:0;opacity:0;visibility:hidden;pointer-events:none;overflow:hidden;background:#c5d9dc;will-change:transform}
+.trust-frame{position:fixed;inset:0;opacity:0;visibility:hidden;pointer-events:none;overflow:clip;background:#c5d9dc;will-change:transform}
 .city-backdrop{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(22px) saturate(.82) contrast(.96) brightness(1.02)}
 .city-world{position:absolute;z-index:1;left:50%;top:50%;transform-origin:52% 48%;will-change:transform;container-type:inline-size}
 .city-picture,.city-picture img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -30,7 +30,7 @@
 .city-client:focus-visible{outline:1px solid #d0efff;background:#ffffff10}
 .city-carousel.is-focused .city-carousel-viewport{overflow-x:auto;scrollbar-width:none;mask-image:none;scroll-padding-inline:14px}
 .city-carousel.is-focused .city-carousel-viewport::-webkit-scrollbar{display:none}
-.city-pin{position:absolute;left:var(--pin-x);top:var(--pin-y);transform:translate(-50%,-50%);width:44px;height:44px;display:grid;place-items:center;border:0;padding:0;background:none;pointer-events:auto;cursor:pointer;touch-action:manipulation;border-radius:50%;outline-offset:1px;-webkit-tap-highlight-color:transparent}
+.city-pin{position:absolute;left:var(--pin-x);top:var(--pin-y);transform:translate(-50%,-50%);width:44px;height:44px;display:grid;place-items:center;border:0;padding:0;background:none;pointer-events:auto;cursor:pointer;touch-action:pan-y;border-radius:50%;outline-offset:1px;-webkit-tap-highlight-color:transparent}
 .city-pin:hover,.city-pin:focus-visible{z-index:2}
 .city-pin:after{content:'';position:absolute;top:calc(50% + 10px);height:20px;width:1px;background:linear-gradient(#ffffffce,#ffffff30);box-shadow:0 0 4px #00afff70;pointer-events:none}
 .city-pin-dot{display:block;width:20px;height:20px;box-sizing:border-box;background:#169fef;border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px #ffffff40;transition:transform .2s,box-shadow .2s}
@@ -38,6 +38,7 @@
 .city-pin:focus-visible{outline:2px solid #fff}
 .city-pin-label{position:absolute;left:50%;bottom:calc(100% - 7px);transform:translate(-50%,5px);color:#fff;background:#17445de8;padding:7px 11px;border:1px solid #ffffff50;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
 .city-pin:hover .city-pin-label,.city-pin:focus-visible .city-pin-label,.city-pin.is-selected .city-pin-label{opacity:1;transform:translate(-50%,0)}
+.city-building[data-client="collaborate"] .city-pin .city-pin-label{transform:translate(-20%,0)}
 .city-building [hidden]{display:none}
 .city-hub{position:absolute;left:52%;top:32.3%;transform:translate(-50%,-50%);font-size:.85cqw;letter-spacing:.13em;font-weight:650;color:white;text-shadow:0 1px 8px #004e77,0 0 16px #0075c6;display:flex;align-items:center;gap:.5cqw}
 .city-hub-dot{width:.45cqw;height:.45cqw;background:#d4f8ff;border-radius:50%;box-shadow:0 0 .5cqw #00c7ff,0 0 1.5cqw #00aaff}
@@ -71,6 +72,10 @@ body:not(.city-active) .city-light-beam,body:not(.city-active) .city-light-ring{
 @keyframes city-signal{0%{transform:translate(-50%,-50%) scale(.88);opacity:.65}85%,100%{transform:translate(-50%,-50%) scale(1.42);opacity:0}}
 .case-dialog{width:min(560px,calc(100% - 36px));max-height:calc(100svh - 48px);padding:44px 42px 24px;border-radius:16px;color:#20394f;background:radial-gradient(ellipse at 100% 0,#d6effc 0,transparent 60%),#f9fcfd;border:1px solid #fff;box-shadow:0 30px 100px #082b4655;overscroll-behavior:contain;scrollbar-width:thin}
 .case-dialog::backdrop{background:#0b2b445c;backdrop-filter:blur(7px)}
+.case-brand[hidden],.case-draft[hidden],.case-more-button[hidden],.case-contact[hidden]{display:none}
+.case-contact{display:inline-flex;align-items:center;gap:30px;margin-top:22px;padding:14px 20px;border-radius:100px;background:#128ccc;color:#fff;text-decoration:none;font-size:15px}
+.case-contact:hover{background:#0877b1}
+.case-contact:focus-visible{outline:2px solid #128ccc;outline-offset:4px}
 .case-close{position:absolute;right:12px;top:12px;width:44px;height:44px;border:1px solid #22608a20;border-radius:50%;background:#ffffff90;color:#2b5978;display:grid;place-items:center;cursor:pointer;font-size:26px;line-height:1}
 .case-close:hover{background:#fff;border-color:#22608a60}
 .case-close:focus-visible,.case-more-button:focus-visible{outline:2px solid #138bcf;outline-offset:4px}
@@ -78,7 +83,7 @@ body:not(.city-active) .city-light-beam,body:not(.city-active) .city-light-ring{
 .case-logo{max-width:100%;max-height:42px;object-fit:contain}
 .case-eyebrow{display:flex;align-items:center;gap:9px;color:#46728e;font-size:8px;letter-spacing:.2em;margin:0 0 12px}
 .case-dialog h2{font-family:inherit;font-size:13px;font-weight:550;line-height:1.5;color:#35617c;margin:0 0 16px}
-.case-heading{font-family:DM Serif,Georgia,serif;font-size:clamp(30px,3vw,42px);font-weight:400;line-height:1.12;letter-spacing:-.025em;color:#2c759f;margin:0 0 22px;max-width:420px}
+.case-heading{font-family:DM Serif,serif;font-size:clamp(30px,3vw,42px);font-weight:400;line-height:1.12;letter-spacing:-.025em;color:#2c759f;margin:0 0 22px;max-width:420px}
 .case-intro{font-size:14px;line-height:1.85;color:#476276;margin:0 0 24px}
 .case-more-button{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:12px 17px;border:1px solid #5a9fc640;border-radius:30px;color:#256e98;background:#fff9;font-family:inherit;font-size:11px;cursor:pointer;min-height:44px}
 .case-more-button:hover{border-color:#5a9fc6;background:#fff}
@@ -106,6 +111,7 @@ body:not(.city-active) .city-light-beam,body:not(.city-active) .city-light-ring{
  .city-pin-dot{width:18px;height:18px}
  .city-pin:after{height:16px}
  .city-pin-label{font-size:9px;max-width:140px}
+ .city-building[data-client="collaborate"] .city-pin .city-pin-label{transform:translate(0,0)}
  .case-dialog{padding:40px 26px 24px;max-height:calc(100svh - 32px);width:calc(100% - 32px)}
  .case-brand{margin-bottom:27px;height:36px;max-width:130px}
  .case-logo{max-height:36px}

@@ -21,7 +21,7 @@ export function cityState(scroll, geometry, reduced = false) {
   return {
     opacity: exit < 1 ? opacity : 0,
     progress,
-    zoom: reduced ? 1 : mix(1.2, 1, travel),
+    zoom: reduced ? 1 : mix(1.5, 1, travel),
     copyOpacity: reduced ? 1 : 1 - smooth(.18, .57, progress),
     namesOpacity: reduced ? 1 : smooth(.08, .40, progress),
     exitY: exit * viewport,

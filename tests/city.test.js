@@ -27,7 +27,7 @@ test('scroll continuously pulls back on desktop and portrait, in both directions
       previous=state.zoom;
       assert.deepEqual(state,cityState(y,geometry));
     }
-    assert.equal(cityState(geometry.revealed,geometry).zoom,1.2);
+    assert.equal(cityState(geometry.revealed,geometry).zoom,1.5);
     assert.equal(cityState(geometry.end,geometry).zoom,1);
   }
 });

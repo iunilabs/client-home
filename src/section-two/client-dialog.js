@@ -7,6 +7,9 @@ export function createClientDialog({onOpen = () => {}, onClose = () => {}} = {})
   const details = dialog.querySelector('#case-more');
   const title = dialog.querySelector('#case-title');
   const logo = dialog.querySelector('.case-logo');
+  const brand = dialog.querySelector('.case-brand');
+  const draft = dialog.querySelector('.case-draft');
+  const contact = dialog.querySelector('.case-contact');
   let opener = null;
 
   function collapse() {
@@ -20,8 +23,12 @@ export function createClientDialog({onOpen = () => {}, onClose = () => {}} = {})
     if (!story) return;
     opener = trigger;
     dialog.dataset.client = client.id;
+    brand.hidden = false;
+    draft.hidden = false;
+    contact.hidden = true;
+    moreButton.hidden = false;
     logo.alt = client.name;
-    // Logos are already cleaned and loaded by the city; reuse that exact image.
+    // Reuse the same official vector/high-resolution file as the carousel.
     logo.src = logoSource;
     title.textContent = client.name;
     dialog.querySelector('.case-heading').textContent = story.title;
@@ -29,6 +36,23 @@ export function createClientDialog({onOpen = () => {}, onClose = () => {}} = {})
     for (const field of ['challenge', 'approach', 'goal']) {
       dialog.querySelector('[data-case="' + field + '"]').textContent = story[field];
     }
+    collapse();
+    dialog.showModal();
+    trigger.setAttribute('aria-expanded', 'true');
+    onOpen();
+    closeButton.focus({preventScroll: true});
+  }
+
+  function openInvitation(trigger) {
+    opener = trigger;
+    dialog.dataset.client = 'collaborate';
+    brand.hidden = true;
+    draft.hidden = true;
+    contact.hidden = false;
+    moreButton.hidden = true;
+    title.textContent = '¿Quieres colaborar?';
+    dialog.querySelector('.case-heading').textContent = 'El próximo punto puede ser el tuyo.';
+    dialog.querySelector('.case-intro').textContent = 'Hay un lugar para las ideas que merecen hacerse realidad. Cuéntanos qué quieres transformar y construyamos el siguiente proyecto juntos.';
     collapse();
     dialog.showModal();
     trigger.setAttribute('aria-expanded', 'true');
@@ -57,5 +81,5 @@ export function createClientDialog({onOpen = () => {}, onClose = () => {}} = {})
     if (opener?.isConnected && !opener.closest('[inert]')) opener.focus({preventScroll: true});
   });
 
-  return {open, close, get isOpen() {return dialog.open}};
+  return {open, openInvitation, close, get isOpen() {return dialog.open}};
 }

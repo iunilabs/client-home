@@ -1,15 +1,17 @@
-import desktopUrl from './assets/puntoes-city-v7.webp';
-import portraitUrl from './assets/puntoes-city-mobile-v8.webp';
+import desktopUrl from './assets/puntoes-city-v10.webp';
+import portraitUrl from './assets/puntoes-city-mobile-v10.webp';
 import {cityClients} from './city-clients.js';
 import {cityGeometry, cityState} from './city-state.js';
 import {createClientDialog} from './client-dialog.js';
 import {createCityWater} from './city-water.js';
 import {createCityCarousel} from './city-carousel.js';
 import {createCityPan} from './city-pan.js';
+import {createCityPerspective} from './city-perspective.js';
 
 // Architecture is interpreted from photos; the city layout is imaginary.
 // Roof points are calibrated separately for the two artwork compositions.
 const sites = {
+  collaborate: {pinDesktop: [16.2, 16.2], pinPortrait: [14.2, 14.4]},
   accenture: {pinDesktop: [29.5, 31.2], pinPortrait: [23.6, 29.4]},
   bbva: {pinDesktop: [49.4, 12.9], pinPortrait: [49.5, 14.2]},
   canal: {pinDesktop: [39.4, 16], pinPortrait: [32, 19.4]},
@@ -36,9 +38,11 @@ export function createCity(section, options = {}) {
     onClose() {carousel.setModal(false); options.onClose?.()},
   });
   const pan = createCityPan(section);
+  const perspective = createCityPerspective();
   let loading = false, ready = false, geometry, lastWidth = 0, lastHeight = 0, water = null;
 
-  for (const client of cityClients) {
+  const invitation = {id: 'collaborate', name: '¿Quieres colaborar?', invitation: true};
+  for (const client of [...cityClients, invitation]) {
     const site = sites[client.id];
     const item = document.createElement('li');
     item.className = 'city-building';
@@ -50,7 +54,7 @@ export function createCity(section, options = {}) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'city-pin';
-    button.setAttribute('aria-label', `Ver caso de ${client.name}`);
+    button.setAttribute('aria-label', client.invitation ? client.name : `Ver caso de ${client.name}`);
     button.setAttribute('aria-haspopup', 'dialog');
     button.setAttribute('aria-controls', 'city-case');
     button.setAttribute('aria-expanded', 'false');
@@ -72,7 +76,11 @@ export function createCity(section, options = {}) {
     list.append(item);
   }
 
-  const carousel = createCityCarousel(section, cityClients, {onSelect: select, onOpen: open});
+  const carousel = createCityCarousel(section, cityClients, {onSelect(id) {
+    select(id);
+    const marker = markers.find(button => button.parentElement.dataset.client === id);
+    if (marker) pan.reveal(marker.getBoundingClientRect());
+  }, onOpen: open});
   function select(id) {
     list.classList.toggle('has-selection', Boolean(id));
     for (const button of markers) button.classList.toggle('is-selected', button.parentElement.dataset.client === id);
@@ -80,7 +88,8 @@ export function createCity(section, options = {}) {
   }
   function open(client, trigger) {
     select(client.id);
-    dialog.open(client, trigger, carousel.logoFor(client.id));
+    if (client.invitation) dialog.openInvitation(trigger);
+    else dialog.open(client, trigger, carousel.logoFor(client.id));
   }
 
   function resize() {
@@ -90,7 +99,8 @@ export function createCity(section, options = {}) {
     const portrait = innerWidth < 700;
     const aspect = portrait ? 941 / 1672 : 1672 / 941;
     const available = document.documentElement.clientWidth;
-    const width = portrait ? Math.max(available, Math.min(viewport * aspect, available * 1.13)) : Math.max(available, viewport * aspect);
+    // Cover both axes with real artwork, including a small exploration margin.
+    const width = Math.max(available, viewport * aspect) * 1.04;
     world.style.width = `${width}px`;
     world.style.height = `${width / aspect}px`;
     lastWidth = innerWidth; lastHeight = viewport;
@@ -126,8 +136,15 @@ export function createCity(section, options = {}) {
     frame.style.opacity = ready ? state.opacity : 0;
     frame.style.visibility = state.active ? 'visible' : 'hidden';
     frame.style.transform = `translate3d(0,${-state.exitY}px,0)`;
-    const position = pan.update(world, state.zoom, reduced);
-    world.style.transform = `translate3d(calc(-50% + ${position.x}px),calc(-50% + ${position.y}px),0) scale(${state.zoom})`;
+    const interactive = ready && state.active && state.opacity > .55;
+    const mobile = innerWidth < 700 || matchMedia('(pointer: coarse)').matches;
+    const view = perspective.update(now, {active: interactive && mobile, reduced, paused: dialog.isOpen || pan.isDragging});
+    const reserve = Math.max(Math.abs(view.x), Math.abs(view.y)) * .0085;
+    const position = pan.update(world, state.zoom, reduced, interactive && !dialog.isOpen, reserve);
+    const depth = Math.max(parseFloat(world.style.width), parseFloat(world.style.height)) * 2.5;
+    const tilt = view.hasReading ? ` perspective(${depth}px) rotateX(${view.x}deg) rotateY(${view.y}deg)` : '';
+    world.style.transform = `translate3d(calc(-50% + ${position.x}px),calc(-50% + ${position.y}px),0) scale(${state.zoom})${tilt}`;
+    section.dataset.cityPerspective = view.state;
     copy.style.opacity = state.copyOpacity;
     copy.setAttribute('aria-hidden', String(state.copyOpacity < .1));
     list.style.opacity = state.namesOpacity;
@@ -149,5 +166,5 @@ export function createCity(section, options = {}) {
   }
 
   resize();
-  return {update, resize, load, dialog, dispose: () => water?.dispose(), scrollAt: progress => geometry.revealed + Math.max(0, Math.min(1, progress)) * (geometry.end - geometry.revealed)};
+  return {update, resize, load, dialog, dispose() {water?.dispose(); pan.dispose(); perspective.dispose()}, scrollAt: progress => geometry.revealed + Math.max(0, Math.min(1, progress)) * (geometry.end - geometry.revealed)};
 }

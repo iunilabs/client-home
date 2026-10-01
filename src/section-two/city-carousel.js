@@ -3,7 +3,7 @@ import {smooth} from '../timeline.js';
 
 // Optical heights compensate for tall symbols, secondary lines and wide names.
 // The original proportions stay intact; a shared width cap prevents overflow.
-const logoHeights = {accenture: 62, bbva: 38, canal: 62, cepsa: 50, mapfre: 38, mediaset: 68, ree: 68, siemens: 38, naturgy: 58, sabadell: 40};
+const logoHeights = {accenture: 58, bbva: 40, canal: 66, cepsa: 50, mapfre: 50, mediaset: 36, ree: 36, siemens: 38, naturgy: 50, sabadell: 40};
 
 export function createCityCarousel(section, clients, {onSelect, onOpen}) {
   const carousel = section.querySelector('.city-carousel');
@@ -29,7 +29,8 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     logo.decoding = 'async';
     logo.draggable = false;
     logo.dataset.src = client.image;
-    cleanClientImage(logo);
+    // Published vector assets stay vector all the way to the rendered image.
+    if (!client.clean) cleanClientImage(logo);
     const fallback = document.createElement('span');
     fallback.textContent = client.name;
     fallback.hidden = true;
@@ -73,7 +74,12 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     carousel.classList.add('is-focused');
     offset = 0;
     track.style.transform = 'translate3d(0,0,0)';
-    event.target.scrollIntoView({block: 'nearest', inline: 'nearest', behavior: 'instant'});
+    // Scroll only the logo viewport. scrollIntoView would also scroll the
+    // fixed scene's clipped ancestors and displace the whole city vertically.
+    const buttonBounds = event.target.getBoundingClientRect();
+    const viewportBounds = viewport.getBoundingClientRect();
+    if (buttonBounds.left < viewportBounds.left) viewport.scrollLeft += buttonBounds.left - viewportBounds.left;
+    else if (buttonBounds.right > viewportBounds.right) viewport.scrollLeft += buttonBounds.right - viewportBounds.right;
   });
   carousel.addEventListener('focusout', event => {
     if (carousel.contains(event.relatedTarget)) return;
