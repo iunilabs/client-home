@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {cityOceanGuide} from './city-shore.js';
 
 // Ocean animation is an independent layer. Buildings and the underlying artwork
 // remain stationary; only sea pixels inside the coast boundary are displaced.
@@ -38,28 +39,7 @@ function oceanMask(image) {
   const pixels = context.getImageData(0, 0, width, height);
   const outline = coast[portrait ? 'portrait' : 'desktop'];
   const shoreX = Array.from({length: height}, (_, y) => coastAt(y / height, outline).x * width);
-  for (let y = 0; y < height; y++) {
-    const edge = shoreX[y];
-    for (let x = 0; x < width; x++) {
-      const i = y * width + x, n = i * 4;
-      const [r, g, b] = pixels.data.subarray(n, n + 3);
-      // The coast boundary excludes all buildings. Colour further excludes
-      // sand, rocks and boats, while admitting the blue and turquoise water.
-      const sea = x >= edge && b - r > 12 && g - r > 5 && b > 70;
-      // Distance to a continuous shoreline rounds the bays and headlands.
-      // A local 18-pixel search is sufficient for the entire foam band;
-      // offshore pixels saturate to 1 without an expensive global search.
-      let squared = 18 * 18;
-      if (sea) for (let row = Math.max(0, y - 18); row <= Math.min(height - 1, y + 18); row++) {
-        squared = Math.min(squared, (x - shoreX[row])**2 + (y - row)**2);
-      }
-      const distance = Math.sqrt(squared);
-      pixels.data[n] = sea ? Math.min(255, distance * 128) : 0;
-      pixels.data[n + 1] = Math.min(255, distance / 18 * 255);
-      pixels.data[n + 2] = 0;
-      pixels.data[n + 3] = 255;
-    }
-  }
+  pixels.data.set(cityOceanGuide(pixels, shoreX));
   context.putImageData(pixels, 0, 0);
   return canvas;
 }
@@ -101,7 +81,7 @@ export function createCityWater(world, image) {
       uniform vec2 uMaskStep;
       varying vec2 vUv;
       void main() {
-        vec2 guide = texture2D(uMask, vUv).rg;
+        vec3 guide = texture2D(uMask, vUv).rgb;
         float alpha = smoothstep(0.1, 0.9, guide.r);
         if (alpha < 0.01) discard;
         vec2 shoreNormal = normalize(vec2(
@@ -109,11 +89,14 @@ export function createCityWater(world, image) {
           texture2D(uMask, vUv + vec2(0.0, uMaskStep.y)).g - guide.g
         ) + vec2(0.00001, 0.0));
         float phase = guide.g * 23.0 + uTime * 1.6 + sin(vUv.x * 48.0 + vUv.y * 37.0) * 0.8;
-        float shore = (1.0 - smoothstep(0.08, 0.9, guide.g)) * alpha;
+        // Breaking waves belong to sand beaches, not rocks or promenades.
+        float shore = (1.0 - smoothstep(0.08, 0.9, guide.g)) * alpha * guide.b;
+        float waterLife = mix(smoothstep(0.55, 1.0, guide.g), 1.0, guide.b);
         vec2 flow = vec2(
           sin(vUv.y * 112.0 + uTime * 0.72) + sin(vUv.x * 73.0 - uTime * 0.48),
           cos(vUv.x * 96.0 + vUv.y * 42.0 + uTime * 0.62)
         ) * 0.0028 * alpha + shoreNormal * sin(phase) * shore * 0.0035;
+        flow *= waterLife;
         // Do not pull a boat or a patch of land into the animated water.
         flow *= smoothstep(0.7, 1.0, texture2D(uMask, vUv + flow).r);
         vec3 colour = texture2D(uPhoto, vUv + flow).rgb;
@@ -125,7 +108,7 @@ export function createCityWater(world, image) {
         colour *= 1.0 + (crest - 0.2) * shore * 0.045;
         colour = mix(colour, vec3(0.90, 0.97, 1.0), foam * 0.43);
         float glint = pow(0.5 + 0.5 * sin(vUv.x * 241.0 + vUv.y * 193.0 + uTime * 1.15), 22.0);
-        colour += glint * 0.022 * (1.0 - shore);
+        colour += glint * 0.022 * (1.0 - shore) * waterLife;
         gl_FragColor = vec4(colour, alpha);
         #include <colorspace_fragment>
       }
