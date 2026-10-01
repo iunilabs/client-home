@@ -369,5 +369,19 @@
     "mismatches": [],
     "regenerated": false,
     "reason": "URL adaptation lives outside every input of the baked skin contract; approved geometry and pixels unchanged"
-  }
+  },
+  "build": {
+    "base": "/client-home/",
+    "entries": [
+      "index.html",
+      "mano.html",
+      "modelos.html"
+    ],
+    "manifest": "dist/.vite/manifest.json",
+    "compiledBytes": 20535613,
+    "previousAcceptedCompiledBytes": 23402673,
+    "note": "Total build directory sizes, not per-visit downloaded payload. Deleted source bytes are not claimed as runtime transfer savings."
+  },
+  "toolsRestore": "For texture/font generation tools requiring deleted PNG/TTF/Blender source inputs, restore those inputs from manos-cerradas-2026-10-01 in a separate working directory. Current production uses approved lossless WebP/WOFF2; skin cache hashes remain valid.",
+  "retainedFallbackSource": "human-right.glb remains supported by createHand(..., {photographic:false}); current studio defaults to photographic hand."
 }
