@@ -23,7 +23,7 @@ export function createPoseTrack(hand,frames,section){
  const sectionTrack=section?[sample(track,section.start),...section.frames.map(capture),sample(track,section.end)]:null;
  const active=value=>sectionTrack&&value>section.start&&value<section.end?sectionTrack:track;
  const q=new THREE.Quaternion(),p=new THREE.Vector3(),joints={};
- return {targetIndex(value){const track=active(value);let i=track.findIndex((f,i)=>i<track.length-1&&value>=f.at&&value<=track[i+1].at);if(i<0)i=value<track[0].at?0:track.length-2;const a=track[i],b=track[i+1];return a.index.clone().lerp(b.index,smooth(a.at,b.at,value))},apply(value,time=0,reduced=false){
+ return {jointQuaternion(value,name){return sample(active(value),value).joints[name].q.clone()},targetIndex(value){const track=active(value);let i=track.findIndex((f,i)=>i<track.length-1&&value>=f.at&&value<=track[i+1].at);if(i<0)i=value<track[0].at?0:track.length-2;const a=track[i],b=track[i+1];return a.index.clone().lerp(b.index,smooth(a.at,b.at,value))},apply(value,time=0,reduced=false){
   const track=active(value);
   let i=track.findIndex((f,i)=>i<track.length-1&&value>=f.at&&value<=track[i+1].at);if(i<0)i=value<track[0].at?0:track.length-2;
   const a=track[i],b=track[i+1],t=smooth(a.at,b.at,value);

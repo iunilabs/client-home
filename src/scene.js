@@ -18,6 +18,7 @@ import {smooth,mix} from './timeline.js';
 import {createFingerGesture} from './finger-gesture.js';
 import {createThumbGesture,createWristGesture} from './wrist-gesture.js';
 import {createMobileCompassGesture,mobileCompassEnvelope} from './mobile-compass-gesture.js';
+import {createHumanPregrasp} from './human-pregrasp.js';
 
 export async function createExperience(container,{onReady,onFailure,poseOverride,handFactory}){
  installAssetBase();
@@ -63,6 +64,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
  const fingerFrames=wrenchHandFrames.map(({at,curls,flexions,spreads,opposition,wrist})=>({...choreography(at*5,0,true,at),at,curls,flexions,spreads,opposition,wrist,tip:undefined}));
  const humanTrack=createPoseTrack(human,humanFrames,{start:.75,end:.9,frames:fingerFrames}),aiTrack=createPoseTrack(ai,aiFrames);
  const mobileCompassGesture=createMobileCompassGesture(human);
+ const humanPregrasp=createHumanPregrasp(human,humanTrack.jointQuaternion(.25,'DEF-thumb01L'));
  const tools=await createToolSequence(scene,{deferred:!handFactory}),reveal=createIntroReveal(human),humanFalloff=createHandFalloff(human),aiFalloff=createHandFalloff(ai);
  const target=new THREE.Vector3(),look=new THREE.Vector3(),view=new THREE.Vector3(),right=new THREE.Vector3(),up=new THREE.Vector3(0,1,0),zAxis=new THREE.Vector3(0,0,1),tiltQuaternion=new THREE.Quaternion();
  function portraitFraming(){return innerWidth<700||innerWidth/innerHeight<1}
@@ -149,6 +151,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
    if(ai.root.visible){const pivot=ai.tipWorld();ai.root.position.copy(pivot.clone().addScaledVector(ai.root.position.clone().sub(pivot),scale));ai.root.scale.multiplyScalar(scale)}
   }
   if(!poseOverride)mobileCompassGesture.apply(pose.ratio,time,reduced);
+  if(!poseOverride)humanPregrasp.apply(pose.ratio);
   // The source projects to the raw cursor, even while the camera orbit eases.
   // Refresh only custom hand skin caches after their final root placements.
   human.root.updateMatrixWorld(true);ai.root.updateMatrixWorld(true);human.skin.onBeforeRender?.();ai.skin.onBeforeRender?.();
@@ -157,7 +160,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
   last=()=>{const ht=human.tipWorld(),at=ai.tipWorld();return {lighting:{...lighting},elbowReach:elbowReach.getState(),cursorLight:cursorSurfaceLight.getState(),progress:p,time,reduced,intro,humanVisible:human.root.visible,aiVisible:ai.root.visible,humanPosition:human.root.position.toArray(),humanRotation:human.root.rotation.toArray().slice(0,3),humanScale:human.root.scale.toArray(),humanViewDepth:human.root.position.clone().sub(camera.position).dot(camera.getWorldDirection(new THREE.Vector3())),fingerCurls:pose.curls,fingerFlexions:pose.fingerFlexions,fingerGestureWeight:pose.fingerGestureWeight,humanMirror:pose.humanMirror,humanThumbOpposition:pose.humanThumbOpposition,
    camera:camera.position.toArray(),aiPosition:ai.root.position.toArray(),aiRotation:ai.root.quaternion.toArray(),aiCurls:pose.aiCurls,contactGap:pose.aiVisible?ht.distanceTo(at):null,
    handDetail:1,handSource:human.source,skinContinuity:skinContinuity?{kind:skinContinuity.kind,wristBlend:skinContinuity.wristBlend,seams:skinContinuity.seams}:null,handTriangles:human.skin.geometry.index.count/3,renderScale:budget.scale,pixelRatio:renderer.getPixelRatio(),padCorrections,
-   referencePoseWeight:pose.handPoseWeight,screenLandmarks:{foreground:project(ht),second:ai.root.visible?project(at):null,hand:Object.fromEntries(Object.entries(human.jointTips()).map(([role,tip])=>[role,project(human.scene.parent.localToWorld(new THREE.Vector3(...tip)))]))},tools:tools.getState(),poseAuthority:'absolute joint quaternion track',normalisedScroll:pose.ratio,
+   humanPregrasp:humanPregrasp.getState(),referencePoseWeight:pose.handPoseWeight,screenLandmarks:{foreground:project(ht),second:ai.root.visible?project(at):null,hand:Object.fromEntries(Object.entries(human.jointTips()).map(([role,tip])=>[role,project(human.scene.parent.localToWorld(new THREE.Vector3(...tip)))]))},tools:tools.getState(),poseAuthority:'absolute joint quaternion track',normalisedScroll:pose.ratio,
    actors:scene.children.filter(o=>o.isGroup&&o.visible).map(o=>o.name),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};};
  }
   const resize=()=>{calibrateTools();calibrateElbowCamera();budget.resize();renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()};window.addEventListener('resize',resize);resize();
