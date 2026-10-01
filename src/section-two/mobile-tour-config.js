@@ -1,8 +1,8 @@
 // EDIT THIS LIST to select and order the mobile itinerary.
-// Example: ['bbva', 'mapfre', 'sabadell'] automatically becomes a three-card tour.
+// Accepted mobile itinerary: three companies plus the construction invitation.
+// All ten companies remain available through the logo footer, independently.
 // 'collaborate' is the optional construction-site invitation.
-export const mobileTourOrder = ['canal', 'bbva', 'cepsa', 'mapfre', 'ree',
-  'siemens', 'naturgy', 'sabadell', 'mediaset', 'accenture', 'collaborate'];
+export const mobileTourOrder = ['bbva', 'naturgy', 'sabadell', 'collaborate'];
 
 // Camera calibration, in percentages of the portrait artwork.
 export const mobileTourBuildings = {
@@ -25,4 +25,6 @@ export const mobileTourHub = {id: 'puntoes', center: [52.657, 40.879], size: [19
 
 // Distances are viewport heights; changing the list adjusts the section length.
 export const mobileTourTiming = {intro: .8, stop: 1.45, outro: .25,
-  travelUntil: .42, cardFrom: .44, cardUntil: .68};
+  travelUntil: .42, cardFrom: .04, cardUntil: .48,
+  // Logo visits use milliseconds, independently of scrolling speed.
+  logoTravel: 1250, logoCardFrom: 80, logoCardUntil: 650};

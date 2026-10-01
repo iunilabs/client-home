@@ -10,8 +10,10 @@ import {createCityPan} from './city-pan.js';
 import {createCityPerspective} from './city-perspective.js';
 import {cityExtent} from './city-extent.js';
 import {mobileTourRoute, mobileTourBuildings} from './mobile-tour-config.js';
-import {mobileTourGeometry, mobileTourState, mobileTourCamera} from './mobile-tour.js';
+import {mobileTourGeometry, mobileTourState} from './mobile-tour.js';
 import {createMobileTourDeck} from './mobile-tour-deck.js';
+import {createMobileTourNavigation} from './mobile-tour-navigation.js';
+import {createCityDetail} from './city-detail.js';
 
 // Architecture is interpreted from photos; the city layout is imaginary.
 // Roof points are calibrated separately for the two artwork compositions.
@@ -52,6 +54,11 @@ export function createCity(section, options = {}) {
 
   const invitation = {id: 'collaborate', name: '¿Quieres colaborar?', invitation: true};
   const deck = createMobileTourDeck(section, mobileTourRoute, [...cityClients, invitation]);
+  const navigation = createMobileTourNavigation({onNavigate: top => {
+    if (options.onNavigate) options.onNavigate(top);
+    else window.scrollTo({top, behavior: 'instant'});
+  }});
+  const detail = createCityDetail(core);
   for (const client of [...cityClients, invitation]) {
     const site = sites[client.id];
     const portraitPin = mobileTourBuildings[client.id].pin;
@@ -90,7 +97,7 @@ export function createCity(section, options = {}) {
   const carousel = createCityCarousel(section, cityClients, {onSelect(id) {
     select(id);
     const marker = markers.find(button => button.parentElement.dataset.client === id);
-    if (marker) pan.reveal(marker.getBoundingClientRect());
+    if (innerWidth >= 700 && marker) pan.reveal(marker.getBoundingClientRect());
   }, onOpen: open});
   function select(id) {
     list.classList.toggle('has-selection', Boolean(id));
@@ -99,6 +106,10 @@ export function createCity(section, options = {}) {
   }
   function open(client, trigger) {
     select(client.id);
+    if (innerWidth < 700) {
+      navigation.select(client.id, {now: performance.now(), scroll: window.scrollY, geometry});
+      return;
+    }
     if (client.invitation) dialog.openInvitation(trigger);
     else dialog.open(client, trigger, carousel.logoFor(client.id));
   }
@@ -107,6 +118,7 @@ export function createCity(section, options = {}) {
     const viewport = innerHeight;
     const portrait = innerWidth < 700;
     section.classList.toggle('city-mobile-tour', portrait);
+    if (portrait && loading) deck.load();
     if (portrait) {
       // Keep the itinerary stable when Safari retracts its address bar.
       if (lastWidth !== innerWidth || Math.abs(viewport - tourViewport) > tourViewport * .2) tourViewport = viewport;
@@ -171,7 +183,7 @@ export function createCity(section, options = {}) {
     image.src = desktopUrl;
     extension.src = extendedDesktopUrl;
     if (innerWidth < 700) deck.load();
-    else carousel.load();
+    carousel.load();
   }
 
   function update(scroll, reduced, now = performance.now()) {
@@ -184,24 +196,30 @@ export function createCity(section, options = {}) {
     frame.style.transform = `translate3d(0,${-state.exitY}px,0)`;
     const interactive = ready && state.active && state.opacity > .55;
     const mobile = innerWidth < 700 || matchMedia('(pointer: coarse)').matches;
-    const view = perspective.update(now, {active: interactive && mobile, reduced,
-      paused: dialog.isOpen || pan.isDragging || (portrait && state.stopIndex >= 0 && state.travel < 1)});
-    const reserve = Math.max(Math.abs(view.x), Math.abs(view.y)) * .0085;
-    let position;
+    let position, tour;
     if (portrait) {
-      position = mobileTourCamera(state, {width: parseFloat(world.style.width), height: parseFloat(world.style.height),
-        viewportWidth: document.documentElement.clientWidth, viewportHeight: innerHeight});
+      tour = navigation.update(state, {scroll, now, layout: {width: parseFloat(world.style.width), height: parseFloat(world.style.height),
+        viewportWidth: document.documentElement.clientWidth, viewportHeight: innerHeight}});
+      position = tour.camera;
       state.zoom = position.zoom;
       pan.update(world, state.zoom, reduced, false);
       world.style.transformOrigin = `${position.focusX * 100}% ${position.focusY * 100}%`;
-      deck.update(state, ready && interactive);
-      section.dataset.cityStop = state.current.id;
+      deck.update(state, ready && interactive, tour);
+      section.dataset.cityStop = tour.current.id;
       section.dataset.cityCard = String(state.stopIndex);
-    } else {
+      detail.update({active: interactive, camera: position, current: tour.current.id,
+        next: mobileTourRoute[state.stopIndex + 1]?.id});
+    }
+    const view = perspective.update(now, {active: interactive && mobile, reduced,
+      paused: dialog.isOpen || pan.isDragging || (portrait && tour.moving)});
+    const reserve = Math.max(Math.abs(view.x), Math.abs(view.y)) * .0085;
+    if (!portrait) {
       position = pan.update(world, state.zoom, reduced, interactive && !dialog.isOpen, reserve);
       deck.hide();
       delete section.dataset.cityStop;
       delete section.dataset.cityCard;
+      navigation.reset();
+      detail.update({active: false, camera: {zoom: 1}});
     }
     const depth = Math.max(parseFloat(world.style.width), parseFloat(world.style.height)) * 2.5;
     const tilt = view.hasReading ? ` perspective(${depth}px) rotateX(${view.x}deg) rotateY(${view.y}deg)` : '';
@@ -226,7 +244,7 @@ export function createCity(section, options = {}) {
     document.body.classList.toggle('city-active', state.active);
     section.dataset.cityProgress = state.progress.toFixed(3);
     water?.update(now, state.active && !dialog.isOpen, reduced);
-    carousel.update(now, {...state, ready, active: state.active && !portrait}, reduced);
+    carousel.update(now, {...state, ready, tourClient: tour?.entry?.id}, reduced);
     return {...state, ready};
   }
 

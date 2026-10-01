@@ -1,0 +1,241 @@
+{
+  "_meta": {
+    "version": "v14-local-native-detail-trials",
+    "source_master": "review-section-two/city-source/puntoes-city-mobile-master-v13-tour.png",
+    "source_width": 941,
+    "source_height": 1672,
+    "source_sha256": "fa4cd4f0979e35cae8e58361dd723fccd38062e3b509578be612bb4739651c35",
+    "status": "Five native mobile detail layers integrated over the unchanged V13 portrait. Compiled visual, boundary, lazy-loading and touch QA passed; independent review verifies card withdrawal separately.",
+    "rect_contract": "Normalized world_rect maps full tile including all context; do not map only building bounds. No extra crop, resize, camera rotation or coordinate shift.",
+    "transfer_budget": "Load by visit. Do not preload all five at startup. PNG masters are QA sources, not web downloads.",
+    "prompt_document": "src/section-two/assets/PROMPTS-NITIDEZ-V14.md",
+    "total_webp_bytes": 3182292
+  },
+  "tiles": [
+    {
+      "id": "puntoes",
+      "source_generated_png": "/Users/daviddavila/.codex/generated_images/01a0f467-7316-7563-bab6-d4fd09ed9786/exec-e11a60e8-d35f-400c-b218-1b457cf9de70.png",
+      "source_crop": {
+        "left": 346,
+        "top": 418,
+        "width": 300,
+        "height": 532
+      },
+      "world_rect_normalized": {
+        "left": 0.36769394261424015,
+        "top": 0.25,
+        "width": 0.3188097768331562,
+        "height": 0.3181818181818182
+      },
+      "native_width": 941,
+      "native_height": 1670,
+      "native_pixels_per_source_pixel": {
+        "x": 3.1366666666666667,
+        "y": 3.1390977443609023
+      },
+      "quality": 92,
+      "master": "review-section-two/city-source/v14-resolution-study/puntoes-detail-native-v14-trial.png",
+      "asset": "src/section-two/assets/puntoes-city-mobile-puntoes-detail-v14.webp",
+      "status": "Integrated with soft boundaries and gradual appearance. Base V13 retained.",
+      "master_bytes": 3178747,
+      "master_sha256": "e38c71beb743250dfe0245166423508c76d3e97bf3a9e3365de422986fd16ecc",
+      "asset_bytes": 591390,
+      "asset_sha256": "135aa0854130c96abe7dbd6b66d5be7a5db068f7b664888ad8251108789ff4d6",
+      "registration_summary": {
+        "inliers": 157,
+        "median_displacement_xy_source_px": [
+          0.0688018798828125,
+          -0.090850830078125
+        ],
+        "median_displacement_source_px": 0.3117583096027374,
+        "p95_displacement_source_px": 0.9627029895782471
+      },
+      "source_subject_box_local_px": [
+        58.99698999999998,
+        209.0,
+        239.99833999999998,
+        321.99376000000007
+      ]
+    },
+    {
+      "id": "bbva",
+      "source_crop": {
+        "left": 332,
+        "top": 70,
+        "width": 280,
+        "height": 496,
+        "units": "V13 source pixels, exact crop without resize"
+      },
+      "world_rect_normalized": {
+        "left": 0.3528161530286929,
+        "top": 0.041866028708133975,
+        "width": 0.2975557917109458,
+        "height": 0.2966507177033493
+      },
+      "native_width": 942,
+      "native_height": 1669,
+      "native_pixels_per_source_pixel": {
+        "x": 3.3642857142857143,
+        "y": 3.3649193548387095
+      },
+      "quality": 92,
+      "master": "review-section-two/city-source/v14-resolution-study/bbva-detail-native-v14-trial.png",
+      "master_bytes": 3334046,
+      "master_sha256": "d4c2fde525ec3bc045cfec306190edf0d1f62373b969c00b5598b3f915ad199a",
+      "asset": "src/section-two/assets/puntoes-city-mobile-bbva-detail-v14.webp",
+      "asset_bytes": 687164,
+      "asset_sha256": "e81e438fc65d667bcde4c2ffbcf8dde16aae2a8dbdd8931b7a3ed3f0305ace1b",
+      "status": "Integrated with soft boundaries and gradual appearance. Base V13 retained.",
+      "registration_summary": {
+        "inliers": 80,
+        "median_displacement_xy_source_px": [
+          0.12741851806640625,
+          -0.1340179443359375
+        ],
+        "median_displacement_source_px": 0.38235414028167725,
+        "p95_displacement_source_px": 0.7751471400260925
+      },
+      "source_subject_box_local_px": [
+        90.00085999999999,
+        173.99496000000002,
+        186.99914,
+        323.00359999999995
+      ]
+    },
+    {
+      "id": "naturgy",
+      "source_generated_png": "/Users/daviddavila/.codex/generated_images/01a0f467-7316-7563-bab6-d4fd09ed9786/exec-816d8e39-0580-47cf-82cb-ae9c5dede915.png",
+      "source_crop": {
+        "left": 297,
+        "top": 777,
+        "width": 280,
+        "height": 496
+      },
+      "world_rect_normalized": {
+        "left": 0.31562167906482463,
+        "top": 0.4647129186602871,
+        "width": 0.2975557917109458,
+        "height": 0.2966507177033493
+      },
+      "native_width": 942,
+      "native_height": 1669,
+      "native_pixels_per_source_pixel": {
+        "x": 3.3642857142857143,
+        "y": 3.3649193548387095
+      },
+      "quality": 92,
+      "master": "review-section-two/city-source/v14-resolution-study/naturgy-detail-native-v14-trial.png",
+      "asset": "src/section-two/assets/puntoes-city-mobile-naturgy-detail-v14.webp",
+      "status": "Integrated with soft boundaries and gradual appearance. Base V13 retained.",
+      "master_bytes": 3267242,
+      "master_sha256": "8d6fb5711e36fb2b5f5815d1a1124bb09a924f8de513c23982c232d05c5fa843",
+      "asset_bytes": 649394,
+      "asset_sha256": "cc4babe7f7e85b17e3c0023c86c1907c4d1747569799fd991849ad1e9360f87a",
+      "registration_summary": {
+        "inliers": 111,
+        "median_displacement_xy_source_px": [
+          0.291107177734375,
+          0.052032470703125
+        ],
+        "median_displacement_source_px": 0.43188726902008057,
+        "p95_displacement_source_px": 1.0264827013015747
+      },
+      "source_subject_box_local_px": [
+        73.99865999999997,
+        162.99840000000006,
+        206.00214,
+        332.00415999999996
+      ]
+    },
+    {
+      "id": "sabadell",
+      "source_generated_png": "/Users/daviddavila/.codex/generated_images/01a0f467-7316-7563-bab6-d4fd09ed9786/exec-dfdced74-0ad9-4cf6-af15-4d122ca02703.png",
+      "source_crop": {
+        "left": 72,
+        "top": 962,
+        "width": 280,
+        "height": 496
+      },
+      "world_rect_normalized": {
+        "left": 0.0765143464399575,
+        "top": 0.5753588516746412,
+        "width": 0.2975557917109458,
+        "height": 0.2966507177033493
+      },
+      "native_width": 943,
+      "native_height": 1668,
+      "native_pixels_per_source_pixel": {
+        "x": 3.367857142857143,
+        "y": 3.3629032258064515
+      },
+      "quality": 92,
+      "master": "review-section-two/city-source/v14-resolution-study/sabadell-detail-native-v14-trial.png",
+      "asset": "src/section-two/assets/puntoes-city-mobile-sabadell-detail-v14.webp",
+      "status": "Integrated with soft boundaries and gradual appearance. Base V13 retained.",
+      "master_bytes": 3265322,
+      "master_sha256": "fe75ebeb6c472ec1e2023295cd8efff7bf00e9e0b69b1b3da7b93ad4bf2cd2ba",
+      "asset_bytes": 636300,
+      "asset_sha256": "ec7b7d7b4a755ee041c862d66bb4ea12975cfcfe880f9b3fd8b2fa83359013f5",
+      "registration_summary": {
+        "inliers": 186,
+        "median_displacement_xy_source_px": [
+          0.17069625854492188,
+          0.1589202880859375
+        ],
+        "median_displacement_source_px": 0.4143625497817993,
+        "p95_displacement_source_px": 1.1486462354660034
+      },
+      "source_subject_box_local_px": [
+        61.998400000000004,
+        160.99880000000007,
+        217.99738000000002,
+        335.0038400000001
+      ]
+    },
+    {
+      "id": "collaborate",
+      "source_generated_png": "/Users/daviddavila/.codex/generated_images/01a0f467-7316-7563-bab6-d4fd09ed9786/exec-f782b844-73b0-48f6-a824-6e51f96a458b.png",
+      "source_crop": {
+        "left": 0,
+        "top": 0,
+        "width": 252,
+        "height": 448
+      },
+      "world_rect_normalized": {
+        "left": 0,
+        "top": 0,
+        "width": 0.2678002125398512,
+        "height": 0.2679425837320574
+      },
+      "native_width": 941,
+      "native_height": 1672,
+      "native_pixels_per_source_pixel": {
+        "x": 3.734126984126984,
+        "y": 3.732142857142857
+      },
+      "quality": 92,
+      "master": "review-section-two/city-source/v14-resolution-study/collaborate-detail-native-v14-trial.png",
+      "asset": "src/section-two/assets/puntoes-city-mobile-collaborate-detail-v14.webp",
+      "status": "Integrated with soft boundaries and gradual appearance. Base V13 retained.",
+      "master_bytes": 3200061,
+      "master_sha256": "8a462581896b981461cc68baa5aaa0380d088e1e3c7d3b6ef3c820991049bd94",
+      "asset_bytes": 618044,
+      "asset_sha256": "efbe283915dbc13900e48eb915a2a3e6d87a54f860d85fcbe9b4f08bc8e802ce",
+      "registration_summary": {
+        "inliers": 223,
+        "median_displacement_xy_source_px": [
+          0.1222381591796875,
+          0.0029144287109375
+        ],
+        "median_displacement_source_px": 0.3005092740058899,
+        "p95_displacement_source_px": 0.9304870963096619
+      },
+      "source_subject_box_local_px": [
+        40.00191,
+        90.00376,
+        177.99956,
+        237.99248
+      ]
+    }
+  ]
+}

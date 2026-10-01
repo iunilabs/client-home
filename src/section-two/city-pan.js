@@ -43,10 +43,45 @@ export function createCityTouchGesture() {
   return {start, move, end, reset() {gesture = null}, get mode() {return gesture?.mode ?? 'idle'}};
 }
 
+// Logo navigation uses elapsed time, not a per-frame lerp. Start and arrival
+// have zero velocity/acceleration, and even a long trip finishes promptly.
+export function createCityPanMotion() {
+  const position = {x: 0, y: 0};
+  let trip = null;
+  return {
+    position,
+    moveTo(x, y) {trip = null; position.x = x; position.y = y},
+    reveal(x, y, now) {
+      if (trip && Math.hypot(x - trip.to.x, y - trip.to.y) < .5) return;
+      const distance = Math.hypot(x - position.x, y - position.y);
+      if (distance < .5) {this.moveTo(x, y); return}
+      trip = {from: {...position}, to: {x, y}, start: now,
+        duration: Math.min(1200, 650 + distance * .6)};
+    },
+    update(now) {
+      if (!trip) return position;
+      const t = Math.max(0, Math.min(1, (now - trip.start) / trip.duration));
+      const eased = t * t * t * (10 + t * (-15 + 6 * t));
+      position.x = trip.from.x + (trip.to.x - trip.from.x) * eased;
+      position.y = trip.from.y + (trip.to.y - trip.from.y) * eased;
+      if (t === 1) {position.x = trip.to.x; position.y = trip.to.y; trip = null}
+      return position;
+    },
+    constrain(bounds) {
+      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+      for (const point of [position, ...(trip ? [trip.to] : [])]) {
+        point.x = clamp(point.x, bounds.minX, bounds.maxX);
+        point.y = clamp(point.y, bounds.minY, bounds.maxY);
+      }
+    },
+    stop() {trip = null},
+  };
+}
+
 export function createCityPan(section) {
   const surface = section.querySelector('.city-drag-surface');
   const frame = section.querySelector('.trust-frame');
-  const position = {x: 0, y: 0};
+  const motion = createCityPanMotion(), position = motion.position;
   const touch = createCityTouchGesture();
   const listeners = new AbortController();
   let drag = null, enabled = false, suppressClickUntil = 0;
@@ -54,8 +89,7 @@ export function createCityPan(section) {
   let dimensions = '', originX = .52, originY = .48;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   function moveTo(x, y) {
-    position.x = clamp(x, bounds.minX, bounds.maxX);
-    position.y = clamp(y, bounds.minY, bounds.maxY);
+    motion.moveTo(clamp(x, bounds.minX, bounds.maxX), clamp(y, bounds.minY, bounds.maxY));
   }
   function release() {
     const id = drag?.id;
@@ -68,6 +102,7 @@ export function createCityPan(section) {
 
   on(surface, 'pointerdown', event => {
     if (!enabled || event.button !== 0 || event.pointerType === 'touch') return;
+    motion.stop();
     drag = {id: event.pointerId, x: event.clientX, y: event.clientY, start: {...position}};
     surface.setPointerCapture(event.pointerId);
     frame.classList.add('is-dragging');
@@ -92,6 +127,7 @@ export function createCityPan(section) {
     .map(point => ({id: point.identifier, x: point.clientX, y: point.clientY}));
   on(frame, 'touchstart', event => {
     if (!enabled || !event.target.closest('.city-drag-surface, .city-pin')) return;
+    motion.stop();
     if (touch.mode === 'idle') suppressClickUntil = 0;
     if (touch.start(points(event), position)) {
       event.preventDefault();
@@ -120,9 +156,10 @@ export function createCityPan(section) {
       event.stopPropagation();
     }
   }, {capture: true});
-  on(window, 'blur', release);
-  on(window, 'resize', release);
-  on(document, 'visibilitychange', () => {if (document.hidden) release()});
+  const interrupt = () => {motion.stop(); release()};
+  on(window, 'blur', interrupt);
+  on(window, 'resize', interrupt);
+  on(document, 'visibilitychange', () => {if (document.hidden) interrupt()});
 
   return {
     update(world, zoom, reduced, active = true, reserve = 0) {
@@ -137,8 +174,13 @@ export function createCityPan(section) {
       enabled = active && !reduced;
       surface.inert = !enabled;
       if (!enabled) release();
-      if (reduced) {position.x = 0; position.y = 0}
-      else moveTo(position.x, position.y);
+      if (reduced) motion.moveTo(0, 0);
+      else {
+        // A case dialog disables dragging but does not interrupt the trip
+        // already requested by its logo. No independent RAF/timer is needed.
+        motion.update(performance.now());
+        motion.constrain(bounds);
+      }
       return position;
     },
     reveal(rect) {
@@ -146,9 +188,10 @@ export function createCityPan(section) {
       const right = document.documentElement.clientWidth - 28, bottom = innerHeight - 128;
       const dx = rect.left < 28 ? 28 - rect.left : rect.right > right ? right - rect.right : 0;
       const dy = rect.top < 90 ? 90 - rect.top : rect.bottom > bottom ? bottom - rect.bottom : 0;
-      moveTo(position.x + dx, position.y + dy);
+      motion.reveal(clamp(position.x + dx, bounds.minX, bounds.maxX),
+        clamp(position.y + dy, bounds.minY, bounds.maxY), performance.now());
     },
-    dispose() {release(); listeners.abort()},
+    dispose() {interrupt(); listeners.abort()},
     get isDragging() {return Boolean(drag) || touch.mode === 'map'},
   };
 }

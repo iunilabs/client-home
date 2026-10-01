@@ -8,22 +8,21 @@ export function createMobileTourDeck(section, route, clients) {
   deck.className = 'city-tour-deck';
   deck.setAttribute('role', 'region');
   deck.setAttribute('aria-label', 'Recorrido por nuestros clientes');
-  const cards = route.map((stop, index) => {
-    const client = clients.find(item => item.id === stop.id);
-    if (!client) throw new Error(`Unknown mobile tour client: ${stop.id}`);
+  const cards = clients.map(client => {
+    const index = route.findIndex(stop => stop.id === client.id);
     const invitation = Boolean(client.invitation);
-    const story = invitation ? collaborationStory : getCaseStudy(stop.id);
+    const story = invitation ? collaborationStory : getCaseStudy(client.id);
     const card = document.createElement('article');
     card.className = 'city-tour-card';
-    card.dataset.client = stop.id;
-    card.style.zIndex = index + 1;
-    card.setAttribute('aria-labelledby', `tour-client-${stop.id}`);
+    card.dataset.client = client.id;
+    card.id = `tour-card-${client.id}`;
+    card.setAttribute('aria-labelledby', `tour-client-${client.id}`);
     card.innerHTML = '<div class="tour-card-brand"><img alt="" /><span class="tour-card-count"></span></div><h3 class="tour-card-client"></h3><h4 class="tour-card-heading"></h4><p class="tour-card-intro"></p>';
-    card.querySelector('.tour-card-client').id = `tour-client-${stop.id}`;
+    card.querySelector('.tour-card-client').id = `tour-client-${client.id}`;
     card.querySelector('.tour-card-client').textContent = client.name;
     card.querySelector('.tour-card-heading').textContent = story.title;
     card.querySelector('.tour-card-intro').textContent = story.intro;
-    card.querySelector('.tour-card-count').textContent = `${String(index + 1).padStart(2, '0')} / ${String(route.length).padStart(2, '0')}`;
+    card.querySelector('.tour-card-count').textContent = index < 0 ? 'Cliente' : `${String(index + 1).padStart(2, '0')} / ${String(route.length).padStart(2, '0')}`;
     const logo = card.querySelector('img');
     if (invitation) logo.hidden = true;
     else {logo.dataset.src = client.image; logo.alt = client.name; logo.decoding = 'async';}
@@ -52,26 +51,35 @@ export function createMobileTourDeck(section, route, clients) {
     return card;
   });
   section.querySelector('.trust-frame').append(deck);
-  let previousIndex = -1;
+  let previousClient = null;
   return {
     load() {for (const logo of deck.querySelectorAll('img[data-src]')) if (!logo.src) logo.src = logo.dataset.src;},
-    update(state, enabled) {
-      const showing = enabled && state.active && state.stopIndex >= 0;
+    update(state, enabled, {order, entry, retreat = 1}) {
+      const showing = enabled && state.active && order.length > 0 && retreat > .03;
+      deck.style.opacity = retreat;
+      deck.style.transform = `translateY(${(1 - retreat) * 36}px)`;
       deck.inert = !showing;
       deck.setAttribute('aria-hidden', String(!showing));
-      if (state.stopIndex !== previousIndex) {
+      if (entry?.id !== previousClient) {
         for (const details of deck.querySelectorAll('details[open]')) details.open = false;
-        previousIndex = state.stopIndex;
+        previousClient = entry?.id;
       }
-      const readable = state.cardProgress > .9 ? state.stopIndex : state.stopIndex - 1;
-      for (const [index, card] of cards.entries()) {
-        const stack = mobileCardStack(index, state);
-        const visible = showing && stack.incoming > 0 && !stack.buried;
+      const incomingIndex = order.indexOf(entry?.id);
+      const readable = entry?.progress > .9 ? entry.id : order.at(incomingIndex < 0 ? -1 : -2);
+      for (const card of cards) {
+        const index = order.indexOf(card.dataset.client);
+        const stack = mobileCardStack(index, {stopIndex: incomingIndex < 0 ? order.length : incomingIndex, cardProgress: entry?.progress ?? 0});
+        const visible = showing && index >= 0 && stack.incoming > 0 && !stack.buried;
+        const fade = card.dataset.client === entry?.id && entry.mode === 'fade';
+        card.style.zIndex = index + 1;
         card.style.visibility = visible ? 'visible' : 'hidden';
-        card.style.transform = `translate3d(${stack.offsetX}px,calc(${(1 - stack.incoming) * 100}% + ${(1 - stack.incoming) * 64 + stack.offsetY}px),0) rotate(${stack.rotation}deg) scale(${stack.scale})`;
-        card.inert = !visible || index !== readable;
+        card.style.opacity = fade ? stack.incoming : 1;
+        card.dataset.entrance = fade ? 'fade' : 'slide';
+        card.style.transform = fade ? `translate3d(${stack.offsetX}px,${(1 - stack.incoming) * 4 + stack.offsetY}px,0) rotate(${stack.rotation}deg) scale(${stack.scale})` :
+          `translate3d(${stack.offsetX}px,calc(${(1 - stack.incoming) * 100}% + ${(1 - stack.incoming) * 64 + stack.offsetY}px),0) rotate(${stack.rotation}deg) scale(${stack.scale})`;
+        card.inert = !visible || card.dataset.client !== readable;
         card.setAttribute('aria-hidden', String(card.inert));
-        card.classList.toggle('is-current', index === readable);
+        card.classList.toggle('is-current', card.dataset.client === readable);
       }
     },
     hide() {deck.inert = true; deck.setAttribute('aria-hidden', 'true');},

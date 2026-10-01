@@ -1,9 +1,48 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cityPanBounds, createCityTouchGesture} from '../src/section-two/city-pan.js';
+import {cityPanBounds, createCityTouchGesture, createCityPanMotion} from '../src/section-two/city-pan.js';
 import {cityExtent} from '../src/section-two/city-extent.js';
 
 const finger = (x, y, id = 1) => ({x, y, id});
+
+test('logo travel is gradual, bounded and identical at different frame rates', () => {
+  const regular = createCityPanMotion(), sparse = createCityPanMotion();
+  regular.reveal(400, -200, 1000); sparse.reveal(400, -200, 1000);
+  assert.deepEqual(regular.position, {x: 0, y: 0});
+  let prior = 0;
+  for (let now = 1000; now <= 1600; now += 10) {
+    const p = regular.update(now);
+    assert.ok(p.x >= prior && p.x < 400 && p.y > -200 && p.y <= 0);
+    prior = p.x;
+  }
+  assert.deepEqual(sparse.update(1600), regular.position);
+  assert.ok(regular.position.x > 0 && regular.position.x < 400);
+  assert.deepEqual(regular.update(2300), {x: 400, y: -200});
+});
+
+test('repeated hover does not restart travel and changing logos starts from the visible position', () => {
+  const motion = createCityPanMotion();
+  motion.reveal(400, 200, 1000);
+  motion.update(1400);
+  const visible = {...motion.position};
+  motion.reveal(400, 200, 1400);
+  assert.deepEqual(motion.update(2300), {x: 400, y: 200});
+  motion.moveTo(visible.x, visible.y);
+  motion.reveal(-100, -80, 2500);
+  assert.deepEqual(motion.update(2500), visible);
+  assert.deepEqual(motion.update(3800), {x: -100, y: -80});
+});
+
+test('manual drag interrupts logo travel and limits never expose artwork edges', () => {
+  const motion = createCityPanMotion();
+  motion.reveal(800, -400, 0);
+  motion.constrain({minX: -150, maxX: 150, minY: -100, maxY: 100});
+  assert.deepEqual(motion.update(1300), {x: 150, y: -100});
+  motion.reveal(-150, 100, 1500);
+  motion.update(1700);
+  motion.moveTo(40, 25);
+  assert.deepEqual(motion.update(3000), {x: 40, y: 25});
+});
 
 test('a horizontal start can continue in both axes and reverse without scrolling', () => {
   const gesture = createCityTouchGesture(), position = {x: 12, y: -8};

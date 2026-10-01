@@ -2,7 +2,7 @@ import {clamp, mix, smooth} from '../timeline.js';
 import {mobileTourRoute, mobileTourHub, mobileTourTiming} from './mobile-tour-config.js';
 
 // Zero velocity and acceleration at both ends: depart gently, accelerate,
-// then brake into the building before bringing in its card. Scroll is reversible.
+// then brake into the building. Its card starts entering during the journey.
 export function tourEase(value) {
   const t = clamp(value);
   return t * t * t * (t * (6 * t - 15) + 10);
@@ -25,7 +25,7 @@ export function mobileTourState({scroll, geometry, route = mobileTourRoute}) {
   const phase = stopIndex < 0 ? 0 : clamp(travelDistance / mobileTourTiming.stop - stopIndex);
   const exit = clamp((scroll - end) / viewport);
   const opacity = exit < 1 ? smooth(start, fadeEnd, scroll) : 0;
-  return {stopIndex, phase, previous: stopIndex <= 0 ? mobileTourHub : route[stopIndex - 1],
+  return {stopIndex, phase, introDistance: distance, previous: stopIndex <= 0 ? mobileTourHub : route[stopIndex - 1],
     current: stopIndex < 0 ? mobileTourHub : route[stopIndex],
     entrance: tourEase((scroll - start) / (fadeEnd - start)),
     travel: tourEase(phase / mobileTourTiming.travelUntil),
@@ -36,27 +36,37 @@ export function mobileTourState({scroll, geometry, route = mobileTourRoute}) {
     revealed: opacity >= .999, mode: 'tour'};
 }
 
-export function mobileTourCamera(state, {width, height, viewportWidth, viewportHeight}) {
+export function mobileBuildingView(stop, {width, height, viewportWidth, viewportHeight}, hub = false) {
   const fit = (stop, hub = false) => Math.max(1.5, Math.min(
     viewportWidth * (hub ? .98 : .9) / (width * stop.size[0] / 100),
-    viewportHeight * (hub ? .68 : .40) / (height * stop.size[1] / 100)));
-  const hubZoom = fit(mobileTourHub, true);
+    viewportHeight * (hub ? .68 : .34) / (height * stop.size[1] / 100)));
+  return {zoom: fit(stop, hub), focusX: stop.center[0] / 100, focusY: stop.center[1] / 100,
+    targetY: viewportHeight * (hub ? .48 : .26)};
+}
+
+export function mobileCameraAt(view, {width, height, viewportWidth, viewportHeight}) {
+  const {zoom, focusX, focusY, targetY} = view;
+  // Clamp the actual photo edges, including a little overlap for sensor tilt.
+  const reserve = Math.min(viewportWidth, viewportHeight) * .025;
+  const left = clamp(viewportWidth / 2 - focusX * width * zoom, viewportWidth - width * zoom + reserve, -reserve);
+  const top = clamp(targetY - focusY * height * zoom, viewportHeight - height * zoom + reserve, -reserve);
+  return {...view,
+    x: left - viewportWidth / 2 + width * .5 + focusX * width * (zoom - 1),
+    y: top - viewportHeight / 2 + height * .5 + focusY * height * (zoom - 1), left, top};
+}
+
+export function mobileTourCamera(state, layout) {
+  const {viewportHeight} = layout;
+  const hubZoom = mobileBuildingView(mobileTourHub, layout, true).zoom;
   const intro = state.stopIndex < 0;
   const from = state.previous, to = state.current;
   const t = intro ? state.entrance : state.travel;
   const focusX = intro ? mix(.56, mobileTourHub.center[0] / 100, t) : mix(from.center[0], to.center[0], t) / 100;
   const focusY = intro ? mix(.43, mobileTourHub.center[1] / 100, t) : mix(from.center[1], to.center[1], t) / 100;
   const zoom = intro ? mix(1.5, hubZoom, t) :
-    mix(fit(from, state.stopIndex === 0), fit(to), t) * (1 - .16 * Math.sin(Math.PI * t) ** 2);
-  const targetY = viewportHeight * (intro ? .48 : mix(state.stopIndex === 0 ? .48 : .29, .29, t));
-  // Clamp the actual photo edges, including a little overlap for sensor tilt.
-  const reserve = Math.min(viewportWidth, viewportHeight) * .025;
-  const left = clamp(viewportWidth / 2 - focusX * width * zoom, viewportWidth - width * zoom + reserve, -reserve);
-  const top = clamp(targetY - focusY * height * zoom, viewportHeight - height * zoom + reserve, -reserve);
-  return {zoom, focusX, focusY,
-    x: left - viewportWidth / 2 + width * .5 + focusX * width * (zoom - 1),
-    y: top - viewportHeight / 2 + height * .5 + focusY * height * (zoom - 1),
-    left, top};
+    mix(mobileBuildingView(from, layout, state.stopIndex === 0).zoom, mobileBuildingView(to, layout).zoom, t) * (1 - .16 * Math.sin(Math.PI * t) ** 2);
+  const targetY = viewportHeight * (intro ? .48 : mix(state.stopIndex === 0 ? .48 : .26, .26, t));
+  return mobileCameraAt({zoom, focusX, focusY, targetY}, layout);
 }
 
 export function mobileCardStack(index, state) {
