@@ -75,7 +75,19 @@ function phase(value, corridor, delay) {
   return value-delay*4*t*(1-t);
 }
 
-export function createHumanPregrasp(hand,thumbReference) {
+// The compass has its own absolute joint excursion. A scalar correction of
+// the old track would inherit its reaction/closure at570. These local targets
+// instead extend from the accepted440 articulation, then rejoin at630.
+export const compassExtension = {
+  blendStart:.43,start:.44,peak:.58,end:.63,
+  // Keep the MCP arc contained: PIP/DIP unfurl without sending the long
+  // middle finger into the compass arc under the extreme camera orbit.
+  flex:[[-.012,-.055,-.045],[-.03,-.24,-.095],[.06,-.30,-.085],[0,-.38,-.20],[-.10,-.43,-.20]],
+  opposition:.02,
+  middleKnuckle:curve([.44,.465,.48,.515,.525,.54,.56,.63],[0,.18,.22,.22,.19,.10,0,0]),
+};
+
+export function createHumanPregrasp(hand,thumbReference,jointQuaternion) {
   const roles=['thumb','index','middle','ring','pinky'],q=new THREE.Quaternion();
   const entries=roles.flatMap((role,finger)=>[1,2,3].map(joint=>{
     const name=THREE.PropertyBinding.sanitizeNodeName(`DEF-${role==='thumb'?'thumb':`f_${role}`}.${String(joint).padStart(2,'0')}.L`);
@@ -111,6 +123,15 @@ export function createHumanPregrasp(hand,thumbReference) {
   hand.root.updateMatrixWorld(true);
   const mcp=finger=>wrist.worldToLocal(entries.find(e=>e.finger===finger&&e.joint===1).bone.getWorldPosition(new THREE.Vector3()));
   const wristAxis=mcp(1).sub(mcp(4)).normalize();
+  const compass=pregraspCorridors.find(c=>c.name==='compass');
+  function publishedJoint(value,{bone,axis,finger,joint}){
+    const result=jointQuaternion(value,bone.name);
+    const delay=compass.lag[finger]+(joint-1)*.0025;
+    result.multiply(q.setFromAxisAngle(axis,sampleGestureCurve(compass.flex[finger][joint-1],phase(value,compass,delay))));
+    if(finger===0&&joint===1)result.multiply(q.setFromAxisAngle(oppositionAxis,sampleGestureCurve(compass.opposition,phase(value,compass,compass.lag[0]))));
+    return result;
+  }
+  const compassAnchors=entries.map(entry=>publishedJoint(compassExtension.start,entry));
   let last={active:false};
   return {apply(ratio){
     const c=pregraspCorridors.find(c=>ratio>c.start&&ratio<c.end);
@@ -127,7 +148,27 @@ export function createHumanPregrasp(hand,thumbReference) {
     thumb.bone.quaternion.multiply(q.setFromAxisAngle(oppositionAxis,opposition));
     const wristAngle=sampleGestureCurve(c.wrist,phase(ratio,c,-.010));
     wrist.quaternion.multiply(q.setFromAxisAngle(wristAxis,wristAngle));
+    let extension=null;
+    if(c.name==='compass'&&ratio>compassExtension.blendStart){
+      const amount=smooth(compassExtension.start,compassExtension.peak,ratio);
+      const weight=smooth(compassExtension.blendStart,compassExtension.start,ratio)*(1-smooth(compassExtension.peak,compassExtension.end,ratio));
+      const flex={};
+      entries.forEach((entry,i)=>{
+        const {bone,axis,finger,joint}=entry;
+        // Small joint-specific timing differences still reach the same end.
+        const timing=amount+Math.sin(Math.PI*amount)*([.025,.015,0,-.025,-.04][finger]-(joint-1)*.015);
+        // The middle MCP retains a small cup while its PIP/DIP unfold. The
+        // cup releases as the compass leaves; it never closes the distal arc.
+        const angle=compassExtension.flex[finger][joint-1]*timing+(finger===2&&joint===1?sampleGestureCurve(compassExtension.middleKnuckle,ratio):0);
+        const target=compassAnchors[i].clone().multiply(q.setFromAxisAngle(axis,angle));
+        if(finger===0&&joint===1)target.multiply(q.setFromAxisAngle(oppositionAxis,compassExtension.opposition*amount));
+        // Retain the existing tiny idle articulation around the authored pose.
+        const idle=publishedJoint(ratio,entry).invert().multiply(bone.quaternion);
+        bone.quaternion.slerp(target.multiply(idle),weight);flex[bone.name]=angle;
+      });
+      extension={amount,weight,flex};
+    }
     hand.root.updateMatrixWorld(true);
-    last={active:true,corridor:c.name,angles,opposition,wrist:wristAngle,cmcWeight,thumbAxes:{opposition:oppositionAxis.toArray(),long:longAxis.toArray(),flexion:thumb.axis.toArray()}};
+    last={active:true,corridor:c.name,angles,opposition,wrist:wristAngle,cmcWeight,extension,thumbAxes:{opposition:oppositionAxis.toArray(),long:longAxis.toArray(),flexion:thumb.axis.toArray()}};
   },getState:()=>last};
 }

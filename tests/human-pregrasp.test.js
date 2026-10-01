@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {pregraspCorridors,sampleGestureCurve} from '../src/human-pregrasp.js';
+import {pregraspCorridors,compassExtension,sampleGestureCurve} from '../src/human-pregrasp.js';
 
-const curves=pregraspCorridors.flatMap(c=>[...c.flex.flat(),c.opposition,c.wrist]);
+const curves=[...pregraspCorridors.flatMap(c=>[...c.flex.flat(),c.opposition,c.wrist]),compassExtension.middleKnuckle];
 
 test('pregrasp curves return to the locked pose and never exceed authored ranges',()=>{
  for(const curve of curves){

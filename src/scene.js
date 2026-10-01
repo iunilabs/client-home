@@ -64,7 +64,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
  const fingerFrames=wrenchHandFrames.map(({at,curls,flexions,spreads,opposition,wrist})=>({...choreography(at*5,0,true,at),at,curls,flexions,spreads,opposition,wrist,tip:undefined}));
  const humanTrack=createPoseTrack(human,humanFrames,{start:.75,end:.9,frames:fingerFrames}),aiTrack=createPoseTrack(ai,aiFrames);
  const mobileCompassGesture=createMobileCompassGesture(human);
- const humanPregrasp=createHumanPregrasp(human,humanTrack.jointQuaternion(.25,'DEF-thumb01L'));
+ const humanPregrasp=createHumanPregrasp(human,humanTrack.jointQuaternion(.25,'DEF-thumb01L'),humanTrack.jointQuaternion);
  const tools=await createToolSequence(scene,{deferred:!handFactory}),reveal=createIntroReveal(human),humanFalloff=createHandFalloff(human),aiFalloff=createHandFalloff(ai);
  const target=new THREE.Vector3(),look=new THREE.Vector3(),view=new THREE.Vector3(),right=new THREE.Vector3(),up=new THREE.Vector3(0,1,0),zAxis=new THREE.Vector3(0,0,1),tiltQuaternion=new THREE.Quaternion();
  function portraitFraming(){return innerWidth<700||innerWidth/innerHeight<1}
