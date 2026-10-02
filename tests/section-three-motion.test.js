@@ -7,9 +7,10 @@ test('paper entrances retain their pixel anchors and finish before grouping on e
   for (const range of [1794, 2944, 3882.4, 4600]) {
     const t = paperTiming(range);
     assert.ok(Math.abs(t.first * range - 80) < .001);
-    assert.ok(Math.abs(t.several * range - 500) < .001);
-    // The next batch can begin while the first card finishes settling.
-    assert.ok(t.first + t.firstDuration * .7 < t.several);
+    assert.ok(Math.abs(t.several * range - 350) < .001);
+    // The first fall leads the next batch; their animations can overlap.
+    assert.ok(t.first < t.several);
+    assert.ok(t.first + t.firstDuration < t.group);
     assert.ok(t.several + t.severalSpread + t.severalDuration < t.many + t.manySpread);
     assert.ok(t.many + t.manySpread + t.manyDuration < t.group);
     assert.ok(t.group < t.grouped && t.grouped < 1);

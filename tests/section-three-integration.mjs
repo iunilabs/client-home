@@ -36,7 +36,7 @@ try {
   assert.equal((await state()).paper.firstSubject, 'Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.');
   assert.equal((await state()).paper.firstEntryPixels, 80);
   await page.screenshot({path: output + '02-first-paper-desktop.png'});
-  for (const [pixels, count] of [[79, 0], [81, 1], [499, 1], [501, 3]]) {
+  for (const [pixels, count] of [[79, 0], [81, 1], [349, 1], [351, 3]]) {
     const range = (await state()).paper.scrollRange;
     await paperProgress(pixels / range);
     await page.waitForTimeout(900);
@@ -46,7 +46,7 @@ try {
   const density = (await state()).paper;
   assert.equal(density.contentCount, 47); assert.equal(density.totalItems, 47);
   assert.equal(density.glass, 0); assert.equal(density.depthOfField, false);
-  assert.equal(density.secondEntryPixels, 500);
+  assert.equal(density.secondEntryPixels, 350);
   assert.ok(density.lastFallEndPixels < density.groupingPixels, 'all falls finish before grouping');
   assert.equal(density.visibleItems, 47);
   await paperProgress(.95); const grouped = (await state()).paper;
