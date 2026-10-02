@@ -102,16 +102,17 @@ export function surfaceTexture(kind, variant = 0, resolution = 1024, content = n
   if (kind === 'note') {
     const adhesive = ctx.createLinearGradient(0, 0, 0, 145); adhesive.addColorStop(0, '#89b0c015'); adhesive.addColorStop(1, '#89b0c000');
     ctx.fillStyle = adhesive; ctx.fillRect(0, 0, w, 145);
-    line(ctx, variant === 0 ? 'BLOQUEADO' : 'PARA REVISAR', 95, 180, 28, '#6b8ba0', 500);
+    line(ctx, variant === 0 ? 'BLOQUEADO' : 'PARA REVISAR', 95, 180, 40, '#6b8ba0', 500);
     const phrases = noteContent[variant] ?? ['Revisar', `el punto ${variant + 1}.`]; subject = phrases.join(' ');
     textBlock(ctx, phrases.join('\n'), {x: 92, y: 285, width: 840, height: 330, maxSize: 132, minSize: 80, family: 'DM Serif', color: '#35637b'});
     ctx.strokeStyle = '#658da388'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(97, 650); ctx.bezierCurveTo(320, 636, 620, 660, 920, 644); ctx.stroke();
-    textBlock(ctx, variant === 0 ? 'El cliente vuelve a preguntar.' : `Nota ${String(variant + 1).padStart(2, '0')} · Por confirmar`, {x: 97, y: 735, width: 830, height: 105, maxSize: 38, minSize: 28, color: '#64879b', maxLines: 2});
-    ctx.fillStyle = '#76a7c0'; ctx.beginPath(); ctx.arc(113, 893, 6, 0, Math.PI * 2); ctx.fill();
-    line(ctx, `Equipo · 09:${String(14 + variant).padStart(2, '0')}`, 139, 903, 28, '#7392a4');
+    textBlock(ctx, variant === 0 ? 'El cliente vuelve a preguntar.' : `Nota ${String(variant + 1).padStart(2, '0')} · Por confirmar`, {x: 97, y: 715, width: 830, height: 125, maxSize: 53, minSize: 39, color: '#64879b', maxLines: 2});
+    ctx.fillStyle = '#76a7c0'; ctx.beginPath(); ctx.arc(113, 893, 9, 0, Math.PI * 2); ctx.fill();
+    line(ctx, `Equipo · 09:${String(14 + variant).padStart(2, '0')}`, 146, 907, 40, '#7392a4');
   } else if (kind === 'letter') {
-    icon(ctx, 'email', 90, 102, 88); line(ctx, 'HOY · 09:14', 748, 123, 24, '#91a4b3', 500);
-    textBlock(ctx, ['De: Dirección financiera','De: Equipo de operaciones','De: Coordinación de proyecto','De: Área de gestión'][variant % 4], {x: 95, y: 225, width: 832, height: 52, maxSize: 34, minSize: 26, color: '#6b869a', maxLines: 1});
+    icon(ctx, 'email', 90, 80, 124);
+    textBlock(ctx, 'HOY · 09:14', {x: 637, y: 102, width: 290, height: 48, maxSize: 34, minSize: 30, color: '#91a4b3', weight: 500, maxLines: 1, align: 'right'});
+    textBlock(ctx, ['De: Dirección financiera','De: Equipo de operaciones','De: Coordinación de proyecto','De: Área de gestión'][variant % 4], {x: 95, y: 217, width: 832, height: 64, maxSize: 48, minSize: 36, color: '#6b869a', maxLines: 1});
     subject = letterContent[variant] ?? `Revisión del expediente ${variant + 1}`;
     textBlock(ctx, subject, {x: 95, y: 313, width: 832, height: 148, maxSize: 86, minSize: 48, weight: 600, maxLines: 2});
     ctx.strokeStyle = '#ccdce740'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(95, 483); ctx.lineTo(927, 483); ctx.stroke();
@@ -119,27 +120,27 @@ export function surfaceTexture(kind, variant = 0, resolution = 1024, content = n
     textBlock(ctx, ['Adjunto la propuesta para su revisión.','Comparto los cambios para validarlos.','Remito el documento actualizado.','Necesitamos confirmar los siguientes pasos.'][variant % 4], {x: 95, y: 580, width: 832, height: 92, maxSize: 44, minSize: 32, color: '#3d5667', maxLines: 2});
     textBlock(ctx, ['Quedamos a la espera de los comentarios.','¿Podemos revisarlo durante esta semana?','La última versión incluye las observaciones.','Quedo pendiente de vuestra respuesta.'][variant % 4], {x: 95, y: 704, width: 832, height: 92, maxSize: 44, minSize: 32, color: '#3d5667', maxLines: 2});
     line(ctx, 'Un saludo.', 95, 867, 40, '#3d5667');
-    rounded(ctx, 93, 957, 834, 84, 12); ctx.fillStyle = '#eaf2f8'; ctx.fill();
-    icon(ctx, 'document', 115, 976, 44);
-    textBlock(ctx, ['Propuesta.pdf','Detalle_operación.pdf','Borrador_v02.pdf','Resumen_solicitud.pdf','Proyecto.pdf','Documentación.pdf','Seguimiento.pdf'][variant % 7], {x: 181, y: 974, width: 715, height: 49, maxSize: 32, minSize: 24, color: '#5b7b91', maxLines: 1});
-    line(ctx, '1 archivo adjunto', 95, 1110, 25, '#94a8b7');
+    rounded(ctx, 93, 949, 834, 100, 14); ctx.fillStyle = '#eaf2f8'; ctx.fill();
+    icon(ctx, 'document', 115, 968, 62);
+    textBlock(ctx, ['Propuesta.pdf','Detalle_operación.pdf','Borrador_v02.pdf','Resumen_solicitud.pdf','Proyecto.pdf','Documentación.pdf','Seguimiento.pdf'][variant % 7], {x: 204, y: 969, width: 692, height: 60, maxSize: 45, minSize: 34, color: '#5b7b91', maxLines: 1});
+    line(ctx, '1 archivo adjunto', 95, 1110, 35, '#94a8b7');
   } else {
-    icon(ctx, kind, 60, 58, 73);
+    icon(ctx, kind, 60, 46, 102);
     const titles = { email: 'Correo', chat: 'Mensaje interno', ticket: 'Incidencia', document: 'Documento', task: 'Solicitud' };
-    textBlock(ctx, titles[kind], {x: 160, y: 58, width: 640, height: 48, maxSize: 36, minSize: 28, color: '#446c88', weight: 500, maxLines: 1});
-    textBlock(ctx, ['09:14', '10:26', '09:42'][variant % 3], {x: 824, y: 59, width: 132, height: 45, maxSize: 27, minSize: 22, color: '#91a9ba', maxLines: 1, align: 'right'});
+    textBlock(ctx, titles[kind], {x: 190, y: 54, width: 570, height: 66, maxSize: 50, minSize: 39, color: '#446c88', weight: 500, maxLines: 1});
+    textBlock(ctx, ['09:14', '10:26', '09:42'][variant % 3], {x: 784, y: 56, width: 172, height: 62, maxSize: 38, minSize: 31, color: '#91a9ba', maxLines: 1, align: 'right'});
     subject = content?.message ?? channelContent[kind][variant] ?? `${titles[kind]} ${variant + 1}`;
     const secondary = kind === 'document' ? `${(1.2 + variant * .3).toFixed(1).replace('.', ',')} MB · Versión ${String(variant + 1).padStart(2, '0')}` : ['Pendiente de revisión', 'Compartido con el equipo', 'Esperando confirmación', 'Recibido esta mañana', 'En curso'][variant % 5];
     textBlock(ctx, subject, {x: 62, y: 163, width: 894, height: 230, maxSize: 96, minSize: 40, weight: 500});
-    if (!content) textBlock(ctx, secondary, {x: 62, y: 415, width: 894, height: 36, maxSize: 32, minSize: 24, color: '#567082', maxLines: 1});
+    if (!content) textBlock(ctx, secondary, {x: 62, y: 402, width: 894, height: 52, maxSize: 45, minSize: 34, color: '#567082', maxLines: 1});
     ctx.strokeStyle = '#d8e5ee'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(62, 470); ctx.lineTo(956, 470); ctx.stroke();
     const status = content?.status ?? (kind === 'document' ? 'PDF' : kind === 'ticket' ? 'Abierta' : 'Pendiente');
-    ctx.font = '500 32px "Manrope", Arial';
-    const statusWidth = Math.min(430, Math.max(170, ctx.measureText(status).width + 48));
-    ctx.fillStyle = `${palette[kind]}14`; rounded(ctx, 60, 497, statusWidth, 76, 10); ctx.fill();
-    textBlock(ctx, status, {x: 82, y: 510, width: statusWidth - 44, height: 48, maxSize: 32, minSize: 24, color: palette[kind], weight: 500, maxLines: 1});
-    textBlock(ctx, 'Equipo', {x: 805, y: 513, width: 151, height: 42, maxSize: 28, minSize: 24, color: '#91a9ba', maxLines: 1, align: 'right'});
-    if (kind === 'chat') { ctx.fillStyle = `${palette[kind]}18`; ctx.beginPath(); ctx.arc(757, 535, 14, 0, Math.PI * 2); ctx.fill(); }
+    ctx.font = '500 45px "Manrope", Arial';
+    const statusWidth = Math.min(580, Math.max(238, ctx.measureText(status).width + 64));
+    ctx.fillStyle = `${palette[kind]}14`; rounded(ctx, 60, 494, statusWidth, 96, 14); ctx.fill();
+    textBlock(ctx, status, {x: 92, y: 511, width: statusWidth - 64, height: 62, maxSize: 45, minSize: 34, color: palette[kind], weight: 500, maxLines: 1});
+    textBlock(ctx, 'Equipo', {x: 745, y: 512, width: 211, height: 60, maxSize: 40, minSize: 34, color: '#91a9ba', maxLines: 1, align: 'right'});
+    if (kind === 'chat') { ctx.fillStyle = `${palette[kind]}18`; ctx.beginPath(); ctx.arc(713, 542, 20, 0, Math.PI * 2); ctx.fill(); }
   }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.userData.subject = subject; cache.set(key, t); return t;
 }
