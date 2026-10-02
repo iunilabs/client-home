@@ -20,6 +20,7 @@ function element(tag) {
     classList: {toggle(name, enabled) {if (enabled) classes.add(name); else classes.delete(name);},
       remove: name => classes.delete(name), contains: name => classes.has(name)},
     setAttribute(name, value) {this.attributes[name] = value;},
+    addEventListener() {},
     append(child) {this.children.push(child);},
     set innerHTML(value) {
       for (const selector of ['img', '.tour-card-count', '.tour-card-client', '.tour-card-heading', '.tour-card-intro']) {

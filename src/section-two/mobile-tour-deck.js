@@ -3,11 +3,11 @@ import {mobileCardStack} from './mobile-tour.js';
 
 // One bounded summary per client. Case pages are future destinations; links
 // keep normal browser navigation and never expand or open a mobile dialog.
-export function createMobileTourDeck(section, route, clients) {
+export function createMobileTourDeck(section, route, clients, {onClose = () => {}} = {}) {
   const deck = document.createElement('div');
   deck.className = 'city-tour-deck';
   deck.setAttribute('role', 'region');
-  deck.setAttribute('aria-label', 'Recorrido por nuestros clientes');
+  deck.setAttribute('aria-label', 'Información de nuestros clientes');
   const cards = clients.map(client => {
     const index = route.findIndex(stop => stop.id === client.id);
     const invitation = Boolean(client.invitation);
@@ -24,6 +24,11 @@ export function createMobileTourDeck(section, route, clients) {
     card.querySelector('.tour-card-heading').textContent = story.cardTitle ?? story.title;
     card.querySelector('.tour-card-intro').textContent = story.cardIntro ?? story.intro;
     card.querySelector('.tour-card-count').textContent = index < 0 ? 'Cliente' : `${String(index + 1).padStart(2, '0')} / ${String(route.length).padStart(2, '0')}`;
+    const close = document.createElement('button');
+    close.type = 'button'; close.className = 'tour-card-close';
+    close.setAttribute('aria-label', `Cerrar tarjeta de ${client.name}`);
+    close.textContent = '×'; close.addEventListener('click', () => onClose());
+    card.append(close);
     const logo = card.querySelector('img');
     if (invitation) logo.hidden = true;
     else {logo.dataset.src = client.image; logo.alt = client.name; logo.decoding = 'async';}
@@ -48,14 +53,21 @@ export function createMobileTourDeck(section, route, clients) {
     return card;
   });
   section.querySelector('.trust-frame').append(deck);
-  let displayedCountKey = null;
+  let displayedCountKey = null, desktopId = null;
   // Navigation keeps a cache of all visits. The visible pile belongs only to
   // the current pass from Puntoes, so returning to the hub cannot reveal a
   // cached client that has not appeared in this pass.
   let presented = [];
   return {
     load() {for (const logo of deck.querySelectorAll('img[data-src]')) if (!logo.src) logo.src = logo.dataset.src;},
-    update(state, enabled, {order, entry, outgoingId = null, moving = false, retreat = 1, manualId = null, routeLength = route.length}) {
+    show(id) {
+      if (desktopId === id) return;
+      this.update({active: true}, true, {order: [id], entry: {id, progress: 1, mode: 'fade'}, desktop: true});
+      desktopId = id;
+    },
+    bounds() {return deck.getBoundingClientRect();},
+    update(state, enabled, {order, entry, outgoingId = null, moving = false, retreat = 1, manualId = null, routeLength = route.length, desktop = false}) {
+      deck.dataset.mode = desktop ? 'desktop' : 'mobile';
       presented = presented.filter(id => order.includes(id));
       if (outgoingId === 'puntoes' || !entry && retreat <= .03) presented = [];
       if (entry?.progress > .9 && order.includes(entry.id)) {
@@ -73,13 +85,13 @@ export function createMobileTourDeck(section, route, clients) {
       deck.setAttribute('aria-hidden', String(!showing));
       const incomingIndex = renderOrder.indexOf(entry?.id);
       const readable = entry?.progress > .9 ? entry.id : renderOrder.includes(outgoingId) ? outgoingId : null;
-      const countKey = `${manualId ?? ''}:${routeLength}`;
+      const countKey = `${desktop}:${manualId ?? ''}:${routeLength}`;
       for (const card of cards) {
         if (countKey !== displayedCountKey) {
           const routeIndex = route.findIndex(stop => stop.id === card.dataset.client);
           const invitationCard = card.dataset.client === 'collaborate';
           const manualCard = manualId && (card.dataset.client === manualId || invitationCard);
-          card.querySelector('.tour-card-count').textContent = manualCard ?
+          card.querySelector('.tour-card-count').textContent = desktop ? (invitationCard ? 'Colaboración' : 'Cliente') : manualCard ?
             `${card.dataset.client === manualId ? '01' : '02'} / ${String(invitationCard ? Math.max(2, routeLength) : routeLength).padStart(2, '0')}` : routeIndex < 0 ? 'Cliente' :
             `${String(routeIndex + 1).padStart(2, '0')} / ${String(manualId ? route.length : Math.max(routeLength, routeIndex + 1)).padStart(2, '0')}`;
         }
@@ -100,6 +112,7 @@ export function createMobileTourDeck(section, route, clients) {
       displayedCountKey = countKey;
     },
     hide() {
+      desktopId = null; displayedCountKey = null;
       presented = [];
       deck.style.visibility = 'hidden';
       deck.inert = true; deck.setAttribute('aria-hidden', 'true');

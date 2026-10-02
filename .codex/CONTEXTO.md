@@ -1,11 +1,11 @@
 # Contexto
 
-Objetivo: mejorar lectura, textos y botones de todas las tarjetas de clientes y colaboración, especialmente en móvil, a partir de la captura del usuario.
+Objetivo: sustituir el pop-up de escritorio por las mismas tarjetas del móvil y acercar/centrar el edificio seleccionado. Implementado sobre la mejora previa de textos, tipografía y botones de las once tarjetas.
 
-Rama `feature/mobile-card-readability`, base `8619f28` (origin/main). Checkout original con cambios ajenos intacto. Vista local: http://127.0.0.1:5188/?city=0.
+Rama `feature/client-cards`, base `8619f28`; mejora móvil en `f0823ec`. Checkout original con cambios ajenos intacto. Vista local: http://127.0.0.1:5188/?city=.5.
 
-Cambios: once resúmenes móviles específicos en `src/section-two/case-studies.js`, uso en `mobile-tour-deck.js`, cuerpo de 16 px, botones de 48 px, contraste mayor, tarjetas sin recortar texto y altura mínima uniforme en `style.css`. También ampliada tipografía del diálogo de escritorio. Ajustada expectativa de clamp en `tests/mobile-scroll.mjs`.
+Archivos: `city.js`, nuevo `city-focus.js`, `mobile-tour-deck.js` y `style.css`. Diálogo anterior eliminado. Selección suave desde la cámara visible; cierre recupera encuadre previo; marcadores moderados durante zoom; redimensionar conserva cliente y progreso. Movimiento reducido aplica encuadre directo. Móvil conserva recorrido.
 
-Checks: suite unitaria vigente, build `/client-home/`, once tarjetas en 320/390/430 px sin recortes ni desbordamientos; gesto táctil sobre tarjeta y salida nativa correctos. Capturas e informe en `docs/mobile-card-readability/`. Sin errores JS.
+Checks: 113 pruebas unitarias y build `/client-home/`; Chrome en 1424×873, 900×600 y móvil 390×844, zoom, cierre, cambio rápido, arrastre, salida nativa a sección 3 y movimiento reducido sin errores JS. Capturas e informes en `docs/mobile-card-readability/`.
 
-Siguiente paso: revisar propuesta con el usuario; publicar solo cuando lo pida.
+Siguiente paso: revisión del usuario. Publicar solo cuando lo pida.

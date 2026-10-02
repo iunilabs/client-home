@@ -32,8 +32,7 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     button.style.setProperty('--logo-height', `${logoHeights[client.id]}px`);
     button.style.setProperty('--mobile-logo-height', `${Math.round(logoHeights[client.id] * .74)}px`);
     button.setAttribute('aria-label', `Ver caso de ${client.name}`);
-    button.setAttribute('aria-haspopup', 'dialog');
-    button.setAttribute('aria-controls', 'city-case');
+    button.setAttribute('aria-controls', `tour-card-${client.id}`);
     button.setAttribute('aria-expanded', 'false');
     const logo = document.createElement('img');
     logo.alt = '';
@@ -281,11 +280,11 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     if (isTour !== tourMode) {
       tourMode = isTour;
       for (const button of track.querySelectorAll('button')) {
-        button.setAttribute('aria-controls', isTour ? `tour-card-${button.dataset.client}` : 'city-case');
+        button.setAttribute('aria-controls', `tour-card-${button.dataset.client}`);
         const name = clients.find(client => client.id === button.dataset.client).name;
-        button.setAttribute('aria-label', isTour ? `Visitar ${name} en el mapa` : `Ver caso de ${name}`);
+        button.setAttribute('aria-label', isTour ? `Visitar ${name} en el mapa` : `Ver tarjeta de ${name}`);
         if (isTour) {button.removeAttribute('aria-haspopup'); button.removeAttribute('aria-expanded')}
-        else {button.setAttribute('aria-haspopup', 'dialog'); button.setAttribute('aria-expanded', 'false')}
+        else {button.removeAttribute('aria-haspopup'); button.setAttribute('aria-expanded', 'false')}
       }
     }
     const opacity = isTour ? smooth(.72, 1, state.opacity) : reduced ? 1 : smooth(.24, .52, state.progress);

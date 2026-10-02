@@ -49,7 +49,9 @@ La reversa desde la obra vuelve al cliente elegido, luego a Puntoes. Una vez vis
 
 Tab y Enter mantienen el foco y activación normales de enlaces y logos. Las flechas verticales, PageUp/PageDown y espacio solicitan una parada cuando el foco no está en un control; se ignora la repetición automática. Home/End y Cmd+Arriba/Abajo permiten abandonar el recorrido, liberan el bloqueo y sincronizan Lenis. Los enlaces de capítulos suspenden el anclaje antes de navegar; el enlace a confianza reinicia en Puntoes en móvil y muestra el texto de entrada en ordenador. Los cambios pequeños de altura conservan el anclaje para tolerar la barra de URL y reservan la altura de la pantalla actual para la salida; cambios superiores al 20 % o de anchura lo recalculan sin perder la parada. Al cruzar 700 px se restablece la navegación de escritorio, y regresar a móvil reinicia su cursor.
 
-En ordenador, el gesto que llega al final del mapa se detiene en ese límite. Su continuación y su inercia quedan consumidas; un gesto nuevo libera el scroll normal hacia la sección 3. El guard distingue los eventos de una misma ráfaga por su instante de creación, aunque JavaScript tarde en procesarlos. Los enlaces de capítulos, fichas modales y navegación explícita siguen disponibles.
+En ordenador, pulsar un logo o un marcador muestra la misma tarjeta resumida del móvil, sin diálogo modal. La cámara acerca el edificio y centra su tejado en el espacio libre a la derecha de la tarjeta. Cambiar de cliente parte del encuadre visible; cerrar con el botón o Escape recupera el desplazamiento previo y el zoom general. La tarjeta deja libre la fila de logos y el mapa puede arrastrarse después del acercamiento. Movimiento reducido aplica el encuadre directamente.
+
+En ordenador, el gesto que llega al final del mapa se detiene en ese límite. Su continuación y su inercia quedan consumidas; un gesto nuevo libera el scroll normal hacia la sección 3. El guard distingue los eventos de una misma ráfaga por su instante de creación, aunque JavaScript tarde en procesarlos. Los enlaces de capítulos, tarjetas y navegación explícita siguen disponibles.
 
 ## Configuración y arte
 

@@ -8,7 +8,7 @@ const baseline=process.env.SCROLL_GUARD_BASELINE==='1';
 await fs.mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const desktopOnly=process.env.SCROLL_GUARD_PART==='desktop';
-const prior=desktopOnly?JSON.parse(await fs.readFile(`${out}/REPORT.json`,'utf8')):null;
+const prior=desktopOnly?await fs.readFile(`${out}/REPORT.json`,'utf8').then(JSON.parse).catch(()=>null):null;
 const report={base,baseline,passed:false,mobile:prior?.mobile??[],mobileExtra:prior?.mobileExtra,desktop:[],retainedMobile:desktopOnly};
 const sample=()=>({y:scrollY,tour:window.__puntoes.getState().tour,frameY:new DOMMatrixReadOnly(getComputedStyle(document.querySelector('.trust-frame')).transform).m42,nextTop:document.querySelector('#posibilidades').getBoundingClientRect().top});
 try{
@@ -123,9 +123,9 @@ try{
     await page.mouse.move(point.x,point.y);await page.mouse.down();await page.mouse.move(point.x+100,point.y+40,{steps:8});await page.mouse.up();await page.waitForTimeout(200);
     assert.notEqual(await page.locator('.city-world').getAttribute('style'),mapBefore,'desktop map drag remains interactive');
     assert.equal(await page.evaluate(()=>scrollY),Math.round(dynamicEnd));
-    const logo=page.locator('.city-client[data-client="bbva"]');await page.keyboard.press('Tab');await logo.focus();await logo.click();assert.ok(await page.locator('#city-case').evaluate(el=>el.open));
-    await page.mouse.wheel(0,200);assert.equal(await page.evaluate(()=>scrollY),Math.round(dynamicEnd));await page.keyboard.press('Escape');
-    await page.waitForTimeout(1000);await page.mouse.wheel(0,110);await page.waitForTimeout(700);
+    const logo=page.locator('.city-client[data-client="bbva"]');await page.keyboard.press('Tab');await logo.focus();await logo.click();await page.waitForFunction(()=>window.__puntoes.getState().city.focus?.client==='bbva');assert.equal(await page.locator('.city-tour-card.is-current').getAttribute('data-client'),'bbva');
+    assert.equal(await page.evaluate(()=>scrollY),Math.round(dynamicEnd));await page.keyboard.press('Escape');
+    await page.waitForFunction(()=>!window.__puntoes.getState().city.focus?.moving);await page.mouse.wheel(0,110);await page.waitForTimeout(700);
     const native=await page.evaluate(sample);assert.ok(native.y>dynamicEnd+30 && native.y<dynamicEnd+160);
     await page.mouse.wheel(0,-500);await page.waitForTimeout(700);assert.ok(await page.evaluate(()=>scrollY)<dynamicEnd-100);
     await page.mouse.wheel(0,600);await page.waitForTimeout(500);assert.ok(Math.abs(await page.evaluate(()=>scrollY)-dynamicEnd)<1,'inverse entry rearms next finish');
@@ -133,7 +133,7 @@ try{
     await page.keyboard.press('Meta+ArrowDown');await page.waitForFunction(end=>scrollY>end+200,dynamicEnd);assert.ok(await page.evaluate(()=>scrollY)>dynamicEnd+200,'Cmd+Down is an external exit');
     await page.keyboard.press('Meta+ArrowUp');await page.waitForFunction(()=>scrollY<1);
     await page.locator('a[href="#inicio"]').first().click();await page.waitForFunction(()=>scrollY<1);
-    report.desktop.push({dynamicEnd,height:'405svh',held,native,frames,wheelTimes,mapDrag:true,modal:true,reverse:true,commandKeys:true,chapter:true});
+    report.desktop.push({dynamicEnd,height:'405svh',held,native,frames,wheelTimes,mapDrag:true,inlineCard:true,reverse:true,commandKeys:true,chapter:true});
   }
   await page.close();report.passed=true;
 }catch(error){report.error=error.stack;process.exitCode=1;console.error(error)}

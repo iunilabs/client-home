@@ -162,6 +162,7 @@ export function createCityPan(section) {
   on(document, 'visibilitychange', () => {if (document.hidden) interrupt()});
 
   return {
+    moveTo,
     update(world, zoom, reduced, active = true, reserve = 0) {
       const width = parseFloat(world.style.width), height = parseFloat(world.style.height);
       if (dimensions !== `${width},${height}`) {
@@ -176,8 +177,7 @@ export function createCityPan(section) {
       if (!enabled) release();
       if (reduced) motion.moveTo(0, 0);
       else {
-        // A case dialog disables dragging but does not interrupt the trip
-        // already requested by its logo. No independent RAF/timer is needed.
+        // Camera travel disables dragging while its visible position advances.
         motion.update(performance.now());
         motion.constrain(bounds);
       }

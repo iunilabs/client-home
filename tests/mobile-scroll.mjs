@@ -314,10 +314,12 @@ try {
   assert.ok(await desktop.evaluate(()=>scrollY)>desktopY+30,'desktop keeps continuous scroll');
   const logo=desktop.locator('.city-client[data-client="bbva"]');
   await logo.focus();await logo.click();
-  assert.ok(await desktop.locator('#city-case').evaluate(el=>el.open),'desktop case dialog retained');
+  await desktop.waitForFunction(()=>window.__puntoes.getState().city.focus?.client==='bbva'&&!window.__puntoes.getState().city.focus.moving);
+  assert.equal(await desktop.locator('.city-tour-card.is-current').getAttribute('data-client'),'bbva','desktop uses the shared inline card');
+  assert.equal(await desktop.locator('#city-case').count(),0,'desktop popup removed');
   await desktop.keyboard.press('Escape');
   await desktop.close();
-  report.desktop={handPoseAuthority:hand.s.poseAuthority,continuousScroll:true,caseDialog:true};
+  report.desktop={handPoseAuthority:hand.s.poseAuthority,continuousScroll:true,inlineCard:true};
   report.passed=true;
 } catch(error) {report.error=error.stack;process.exitCode=1;console.error(error)}
 finally {await fs.writeFile(`${out}/REPORT.json`,JSON.stringify(report,null,2)+'\n');await browser.close()}
