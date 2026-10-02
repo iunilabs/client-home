@@ -48,7 +48,7 @@ export async function createPaperSection(journey) {
   }}, () => Math.min(devicePixelRatio, innerWidth < 700 ? 3 : 2,
     Math.sqrt(5_200_000 / (innerWidth * innerHeight))), {minScale: .8});
 
-  await Promise.all([document.fonts.load('400 40px Manrope'), document.fonts.load('400 80px "DM Serif"')]);
+  await Promise.all([document.fonts.load('400 40px Manrope'), document.fonts.load('400 80px "Paper Hand"')]);
   const grain = paperGrain();
   const closeTextureSize = innerWidth < 700 ? 1536 : 2048;
   const pieces = [], heroes = [], field = [], foreground = [];
@@ -65,7 +65,7 @@ export async function createPaperSection(journey) {
   const letter = addPaper('letter', 0, 3.85, 4.44, 192, true);
   for (let i = 0; i < 5; i++) heroes.push(addPaper(CHANNELS[i], i % 2, 3.65, 2.25, 297 + i * 117, true));
   for (let i = 0; i < 36; i++) {
-    const kind = i < 8 ? 'note' : i % 9 === 0 ? 'letter' : CHANNELS[i % 5];
+    const kind = i < 8 ? 'note' : i % 9 === 0 ? 'letter' : CHANNELS[i % CHANNELS.length];
     const w = kind === 'note' ? 1.85 + rand() * .6 : kind === 'letter' ? 2.1 : 2.35 + rand() * .7;
     const h = kind === 'note' ? w * 1.06 : kind === 'letter' ? w * 1.15 : w * .62;
     const p = addPaper(kind, i % 3, w, h, 701 + i * 53);
@@ -75,8 +75,9 @@ export async function createPaperSection(journey) {
     p.rot = [(rand() - .5) * 1.5, (rand() - .5) * 2.15, (rand() - .5) * 1.4];
     field.push(p);
   }
-  for (let i = 0; i < 4; i++) {
-    const p = addPaper(CHANNELS[i], i, 4.1, 2.55, 4101 + i * 47, true);
+  const foregroundKinds = ['qa', 'test', 'deploy', 'summary'];
+  for (let i = 0; i < foregroundKinds.length; i++) {
+    const p = addPaper(foregroundKinds[i], i, 4.1, 2.55, 4101 + i * 47, true);
     p.anchor = [[-.87, -.68, 7.3], [.89, .71, 6.8], [-.84, .62, 6.7], [.92, -.65, 7.5]][i]; foreground.push(p);
   }
   let portrait = false, target = 0, progress = 0, height = 0, active = false, force = true, disposed = false, lost = false, lastState = null;

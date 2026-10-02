@@ -32,7 +32,7 @@ function shell(width, height, nx, ny, radius, thickness) {
   return {geo, base: new Float32Array(base)};
 }
 export function createPaper({kind, variant, width, height, grain, detailed = false, content = null, textureResolution = detailed ? 2048 : 512}) {
-  const {geo, base} = shell(width, height, detailed ? 30 : 14, detailed ? 32 : 14, kind === 'note' || kind === 'letter' ? .015 : .045, kind === 'note' || kind === 'letter' ? .0028 : .004);
+  const {geo, base} = shell(width, height, detailed ? 30 : 14, detailed ? 32 : 14, kind === 'note' ? .015 : Math.min(width, height) * .07, kind === 'note' || kind === 'letter' ? .0028 : .004);
   const material = new THREE.MeshPhysicalMaterial({
     map: surfaceTexture(kind, variant, textureResolution, content), color: '#ffffff', roughness: .86, metalness: 0,
     bumpMap: grain, bumpScale: .00065, sheen: .08, sheenRoughness: .95, sheenColor: new THREE.Color('#fff9ed'), specularIntensity: .18,
@@ -41,7 +41,7 @@ export function createPaper({kind, variant, width, height, grain, detailed = fal
   // The reverse is unprinted paper, not a mirrored software interface.
   material.onBeforeCompile = shader => {
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute float paperSide; varying float vPaperSide;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvPaperSide = paperSide;');
-    shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vPaperSide;').replace('#include <map_fragment>', '#include <map_fragment>\nif (vPaperSide > 0.5) diffuseColor.rgb = vec3(0.91, 0.90, 0.87);');
+    shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vPaperSide;').replace('#include <map_fragment>', '#include <map_fragment>\nif (vPaperSide > 0.5) diffuseColor.rgb = vec3(0.94, 0.95, 0.96);');
   };
   material.customProgramCacheKey = () => 'paper-shell-v2';
   const mesh = new THREE.Mesh(geo, material); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
