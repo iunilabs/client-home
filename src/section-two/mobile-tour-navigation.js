@@ -17,25 +17,44 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
   let manualId = null;
   let active = false, cursor = -1, current = mobileTourHub, transition = null;
   let camera = null, visited = [], geometry, cameraLayout, suspended = false, released = 0, lastScroll = null;
+  let collaborationSeen = false, skipCollaboration = false;
   const stopFor = id => id === 'puntoes' ? mobileTourHub : {id, ...mobileTourBuildings[id]};
-  const itinerary = () => manualId ? [stopFor(manualId), stopFor('collaborate')] : route;
+  const itinerary = () => (manualId ? [stopFor(manualId), stopFor('collaborate')] : route)
+    .filter(stop => !skipCollaboration || stop.id !== 'collaborate');
+  const nextCursor = () => {
+    const stops = itinerary();
+    let next = cursor + 1;
+    while (collaborationSeen && stops[next]?.id === 'collaborate') next++;
+    return next;
+  };
   const snapshot = () => ({active, currentId: current.id, guidedCursor: cursor, manualId,
-    nextId: itinerary()[cursor + 1]?.id ?? null, previousId: cursor < 0 ? null : cursor === 0 ? 'puntoes' : itinerary()[cursor - 1].id,
-    moving: Boolean(transition), visitedIds: [...visited], released});
+    routeLength: itinerary().filter(stop => stop.id !== 'collaborate' || !collaborationSeen || current.id === 'collaborate').length,
+    nextId: itinerary()[nextCursor()]?.id ?? null, previousId: cursor < 0 ? null : cursor === 0 ? 'puntoes' : itinerary()[cursor - 1].id,
+    moving: Boolean(transition), visitedIds: [...visited], collaborationSeen, released});
 
   function enter(bounds, backwards = false) {
     geometry = bounds;
     // Reverse entry from the native exit preserves the selected client. A new
     // forward entrance from section 1 starts the default itinerary again.
-    if (!backwards) manualId = null;
+    if (!backwards) {manualId = null; visited = []; skipCollaboration = collaborationSeen}
     const stops = itinerary();
-    cursor = backwards ? stops.length - 1 : -1;
+    // An exit can now come from the last client after the invitation was seen.
+    // Native reverse entry must recover that actual departure, not the old
+    // itinerary's construction stop.
+    cursor = backwards ? released > 0 ? cursor : stops.length - 1 : -1;
     current = cursor < 0 ? mobileTourHub : stops[cursor];
     active = true; released = 0; suspended = false; transition = null;
     if (cursor >= 0) visited = promoteMobileCard(visited, current.id);
     onNavigate(bounds.revealed);
   }
   function travel(id, now) {
+    // Sample the interrupted trip at the input time. A fresh gesture can
+    // retarget immediately without jumping back to a building or losing it.
+    if (transition?.from && cameraLayout) {
+      const view = mobileBuildingView(current, cameraLayout, current.id === 'puntoes');
+      camera = blendCamera(transition.from, view,
+        tourEase((now - transition.started) / transition.duration), cameraLayout, transition.cruiseZoom);
+    }
     const previous = current.id;
     current = stopFor(id);
     const repeated = visited.includes(id);
@@ -46,7 +65,7 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
     transition = {from: camera, started: now, previous, mode: repeated ? 'fade' : 'slide', ...profile};
   }
   function canRelease(direction) {
-    return active && !transition && (direction > 0 ? cursor === itinerary().length - 1 : cursor < 0);
+    return active && (direction > 0 ? nextCursor() >= itinerary().length : cursor < 0);
   }
   return {
     getState: snapshot, enter, canRelease,
@@ -65,17 +84,18 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
       if (!active || !mobileTourBuildings[id] || !camera) return false;
       if (id !== 'collaborate') {
         // Even tapping the already focused logo cancels the remaining default
-        // companies. Another logo replaces that choice, keeping only the work.
+        // companies. Another logo keeps only an invitation not yet seen.
         manualId = id;
+        skipCollaboration = collaborationSeen;
         cursor = 0;
-      } else cursor = itinerary().length - 1;
+      } else {skipCollaboration = false; cursor = itinerary().length - 1}
       if (current.id === id) return true;
       travel(id, now); return true;
     },
     step(direction, {now = performance.now()} = {}) {
-      if (!active || transition) return false;
+      if (!active || !direction) return false;
       if (canRelease(direction)) return this.release(direction);
-      cursor += direction > 0 ? 1 : -1;
+      cursor = direction > 0 ? nextCursor() : cursor - 1;
       travel(cursor < 0 ? 'puntoes' : itinerary()[cursor].id, now); return true;
     },
     update(state, {scroll, now, layout, geometry: bounds, reduced = false}) {
@@ -106,11 +126,14 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
         } else {camera = mobileCameraAt(view, layout); transition = null}
       }
       const retreat = current.id === 'puntoes' ? 1 - progress : 1;
+      // Count the invitation only after both the building and its CTA arrive.
+      // Passing through or leaving mid-flight does not count as seeing it.
+      if (active && current.id === 'collaborate' && !transition && progress >= 1) collaborationSeen = true;
       return {...snapshot(), camera, current, outgoingId, order: [...visited], retreat,
         entry: current.id === 'puntoes' ? null : {id: current.id, progress, mode},
         copyOpacity: ownedView ? current.id === 'puntoes' ? progress : 0 : state.copyOpacity};
     },
-    reset({suspend = false} = {}) {manualId = null; suspended = suspend; active = false; released = 0; cursor = -1;
+    reset({suspend = false} = {}) {manualId = null; skipCollaboration = collaborationSeen; suspended = suspend; active = false; released = 0; cursor = -1;
       current = mobileTourHub; transition = null; camera = null; visited = []; lastScroll = null},
   };
 }

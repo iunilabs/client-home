@@ -49,6 +49,21 @@ try {
   await page.waitForFunction(() => window.__puntoes?.getState().city?.ready && !document.querySelector('.city-carousel').inert);
   await page.waitForTimeout(100);
   const cdp = await context.newCDPSession(page);
+  await page.evaluate(() => {
+    const input = window.__carouselTouch = {x:null,count:0,paintedCount:0,trusted:false};
+    const observe = event => {
+      const point = event.touches[0];
+      if (!point) return;
+      input.x = point.clientX; input.trusted = event.isTrusted;
+      const count = ++input.count;
+      requestAnimationFrame(() => {input.paintedCount = Math.max(input.paintedCount,count)});
+    };
+    for (const type of ['touchstart','touchmove']) document.addEventListener(type,observe,{capture:true,passive:true});
+  });
+  const delivered = x => page.waitForFunction(expected => {
+    const input = window.__carouselTouch;
+    return input.trusted && Math.abs(input.x-expected)<.01 && input.paintedCount===input.count;
+  },x,{timeout:2000});
   const position = () => page.evaluate(() => {
     const row = document.querySelector('.city-carousel');
     return {
@@ -65,6 +80,7 @@ try {
   const swipe = async ({fromX, toX, hold = 0}) => {
     const y = await strip.evaluate(element => element.getBoundingClientRect().top + element.getBoundingClientRect().height / 2);
     await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x: fromX, y, id: 1}]});
+    await delivered(fromX);
     await page.waitForTimeout(120);
     const before = await position();
     const frames = [];
@@ -72,6 +88,9 @@ try {
       const x = fromX + (toX - fromX) * index / 10;
       await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [{x, y, id: 1}]});
       await page.waitForTimeout(25);
+      // Under map paint load a CDP request can resolve before its trusted
+      // TouchEvent arrives. Compare positions after that event's paint frame.
+      await delivered(x);
       frames.push(await position());
     }
     if (hold) await page.waitForTimeout(hold);
@@ -110,6 +129,7 @@ try {
   await page.screenshot({path: `${out}/finger-left-resume.png`});
 
   const right = await swipe({fromX: 30, toX: 350, hold: 0});
+  report.positions.push({direction: 'finger-right', before: right.before, during: right.frames, released: right.released, afterIdle: right.resumed});
   assert.ok(right.frames.some(frame => frame.transform !== right.before.transform), 'reverse finger movement also moves logos');
   assert.ok(right.continuity.length > 5, 'reverse drag crosses multiple real logos');
   assert.ok(right.continuity.every(sample => Math.abs(sample.actual - sample.expected) < 2), 'reverse recycling preserves visible identity and position');
@@ -118,7 +138,6 @@ try {
   assert.ok([...left.frames, ...right.frames].every(frame => frame.clients.length === 10 && new Set(frame.clients.map(client => client.id)).size === 10), 'recycling retains one accessible DOM button per client');
   const seen = new Set([...right.before.clients, ...right.frames.flatMap(frame => frame.clients)].map(client => client.id));
   assert.deepEqual([...seen].sort(), [...ids].sort(), 'real button nodes cover all ten IDs while recycling in either direction');
-  report.positions.push({direction: 'finger-right', before: right.before, during: right.frames, released: right.released, afterIdle: right.resumed});
   await page.screenshot({path: `${out}/finger-right-inertia.png`});
 
   // Touch-generated focus/hover must not strand the carousel in keyboard mode.

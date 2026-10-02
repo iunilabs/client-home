@@ -12,7 +12,7 @@ const executable = source.replace(/import (\w+Url) from '(\.\/assets\/[^']+)';/g
   .replace("'../timeline.js'", JSON.stringify(new URL('../src/timeline.js', import.meta.url).href));
 const {cityDetails, createCityDetail} = await import(`data:text/javascript;base64,${Buffer.from(executable).toString('base64')}`);
 const approvedHashes = {
-  puntoes: '135aa0854130c96abe7dbd6b66d5be7a5db068f7b664888ad8251108789ff4d6',
+  puntoes: '946c07371ea8c665882d79d25644b2ade7aea44926fa3eb0a60d78bf1d574f58',
   bbva: 'e81e438fc65d667bcde4c2ffbcf8dde16aae2a8dbdd8931b7a3ed3f0305ace1b',
   naturgy: 'cc4babe7f7e85b17e3c0023c86c1907c4d1747569799fd991849ad1e9360f87a',
   sabadell: 'ec7b7d7b4a755ee041c862d66bb4ea12975cfcfe880f9b3fd8b2fa83359013f5',
@@ -38,7 +38,7 @@ test('all ten customers, hub and invitation have matching source rectangles', as
     assert.equal(file.length, p.asset_bytes);
     const hash = createHash('sha256').update(file).digest('hex');
     assert.equal(hash, p.asset_sha256);
-    if (approvedHashes[id]) assert.equal(hash, approvedHashes[id], `${id}: approved five textures stay byte-for-byte intact`);
+    if (approvedHashes[id]) assert.equal(hash, approvedHashes[id], `${id}: reviewed detail texture stays byte-for-byte intact`);
   }
 });
 

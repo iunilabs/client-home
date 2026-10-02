@@ -7,8 +7,14 @@
 }
 .city-carousel--interactive .city-carousel-viewport:active {cursor: grabbing}
 .city-carousel--interactive .city-carousel-track {transition: none}
+.city-mobile-tour .city-carousel--interactive .city-carousel-viewport {
+  /* One horizontal owner: the translated track. A native scroll container can
+     retain its own momentum/focus scroll while that track is being recycled. */
+  overflow-x: hidden;
+}
 .city-carousel--interactive.is-focused .city-carousel-viewport {
   overflow-x: auto;
   overscroll-behavior-x: contain;
   cursor: auto;
 }
+.city-mobile-tour .city-carousel--interactive.is-focused .city-carousel-viewport {overflow-x: auto}

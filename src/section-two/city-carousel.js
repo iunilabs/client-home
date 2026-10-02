@@ -5,6 +5,8 @@ import './city-carousel.css';
 
 const logoHeights = {accenture: 58, bbva: 40, canal: 66, cepsa: 50, mapfre: 50, mediaset: 36, ree: 36, siemens: 38, naturgy: 50, sabadell: 40};
 const DRAG_THRESHOLD = 5;
+const POINTER_FOCUS_DELAY = 1000;
+const VELOCITY_SAMPLE_WINDOW = 120;
 
 export function createCityCarousel(section, clients, {onSelect, onOpen}) {
   const carousel = section.querySelector('.city-carousel');
@@ -16,6 +18,7 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
   let focused = false, modal = false, openingClient = false, touchHeld = false, hovered = false, gestureEndedAt = -Infinity;
   let tourMode = null, pointerGesture = null, touchGesture = null;
   let pointerFocus = false, suppressClickUntil = 0, keyboardBrowsing = false;
+  let lastPointerFocusAt = -Infinity;
 
   carousel.dataset.motion = 'paused';
   carousel.classList.add('city-carousel--interactive');
@@ -69,7 +72,7 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
       }
       openingClient = true;
       try {onOpen(client, button)} finally {openingClient = false}
-      if (tourMode && !button.matches(':focus-visible')) button.blur();
+      if (tourMode && !keyboardBrowsing) button.blur();
     });
     logos.set(client.id, logo);
     item.append(button);
@@ -127,7 +130,9 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
       carousel.classList.remove('is-focused');
       setOffset(motion.offset + saved);
     }
+    if (tourMode) focused = false;
     pointerFocus = true;
+    lastPointerFocusAt = now;
     motion.beginDrag();
     return {kind, startX: x, lastX: x, moved: false, travel: 0, samples: [{x: 0, time: now}]};
   }
@@ -141,16 +146,20 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     suppressClickUntil = now + 800;
     setOffset(motion.offset + delta);
     gesture.samples.push({x: gesture.travel, time: now});
-    while (gesture.samples.length > 2 && now - gesture.samples[0].time > 120) gesture.samples.shift();
+    while (gesture.samples.length > 2 && now - gesture.samples[0].time > VELOCITY_SAMPLE_WINDOW) gesture.samples.shift();
   }
 
-  function finishDrag(gesture, now) {
+  function finishDrag(gesture, now, cancelled = false) {
     if (!gesture) return;
     pointerFocus = false;
+    lastPointerFocusAt = now;
     gestureEndedAt = now;
+    if (tourMode && gesture.moved) suppressClickUntil = now + 800;
     let velocity = 0;
     const samples = gesture.samples;
-    if (gesture.moved && samples.length > 1) {
+    // Mobile drags use fresh release samples only, and system cancellation
+    // ends the drag without turning old samples into a fling.
+    if (gesture.moved && samples.length > 1 && (!tourMode || (!cancelled && now - samples.at(-1).time <= VELOCITY_SAMPLE_WINDOW))) {
       const first = samples[0], last = samples[samples.length - 1];
       const duration = (last.time - first.time) / 1000;
       if (duration > 0) velocity = (last.x - first.x) / duration;
@@ -162,7 +171,7 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
   // vertical swipe can continue scrolling the page while a horizontal one is
   // owned by the logo strip.
   viewport.addEventListener('pointerdown', event => {
-    if (event.pointerType === 'touch') {touchHeld = true; return}
+    if (event.pointerType === 'touch') {touchHeld = true; lastPointerFocusAt = performance.now(); return}
     if (event.button !== 0 || focused || modal) return;
     pointerGesture = beginDrag(event.clientX, performance.now(), 'pointer');
   });
@@ -177,17 +186,22 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     // finger release and must not let automatic motion start underneath it.
     if (event.pointerType === 'touch') return;
     if (!pointerGesture) return;
-    finishDrag(pointerGesture, performance.now());
+    finishDrag(pointerGesture, performance.now(), event.type === 'pointercancel');
     pointerGesture = null;
   };
   viewport.addEventListener('pointerup', finishPointer);
   viewport.addEventListener('pointercancel', finishPointer);
 
   viewport.addEventListener('touchstart', event => {
-    if (event.touches.length !== 1 || focused || modal) return;
+    if (event.touches.length !== 1 || (!tourMode && focused) || modal) return;
     const point = event.touches[0];
     touchHeld = true;
-    touchGesture = {startX: point.clientX, startY: point.clientY, lastX: point.clientX, axis: null, moved: false, travel: 0, samples: [{x: 0, time: performance.now()}]};
+    // Mobile touch takes over keyboard browsing immediately. A tap's focus
+    // can arrive after pointerup, and :focus-visible alone does not tell
+    // us whether that focus came from a keyboard or from a finger.
+    const now = performance.now();
+    touchGesture = tourMode ? {...beginDrag(point.clientX, now, 'touch'), startY: point.clientY, axis: null} :
+      {startX: point.clientX, startY: point.clientY, lastX: point.clientX, axis: null, moved: false, travel: 0, samples: [{x: 0, time: now}]};
   }, {passive: true});
   viewport.addEventListener('touchmove', event => {
     const gesture = touchGesture;
@@ -195,7 +209,7 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     const point = event.touches[0], dx = gesture.startX - point.clientX, dy = gesture.startY - point.clientY;
     if (!gesture.axis && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
       gesture.axis = Math.abs(dx) > Math.abs(dy) * 1.15 ? 'x' : 'y';
-      if (gesture.axis === 'x') motion.beginDrag();
+      if (gesture.axis === 'x' && !tourMode) motion.beginDrag();
     }
     if (gesture.axis !== 'x') return;
     if (event.cancelable) event.preventDefault();
@@ -205,17 +219,18 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     // Keep the pause until the last finger leaves, even if a second finger
     // briefly changes the gesture from one-contact to multi-contact.
     if (event.touches.length) return;
-    if (!touchGesture) {touchHeld = false; return}
+    touchHeld = false;
+    if (tourMode) {pointerFocus = false; lastPointerFocusAt = performance.now()}
+    if (!touchGesture) return;
     const gesture = touchGesture;
     touchGesture = null;
-    touchHeld = false;
-    if (gesture.axis === 'x') finishDrag(gesture, performance.now());
+    if (gesture.axis === 'x') finishDrag(gesture, performance.now(), event.type === 'touchcancel');
     else motion.interrupt(performance.now());
   };
   for (const type of ['touchend', 'touchcancel']) viewport.addEventListener(type, finishTouch, {passive: true});
 
   carousel.addEventListener('pointerdown', event => {
-    if (event.pointerType === 'touch') pointerFocus = true;
+    if (event.pointerType === 'touch') {pointerFocus = true; lastPointerFocusAt = performance.now()}
   });
   carousel.addEventListener('pointerup', event => {if (event.pointerType === 'touch') pointerFocus = false});
   carousel.addEventListener('pointercancel', event => {if (event.pointerType === 'touch') pointerFocus = false});
@@ -237,8 +252,11 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
       pointerFocus = false;
     }
   });
+  // Preserve delayed touch-generated focus without treating it as keyboard
+  // browsing. An explicit key immediately restores keyboard focus behavior.
+  document.addEventListener('keydown', () => {if (tourMode) {pointerFocus = false; lastPointerFocusAt = -Infinity}}, {capture: true});
   carousel.addEventListener('focusin', event => {
-    if (pointerFocus || !event.target.matches(':focus-visible')) return;
+    if (pointerFocus || (tourMode && performance.now() - lastPointerFocusAt < POINTER_FOCUS_DELAY) || !event.target.matches(':focus-visible')) return;
     focused = true;
     if (!keyboardBrowsing) enterKeyboardMode(event.target.closest('.city-client'));
     else {

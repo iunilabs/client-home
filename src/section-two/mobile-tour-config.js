@@ -25,7 +25,7 @@ export const mobileTourHub = {id: 'puntoes', center: [52.657, 40.879], size: [19
 
 // Camera and card timing in milliseconds, independent of document scrolling.
 export const mobileTourTiming = {
-  logoTravel: 1850, travelPerScreen: 450, maxTravel: 2800,
+  logoTravel: 1400, travelPerScreen: 340, maxTravel: 2100,
   cruisePullback: .16, pullbackPerScreen: .06, maxPullback: .28,
   logoCardFrom: 80, logoCardUntil: 650,
 };

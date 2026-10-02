@@ -1,15 +1,15 @@
 {
   "_meta": {
-    "version": "v14-local-native-detail-complete",
+    "version": "v14-local-native-detail-complete-office-consultancy",
     "source_master": "review-section-two/city-source/puntoes-city-mobile-master-v13-tour.png",
     "source_width": 941,
     "source_height": 1672,
     "source_sha256": "fa4cd4f0979e35cae8e58361dd723fccd38062e3b509578be612bb4739651c35",
-    "status": "Twelve generated mobile detail layers over unchanged V13. Existing five assets preserved byte-for-byte. Dedicated compiled visual and lazy-loading QA recorded in docs/city-detail-v2.",
+    "status": "Twelve mobile detail layers; Puntoes office revised with the base map as a small technology consultancy on 2026-10-02. The other eleven detail assets stay byte-for-byte intact.",
     "rect_contract": "Normalized world_rect maps full tile including all context; do not map only building bounds. No extra crop, resize, camera rotation or coordinate shift.",
     "transfer_budget": "Visited/current + next only; no initial page or desktop tile requests. Native PNG masters and QA are local docs only, never bundled.",
     "prompt_document": "src/section-two/assets/PROMPTS-NITIDEZ-V14.md",
-    "total_webp_bytes": 6413434,
+    "total_webp_bytes": 6395534,
     "qa_report": "docs/city-detail-v2/REPORT.md",
     "render_contract": "All layers inherit the city-world transform. Current tile z-index 2, neighbours 1. Full opacity at zoom 2.3; load fade 500ms; V13 retained on error.",
     "limits": "Generated plausible detail, not an architectural survey or 4K. Actual native dimensions and per-device sampling in QA report.",
@@ -44,12 +44,40 @@
     "fallback_qa": "failed BBVA detail removed, V13 base present and city remains usable",
     "test_count": 62,
     "runtime_png_masters": 0,
-    "final_independent_review": "Asset/source checks acknowledged by coordinating reviewer. Final integrated twelve-frame independent review remains with the single integrator."
+    "final_independent_review": "Asset/source checks acknowledged by coordinating reviewer. Final integrated twelve-frame independent review remains with the single integrator.",
+    "runtime_source_asset": "src/section-two/assets/puntoes-city-mobile-v13-tour.webp",
+    "runtime_source_asset_sha256": "87433b96889f1428739d3d460543ae129a051991c966543eff09e865b1d77a49",
+    "office_revision_browser_qa": {
+      "status": "passed",
+      "date": "2026-10-02",
+      "engine": "Chromium compiled preview",
+      "viewports": [
+        [
+          320,
+          568
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          430,
+          932
+        ],
+        [
+          1440,
+          900
+        ]
+      ],
+      "device_scale_factor": 1,
+      "evidence": "qa-reviews/2026-10-02/mobile-section2-fixes/office-browser/REPORT.json",
+      "review": "Coordinator inspected all four browser screenshots: office glazing, sign, footprint and framing visible; desktop/mobile source and mobile detail URLs verified. Physical mobile rendering remains unverified."
+    }
   },
   "tiles": [
     {
       "id": "puntoes",
-      "source_generated_png": "/Users/daviddavila/.codex/generated_images/01a0f467-7316-7563-bab6-d4fd09ed9786/exec-e11a60e8-d35f-400c-b218-1b457cf9de70.png",
+      "source_generated_png": "/Users/daviddavila/.codex/generated_images/01a0fc8d-2517-76e0-ba90-0307bd2bf9b4/exec-6bb2099c-bbb5-4a92-86e3-175143f863a7.png",
       "source_crop": {
         "left": 346,
         "top": 418,
@@ -62,47 +90,60 @@
         "width": 0.3188097768331562,
         "height": 0.3181818181818182
       },
-      "native_width": 941,
+      "native_width": 942,
       "native_height": 1670,
       "native_pixels_per_source_pixel": {
-        "x": 3.1366666666666667,
+        "x": 3.14,
         "y": 3.1390977443609023
       },
       "quality": 92,
-      "master": "review-section-two/city-source/v14-resolution-study/puntoes-detail-native-v14-trial.png",
+      "master": "docs/office-consultancy/masters/detail-office-tech.png",
       "asset": "src/section-two/assets/puntoes-city-mobile-puntoes-detail-v14.webp",
-      "status": "Integrated: preserved source rectangle, soft context edges, current stop priority and gradual zoom/loading opacity.",
-      "master_bytes": 3178747,
-      "master_sha256": "e38c71beb743250dfe0245166423508c76d3e97bf3a9e3365de422986fd16ecc",
-      "asset_bytes": 591390,
-      "asset_sha256": "135aa0854130c96abe7dbd6b66d5be7a5db068f7b664888ad8251108789ff4d6",
-      "registration_summary": {
-        "inliers": 157,
-        "median_displacement_xy_source_px": [
-          0.0688018798828125,
-          -0.090850830078125
-        ],
-        "median_displacement_source_px": 0.3117583096027374,
-        "p95_displacement_source_px": 0.9627029895782471
-      },
+      "status": "Integrated: Puntoes facade revised as a small technology consultancy; unchanged world rectangle and soft context mask.",
+      "master_bytes": 3123531,
+      "master_sha256": "532b266a6904ba49265cbd89d06e1633e600ecd0eced3b865a552796a02f250a",
+      "asset_bytes": 573490,
+      "asset_sha256": "946c07371ea8c665882d79d25644b2ade7aea44926fa3eb0a60d78bf1d574f58",
       "source_subject_box_local_px": [
         58.99698999999998,
         209.0,
         239.99833999999998,
         321.99376000000007
       ],
-      "local_original_master": "docs/city-detail-v2/masters/puntoes-detail-native-v14-trial.png",
+      "local_original_master": "docs/office-consultancy/masters/detail-office-tech.png",
       "feather_percent": [
         14,
         12
       ],
-      "generated_vs_interpolated_analysis": {
-        "mean_absolute_rgb_difference": 19.39974885510594,
-        "rmse_rgb": 27.697742971431985,
-        "fraction_pixels_any_channel_difference_over_8": 0.8265833900742616,
-        "meaning": "Non-identical generated pixels at native size compared to Lanczos control; this metric does not establish quality, fidelity or newly correct details. Visual comparison required."
+      "visual_review": "Original and generated tile inspected at full native size; modest two-floor L-shaped footprint, roof and planted courtyard preserved. White slim frames, office glazing, desks and small .es sign reviewed. Coordinating integrator verifies final browser framing.",
+      "prior_office_revision": {
+        "source_generated_png": "/Users/daviddavila/.codex/generated_images/01a0f467-7316-7563-bab6-d4fd09ed9786/exec-e11a60e8-d35f-400c-b218-1b457cf9de70.png",
+        "native_width": 941,
+        "native_height": 1670,
+        "master": "review-section-two/city-source/v14-resolution-study/puntoes-detail-native-v14-trial.png",
+        "master_bytes": 3178747,
+        "master_sha256": "e38c71beb743250dfe0245166423508c76d3e97bf3a9e3365de422986fd16ecc",
+        "asset_bytes": 591390,
+        "asset_sha256": "135aa0854130c96abe7dbd6b66d5be7a5db068f7b664888ad8251108789ff4d6",
+        "registration_summary": {
+          "inliers": 157,
+          "median_displacement_xy_source_px": [
+            0.0688018798828125,
+            -0.090850830078125
+          ],
+          "median_displacement_source_px": 0.3117583096027374,
+          "p95_displacement_source_px": 0.9627029895782471
+        },
+        "generated_vs_interpolated_analysis": {
+          "mean_absolute_rgb_difference": 19.39974885510594,
+          "rmse_rgb": 27.697742971431985,
+          "fraction_pixels_any_channel_difference_over_8": 0.8265833900742616,
+          "meaning": "Non-identical generated pixels at native size compared to Lanczos control; this metric does not establish quality, fidelity or newly correct details. Visual comparison required."
+        }
       },
-      "visual_review": "Inspected source reference, generator native output and 390x844 maximum-framing CSS comparison. Silhouette, roof/plan/floor rhythm and distinctive elements reviewed independently of feature matching; browser frames at 320x568 DPR2, 390x844 DPR3 and 430x932 DPR3 are retained for final independent review."
+      "generation": "Integrated image_gen precise-object-edit of the existing Puntoes tile. Native PNG copied unmodified, WebP Q92 encoding only.",
+      "prompt_section": "Detalle móvil",
+      "prompt_document": "src/section-two/assets/PROMPTS-OFICINA-CONSULTORA.md"
     },
     {
       "id": "bbva",

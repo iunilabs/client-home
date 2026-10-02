@@ -31,7 +31,7 @@ export function wheelEventTime(event, now = performance.now()) {
 }
 
 // Cumulative displacement matters: a deliberate slow swipe may arrive in 3px
-// samples. A gesture that starts while travelling is consumed until lift.
+// samples. Each new finger contact owns one intent, even while travelling.
 export function createSwipeIntent(x, y, consumed = false) {
   let axis = null, used = consumed;
   return {
@@ -82,7 +82,7 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, bou
     if (!active && crossing(delta > 0 ? Math.max(window.scrollY, readTarget()) : Math.min(window.scrollY, readTarget()), delta)) {
       wheel.push(delta, now, true); block(event); lock.set(true); navigation.enter(geometry, delta < 0); return;
     }
-    const direction = wheel.push(delta, now, !active || navigation.getState().moving);
+    const direction = wheel.push(delta, now, !active);
     if (active) {block(event); if (direction) navigation.step(direction, {now: performance.now()})}
   }
   function onStart(event) {
@@ -92,7 +92,7 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, bou
     const p = event.touches[0];
     if (eligible() && navigation.canRelease(1)) boundary.set(false);
     if (eligible() && (navigation.canRelease(1) || navigation.canRelease(-1))) lock.set(false);
-    touch = {intent: createSwipeIntent(p.clientX, p.clientY, navigation.getState().moving),
+    touch = {intent: createSwipeIntent(p.clientX, p.clientY),
       startScroll: window.scrollY, entered: eligible(), native: false,
       forward: navigation.canRelease(1), backward: navigation.canRelease(-1),
       carousel: Boolean(event.target.closest('.city-carousel'))};

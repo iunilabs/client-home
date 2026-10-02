@@ -188,7 +188,7 @@ try {
     assert.equal(await page.locator('.city-tour-card.is-current').getAttribute('data-client'),'cepsa');
     const cepsaCamera=await page.locator('.city-world').getAttribute('style');
     await page.waitForTimeout(600); assert.equal(await page.locator('.city-world').getAttribute('style'),cepsaCamera);
-    await swipe({arrival:'collaborate'}); assert.equal((await state()).currentId,'collaborate');
+    assert.equal((await state()).nextId,null,'after reading Hablemos, a newly selected client goes directly to native exit');
     // All 11 cards remain unique, including recovered manual clients.
     for (const id of ['accenture','bbva','canal','cepsa','mapfre','mediaset','ree','siemens','naturgy','sabadell']) {
       const logo=page.locator(`.city-client[data-client="${id}"]`);

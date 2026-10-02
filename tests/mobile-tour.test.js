@@ -49,10 +49,10 @@ test('a wheel burst and its decaying delayed tail produce only one request', () 
   assert.equal(wheel.push(-80,2000),-1);
 });
 
-test('camera is smooth while document stays at one anchor; transitions reject more steps', () => {
+test('camera is smooth while document stays at one anchor', () => {
   const {nav,frame,writes}=setup();
   const hub=frame(0); assert.equal(hub.current.id,'puntoes');
-  assert.ok(nav.step(1,{now:10})); assert.equal(nav.step(1,{now:20}),false);
+  assert.ok(nav.step(1,{now:10}));
   const first=frame(10),middle=frame(1100),last=frame(10+leg);
   assert.equal(first.camera.focusX,hub.camera.focusX);
   assert.ok(middle.camera.focusX!==hub.camera.focusX);
@@ -61,6 +61,22 @@ test('camera is smooth while document stays at one anchor; transitions reject mo
   assert.equal(nav.anchorScroll(geometry.revealed+300),geometry.revealed);
   assert.deepEqual(writes.slice(count),[geometry.revealed]);
   assert.equal(nav.canRelease(1),false);
+});
+
+test('fresh swipes retarget an unfinished trip from its visible camera in either direction', () => {
+  const {nav,frame}=setup();
+  nav.step(1,{now:10});
+  const visible=frame(350);
+  assert.equal(visible.moving,true);
+  assert.ok(nav.step(1,{now:350}));
+  const retargeted=frame(350);
+  assert.equal(retargeted.current.id,'naturgy');
+  assert.deepEqual(retargeted.camera,visible.camera);
+  const reverseFrom=frame(500);
+  assert.ok(nav.step(-1,{now:500}));
+  assert.deepEqual(frame(500).camera,reverseFrom.camera);
+  assert.equal(nav.getState().currentId,'bbva');
+  assert.equal(frame(500+leg).current.id,'bbva');
 });
 
 test('final release does not write scroll; the next inverse crossing captures the last stop', () => {
@@ -94,21 +110,29 @@ test('each logo cancels all pending companies at the hub, any default stop and r
       const {nav,frame,writes}=setup();let now=0;
       for (let i=0;i<=stage;i++) {nav.step(1,{now});now+=leg;frame(now)}
       assert.ok(nav.select(id,{now}));now+=leg;frame(now);
-      assert.equal(nav.getState().currentId,id);assert.equal(nav.getState().nextId,'collaborate');
+      assert.equal(nav.getState().currentId,id);
+      if (stage===3) {
+        assert.equal(nav.getState().nextId,null);
+        assert.equal(nav.canRelease(1),true);
+        continue;
+      }
+      assert.equal(nav.getState().nextId,'collaborate');
       nav.step(1,{now});now+=leg;frame(now);
       assert.equal(nav.getState().currentId,'collaborate');assert.equal(nav.getState().previousId,id);
       // Reverse cannot revive any of the canceled default companies.
       nav.step(-1,{now});now+=leg;frame(now);assert.equal(nav.getState().currentId,id);
       nav.step(-1,{now});now+=leg;frame(now);assert.equal(nav.getState().currentId,'puntoes');
       nav.step(1,{now});now+=leg;frame(now);assert.equal(nav.getState().currentId,id);
-      nav.step(1,{now});now+=leg;frame(now);assert.equal(nav.getState().currentId,'collaborate');
+      assert.equal(nav.getState().nextId,null,'reverse to the chosen client does not reoffer the invitation');
       const writesBefore=writes.length;
       assert.ok(nav.release(1));assert.equal(writes.length,writesBefore);
       frame(now+10,geometry.revealed+100);frame(now+20,geometry.revealed-10);
-      assert.equal(nav.getState().manualId,id);assert.equal(nav.getState().previousId,id);
-      // A logo chosen after returning still leaves only collaboration pending.
+      assert.equal(nav.getState().manualId,id);assert.equal(nav.getState().currentId,id);
+      assert.equal(nav.getState().previousId,'puntoes');
+      // Once the invitation was read, another client goes straight to exit.
       assert.ok(nav.select(id,{now:now+30}));now+=leg;frame(now);
-      assert.equal(nav.getState().currentId,id);assert.equal(nav.getState().nextId,'collaborate');
+      assert.equal(nav.getState().currentId,id);assert.equal(nav.getState().nextId,null);
+      assert.ok(nav.canRelease(1));
     }
   }
 });
@@ -130,12 +154,55 @@ test('tapping BBVA already focused cancels default route, and changing logo repl
 test('same-logo choice during travel still cancels companies, and a new forward entry resets the override', () => {
   const {nav,frame}=setup();nav.step(1,{now:0});frame(300);
   assert.ok(nav.select('bbva',{now:350}));assert.equal(nav.getState().manualId,'bbva');
-  assert.equal(nav.getState().nextId,'collaborate');assert.equal(nav.step(1,{now:400}),false);
-  frame(leg);nav.step(1,{now:leg+100});frame(2*leg+100);assert.equal(nav.getState().currentId,'collaborate');
+  assert.equal(nav.getState().nextId,'collaborate');assert.ok(nav.step(1,{now:400}));
+  frame(leg);assert.equal(nav.getState().currentId,'collaborate');
   nav.step(-1,{now:3*leg});frame(4*leg);nav.step(-1,{now:5*leg});frame(6*leg);
   assert.ok(nav.release(-1));frame(7*leg,geometry.revealed-100);
   frame(8*leg,geometry.revealed+10);
   assert.equal(nav.getState().manualId,null);assert.equal(nav.getState().nextId,'bbva');
+});
+
+test('the invitation counts after its CTA is presented, survives reentry, and never blocks a fresh exit', () => {
+  const {nav,frame,writes}=setup();
+  nav.select('cepsa',{now:0});frame(leg);
+  nav.step(1,{now:leg});frame(leg+100);
+  assert.equal(nav.getState().collaborationSeen,false,'a fleeting construction destination is not yet seen');
+  nav.select('bbva',{now:leg+100});frame(2*leg);
+  assert.equal(nav.getState().nextId,'collaborate');
+  nav.step(1,{now:2*leg});frame(2*leg+mobileTourTiming.logoCardUntil);
+  assert.equal(nav.getState().collaborationSeen,false,'CTA alone before the building arrives does not count');
+  frame(3*leg);
+  assert.equal(nav.getState().collaborationSeen,true);
+  nav.select('naturgy',{now:3*leg});frame(3*leg+100);
+  assert.equal(nav.getState().nextId,null);
+  const before=writes.length;
+  assert.ok(nav.release(1),'new gesture can exit before the camera animation ends');
+  assert.equal(writes.length,before,'exit belongs to native scrolling');
+  nav.reset();frame(4*leg);
+  assert.equal(nav.getState().collaborationSeen,true);
+  for (let i=0;i<mobileTourRoute.length-1;i++) {nav.step(1,{now:5*leg+i*leg});frame(6*leg+i*leg)}
+  assert.equal(nav.getState().currentId,'sabadell');
+  assert.equal(nav.getState().nextId,null,'fresh guided entrance also omits the invitation already seen');
+});
+
+test('returning by swipe from Hablemos to a guided client also exits without repeating construction', () => {
+  const {nav,frame,writes}=setup();
+  let now=0;
+  for (const stop of mobileTourRoute) {nav.step(1,{now});now+=leg;frame(now)}
+  assert.equal(nav.getState().collaborationSeen,true);
+  nav.step(-1,{now});now+=leg;frame(now);
+  assert.equal(nav.getState().currentId,'sabadell');
+  assert.equal(nav.getState().nextId,null);
+  assert.equal(nav.getState().routeLength,3);
+  const before=writes.length;
+  assert.ok(nav.step(1,{now}));
+  assert.equal(nav.getState().active,false);
+  assert.equal(nav.getState().currentId,'sabadell');
+  assert.equal(writes.length,before);
+  frame(now+10,geometry.revealed+100);
+  frame(now+20,geometry.revealed-10);
+  assert.equal(nav.getState().active,true);
+  assert.equal(nav.getState().currentId,'sabadell','native reverse recovers the actual departure instead of the old construction stop');
 });
 
 test('chapter jumps suspend capture, resets and resized anchors remain coherent', () => {
