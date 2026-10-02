@@ -1,6 +1,6 @@
 # Recorrido móvil: gestos, tarjetas y logos
 
-Candidato local del 2 de octubre de 2026, actualizado tras la elección manual de clientes. A anchuras inferiores a 700 px se mantiene el itinerario configurado **Puntoes → BBVA → Naturgy → Banco Sabadell → obra**. Los diez clientes siguen disponibles en el carrusel, con una tarjeta por empresa y otra de colaboración. El ordenador conserva su ciudad explorable y sus fichas modales.
+Recorrido móvil del 2 de octubre de 2026, actualizado tras la elección manual de clientes. A anchuras inferiores a 700 px se mantiene el itinerario configurado **Puntoes → BBVA → Naturgy → Banco Sabadell → obra**. Los diez clientes siguen disponibles en el carrusel, con una tarjeta por empresa y otra de colaboración. El ordenador conserva su ciudad explorable y sus fichas modales.
 
 ## Un gesto, una parada
 
@@ -37,7 +37,7 @@ Estas páginas **todavía no existen**. Este cambio reserva sus URLs; no crea p�
 
 ## Carrusel, teclado y cambios de pantalla
 
-Se conserva el contrato de `createCityCarousel`: callbacks `onSelect`, `onOpen`, y métodos `select`, `update`, `load`, `setModal`, `logoFor`. No se modifica `city-carousel.js`. El swipe horizontal de sus logos sigue siendo local al carrusel; una intención vertical se dedica al recorrido. Los diez logos conservan su estilo blanco y footer transparente.
+Se conserva el contrato de `createCityCarousel`: callbacks `onSelect`, `onOpen`, y métodos `select`, `update`, `load`, `setModal`, `logoFor`. El carrusel añade arrastre horizontal con inercia, aceleración y frenado en `carousel-motion.js`; reanuda su avance automático dos segundos después de soltar el dedo. La interacción horizontal sigue siendo local al carrusel y no avanza edificios. El teclado mantiene todos los clientes accesibles y pausa el avance mientras conserva el foco. Los diez logos mantienen su estilo blanco y footer transparente.
 
 Seleccionar cualquiera de los diez logos cancela todas las empresas pendientes del itinerario normal, incluso si se toca la empresa ya enfocada. La secuencia restante pasa a ser **cliente elegido → colaboración → nuevo gesto de salida nativa**. Cambiar de logo reemplaza la elección y mantiene pendiente solo colaboración. La cámara y la tarjeta seleccionadas permanecen hasta un nuevo gesto, que viaja directamente a la obra. No se desplaza el documento al seleccionar logos.
 
@@ -47,7 +47,7 @@ Tab y Enter mantienen el foco y activación normales de enlaces y logos. Las fle
 
 ## Configuración y arte
 
-Editar solo `mobileTourOrder` en `mobile-tour-config.js` para cambiar la selección u orden de paradas. No incluir `puntoes`; no repetir identificadores. La lista no filtra clientes ni tarjetas. `collaborate` representa la obra. `mobileTourBuildings` y `mobileTourHub` conservan coordenadas y encuadres del retrato V13. El arte V13, las capas V14 y su procedencia no cambian. `city-detail.js` sigue cargando destino actual y próximo por su interfaz existente. Las manos tampoco cambian. La ciudad consulta localmente `prefers-reduced-motion`: acorta sus viajes y llegada de tarjetas a 100 ms, conservando gestos y selección manual; no altera la preferencia de animación de la experiencia de manos.
+Editar solo `mobileTourOrder` en `mobile-tour-config.js` para cambiar la selección u orden de paradas. No incluir `puntoes`; no repetir identificadores. La lista no filtra clientes ni tarjetas. `collaborate` representa la obra. `mobileTourBuildings` y `mobileTourHub` conservan coordenadas y encuadres del retrato V13. Las doce sedes tienen una capa móvil V14 nativa: se conservan las cinco anteriores y se añaden las siete restantes. [Recursos y procedencia](assets/README.md) documenta los archivos, recortes, dimensiones y prompts. `city-detail.js` carga destino actual y próximo y conserva V13 como fallback. Las manos tampoco cambian. La ciudad consulta localmente `prefers-reduced-motion`: acorta sus viajes y llegada de tarjetas a 100 ms, conservando gestos y selección manual; no altera la preferencia de animación de la experiencia de manos.
 
 ## Validación
 
