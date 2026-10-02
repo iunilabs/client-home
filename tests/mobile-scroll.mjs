@@ -29,6 +29,65 @@ try {
       await page.waitForTimeout(settle);
       return frames;
     }
+    async function browseLogos(direction) {
+      const viewport = page.locator('.city-carousel-viewport');
+      const box = await viewport.boundingBox();
+      const fromX = direction === 'left' ? box.x + box.width - 30 : box.x + 30;
+      const toX = direction === 'left' ? box.x + 30 : box.x + box.width - 30;
+      const y = box.y + box.height / 2;
+      const position = () => viewport.evaluate(el => {
+        const rect = el.getBoundingClientRect();
+        return {y: scrollY, currentId: window.__puntoes.getState().tour.currentId,
+          viewport: {left: rect.left, right: rect.right},
+          logos: [...el.querySelectorAll('.city-client')].map(button => {
+            const logo = button.querySelector('img');
+            const bounds = (logo.hidden ? button.querySelector('span') : logo).getBoundingClientRect();
+            return {id: button.dataset.client, left: bounds.left, right: bounds.right,
+              center: (bounds.left + bounds.right) / 2};
+          })};
+      });
+      await cdp.send('Input.dispatchTouchEvent', {type:'touchStart',touchPoints:[{x:fromX,y,id:1}]});
+      await page.waitForTimeout(120);
+      const before = await position(), frames = [], continuity = [];
+      let prior = before, priorX = fromX, visibleTravel = 0;
+      for (let i = 1; i <= 10; i++) {
+        const x = fromX + (toX - fromX) * i / 10;
+        await cdp.send('Input.dispatchTouchEvent', {type:'touchMove',touchPoints:[{x,y,id:1}]});
+        await page.waitForTimeout(25);
+        const frame = await position();
+        // A recycled, fully clipped logo can wrap by the whole track width.
+        // Compare identities visible in both frames, using their real widths.
+        const visible = (logo, snapshot) => logo.left < snapshot.viewport.right && logo.right > snapshot.viewport.left;
+        const samples = frame.logos.flatMap(logo => {
+          const old = prior.logos.find(candidate => candidate.id === logo.id);
+          return old && visible(old, prior) && visible(logo, frame)
+            ? [{id: logo.id, expected: x - priorX, actual: logo.center - old.center}] : [];
+        });
+        assert.ok(samples.length, `${direction}: consecutive native moves share a visible logo`);
+        assert.ok(samples.every(sample => Math.abs(sample.actual - sample.expected) < 2),
+          `${direction}: visible logos follow the finger through recycling: ${JSON.stringify(samples)}`);
+        visibleTravel += samples.reduce((sum, sample) => sum + sample.actual, 0) / samples.length;
+        continuity.push(...samples);
+        frames.push({x, ...frame});
+        prior = frame; priorX = x;
+      }
+      assert.ok(Math.abs(visibleTravel - (toX - fromX)) < 4, `${direction}: the strip follows the full native drag`);
+      assert.ok(Math.abs(visibleTravel) > 100, `${direction}: logos visibly travel across multiple items`);
+      assert.ok(frames.some(frame => frame.logos[0].id !== before.logos[0].id), `${direction}: drag crosses a recycling boundary`);
+      await page.waitForTimeout(120);
+      const held = await position();
+      assert.deepEqual(held.logos, frames.at(-1).logos, `${direction}: logos stay still under the held finger`);
+      await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+      await page.waitForTimeout(200);
+      const released = await position();
+      for (const frame of [before, ...frames, held, released]) {
+        assert.equal(frame.currentId, 'bbva', `${direction}: horizontal browsing does not visit a building`);
+        assert.ok(Math.abs(frame.y - anchor) < 2, `${direction}: horizontal browsing keeps the document pinned`);
+        assert.equal(frame.logos.length, 10);
+        assert.equal(new Set(frame.logos.map(logo => logo.id)).size, 10, `${direction}: recycling retains ten unique client buttons`);
+      }
+      return {direction, fromX, toX, y, before, frames, held, released, continuity, visibleTravel};
+    }
     async function load() {
       await page.goto(base+'?city=0');
       await page.waitForFunction(() => window.__puntoes?.getState().city?.ready && window.__puntoes.getState().tour.active);
@@ -126,11 +185,10 @@ try {
     assert.equal((await state()).currentId,'puntoes'); assert.ok((await state()).active,JSON.stringify({before,anchor,state:await state()}));
     await swipe(); assert.equal((await state()).currentId,'bbva');
     // Horizontal carousel browsing stays local and does not visit a building.
-    const viewport=page.locator('.city-carousel-viewport');
-    const leftBefore=await viewport.evaluate(el=>el.scrollLeft);
-    await swipe({y:height-35,dx:-100,distance:0,samples:20,settle:200});
+    const carousel = [];
+    carousel.push(await browseLogos('left'));
+    carousel.push(await browseLogos('right'));
     assert.equal((await state()).currentId,'bbva');
-    assert.ok(await viewport.evaluate(el=>el.scrollLeft)>leftBefore+20);
     await page.locator('body').click({position:{x:width/2,y:180}});
     await page.keyboard.press('ArrowDown');await page.waitForTimeout(1400);
     assert.equal((await state()).currentId,'naturgy');
@@ -154,7 +212,7 @@ try {
     await swipe({distance:-100,y:height*.3,settle:300});
     assert.ok((await state()).y<anchor-40);
     assert.deepEqual(errors,[]);
-    report.phones.push({width,height,metrics,anchor,exitBefore,exitAfter,translation,slow,exit,errors});
+    report.phones.push({width,height,metrics,anchor,exitBefore,exitAfter,translation,slow,exit,carousel,errors});
     await context.close(); console.log(`PASS ${width}x${height}: native snap, slow/long swipe, wheel tail, cards, logos, link, native exit/reverse, long entrance`);
   }
   const cold=await browser.newContext({viewport:{width:320,height:568},isMobile:true,hasTouch:true});
