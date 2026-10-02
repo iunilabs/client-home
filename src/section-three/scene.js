@@ -7,6 +7,7 @@ import {CHANNELS, paperGrain, backdrop} from './art.js';
 import {createPaper} from './paper.js';
 import {createSceneInput} from './input.js';
 import {createCursorSurfaceLight} from '../cursor-surface-light.js';
+import {createRenderBudget} from '../render-budget.js';
 import {clamp, mix, smooth, randomSource, flightTrack} from './motion.js';
 import './style.css';
 
@@ -20,35 +21,40 @@ export async function createPaperSection(journey) {
   catch { errorElement.hidden = false; journey.dataset.paperRender = 'fallback'; throw new Error('WebGL unavailable'); }
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping;
-  renderer.toneMappingExposure = 1.06;
+  renderer.toneMappingExposure = .98;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.shadowMap.autoUpdate = false;
-  const scene = new THREE.Scene(); scene.background = backdrop(); scene.backgroundIntensity = 1.5; scene.fog = new THREE.FogExp2('#e7f2fa', .018);
+  const scene = new THREE.Scene(); scene.background = backdrop(); scene.backgroundIntensity = 1.5; scene.fog = new THREE.FogExp2('#e7f2fa', .006);
   const camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, .1, 65); camera.position.set(0, 0, 18);
   const pmrem = new THREE.PMREMGenerator(renderer), room = new RoomEnvironment(), environment = pmrem.fromScene(room, .045);
   scene.environment = environment.texture; scene.environmentIntensity = .24; pmrem.dispose(); room.dispose();
   scene.add(new THREE.HemisphereLight('#f4f8ff', '#a8c4d8', .38));
-  const key = new THREE.DirectionalLight('#fff8ed', 2.65); key.position.set(-6, 8, 12); scene.add(key);
+  const key = new THREE.DirectionalLight('#fff8ed', 2.15); key.position.set(-6, 8, 12); scene.add(key);
   key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
   Object.assign(key.shadow.camera, {left: -15, right: 15, top: 13, bottom: -13, near: .1, far: 55});
-  key.shadow.bias = -.00045; key.shadow.normalBias = .075; key.shadow.radius = 4; key.shadow.blurSamples = 8;
+  key.shadow.bias = -.00015; key.shadow.normalBias = .015; key.shadow.radius = 2; key.shadow.blurSamples = 8;
   const fill = new THREE.DirectionalLight('#d4eaff', .32); fill.position.set(7, 1, 8); scene.add(fill);
   const rim = new THREE.DirectionalLight('#d2edff', .9); rim.position.set(2, 6, -7); scene.add(rim);
   const cursorLight = new THREE.SpotLight('#fff4df', 0, 6, .65, .8, 2); scene.add(cursorLight, cursorLight.target);
   const cursorSurface = createCursorSurfaceLight(cursorLight);
-  const renderTarget = new THREE.WebGLRenderTarget(innerWidth, innerHeight, {type: THREE.HalfFloatType, samples: 4});
+  const renderTarget = new THREE.WebGLRenderTarget(innerWidth, innerHeight, {type: THREE.HalfFloatType, samples: devicePixelRatio > 1 ? 2 : 4});
   const composer = new EffectComposer(renderer, renderTarget); composer.addPass(new RenderPass(scene, camera));
   composer.addPass(new OutputPass());
+  const pixelBudget = createRenderBudget({setPixelRatio(ratio) {
+    renderer.setPixelRatio(ratio); composer.setPixelRatio(ratio);
+  }}, () => Math.min(devicePixelRatio, innerWidth < 700 ? 3 : 2,
+    Math.sqrt(5_200_000 / (innerWidth * innerHeight))), {minScale: .8});
 
   await Promise.all([document.fonts.load('400 40px Manrope'), document.fonts.load('400 80px "DM Serif"')]);
   const grain = paperGrain();
+  const closeTextureSize = innerWidth < 700 ? 1536 : 2048;
   const pieces = [], heroes = [], field = [], foreground = [];
   const variantCounts = new Map([['note', 1]]);
   const rand = randomSource(31415);
   function addPaper(kind, variant, width, height, seed, detailed = false, content = null) {
     if (!content) {variant = variantCounts.get(kind) ?? 0; variantCounts.set(kind, variant + 1);}
-    const paper = createPaper({kind, variant, width, height, grain, detailed, content});
+    const paper = createPaper({kind, variant, width, height, grain, detailed, content, textureResolution: detailed ? closeTextureSize : 512});
     scene.add(paper.mesh); paper.mesh.visible = false;
     const piece = {...paper, flight: flightTrack(seed), seed, phase: seed % 100 / 100 * Math.PI * 2};
     pieces.push(piece); return piece;
@@ -69,7 +75,7 @@ export async function createPaperSection(journey) {
     field.push(p);
   }
   for (let i = 0; i < 4; i++) {
-    const p = addPaper(CHANNELS[i], i, 4.1, 2.55, 4101 + i * 47);
+    const p = addPaper(CHANNELS[i], i, 4.1, 2.55, 4101 + i * 47, true);
     p.anchor = [[-.87, -.68, 7.3], [.89, .71, 6.8], [-.84, .62, 6.7], [.92, -.65, 7.5]][i]; p.start = .31 + i * .075; foreground.push(p);
   }
   let portrait = false, target = 0, progress = 0, height = 0, active = false, force = true, disposed = false, lost = false, lastState = null;
@@ -84,9 +90,9 @@ export async function createPaperSection(journey) {
   function resize() {
     portrait = innerWidth / innerHeight < .85;
     camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-    const ratio = Math.min(devicePixelRatio, 1.5, 2100 / Math.max(innerWidth, innerHeight));
-    renderer.setPixelRatio(ratio); renderer.setSize(innerWidth, innerHeight);
-    composer.setPixelRatio(ratio); composer.setSize(innerWidth, innerHeight);
+    // Resolve Retina text without oversizing the multisampled render targets.
+    pixelBudget.resize(); renderer.setSize(innerWidth, innerHeight);
+    composer.setSize(innerWidth, innerHeight);
     height = Math.max(1, journey.offsetHeight - innerHeight); updateTarget(); force = true;
   }
   function contextLost(event) {
@@ -213,6 +219,7 @@ export async function createPaperSection(journey) {
       input.setActive(active);
       inputState = input.update(dt, now);
       if (!active) {cursorLight.intensity = 0; return;}
+      if (!capture) pixelBudget.update(now / 1000, reducedQuery.matches);
       elapsed += dt; frameDelta = dt;
       updateTarget(y);
       camera.position.set(inputState.x * .50, inputState.y * .35, 18);

@@ -57,13 +57,15 @@ function grain(ctx, w, h, amount, seed) {
 export function surfaceTexture(kind, variant = 0, resolution = 1024, content = null) {
   const key = `${kind}-${variant}-${resolution}-${content?.message ?? ''}`;
   if (cache.has(key)) return cache.get(key);
-  const c = document.createElement('canvas'); c.width = 1024; c.height = kind === 'letter' ? 1180 : kind === 'note' ? 1080 : 630;
-  const ctx = c.getContext('2d'); const { width: w, height: h } = c;
+  // Draw the typography at native texture size, never enlarge a 1024px bitmap.
+  const w = 1024, h = kind === 'letter' ? 1180 : kind === 'note' ? 1080 : 630;
+  const c = document.createElement('canvas'); c.width = resolution; c.height = Math.round(h * resolution / w);
+  const ctx = c.getContext('2d'); ctx.scale(resolution / w, resolution / w);
   const bg = ctx.createLinearGradient(0, 0, w, h);
-  if (kind === 'note') { bg.addColorStop(0, '#e1edf3'); bg.addColorStop(.65, '#edf5f8'); bg.addColorStop(1, '#d9eaf3'); }
-  else { bg.addColorStop(0, '#ffffff'); bg.addColorStop(.6, '#fbfdff'); bg.addColorStop(1, '#eff5fa'); }
+  if (kind === 'note') { bg.addColorStop(0, '#ece8d9'); bg.addColorStop(.65, '#f6f3e6'); bg.addColorStop(1, '#e7e1ce'); }
+  else { bg.addColorStop(0, '#fffefb'); bg.addColorStop(.6, '#faf9f5'); bg.addColorStop(1, '#f0efe9'); }
   ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-  grain(ctx, w, h, 3.4, 408 + variant);
+  grain(ctx, c.width, c.height, 4.2, 408 + variant);
   let subject;
   if (kind === 'note') {
     const adhesive = ctx.createLinearGradient(0, 0, 0, 145); adhesive.addColorStop(0, '#89b0c015'); adhesive.addColorStop(1, '#89b0c000');
@@ -80,10 +82,10 @@ export function surfaceTexture(kind, variant = 0, resolution = 1024, content = n
     line(ctx, ['De: Dirección financiera','De: Equipo de operaciones','De: Coordinación de proyecto','De: Área de gestión'][variant % 4], 95, 261, 24, '#6b869a');
     subject = letterContent[variant] ?? `Revisión del expediente ${variant + 1}`; line(ctx, subject, 95, 363, subject.length > 26 ? 39 : 45, INK, 600);
     ctx.strokeStyle = '#ccdce740'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(95, 413); ctx.lineTo(927, 413); ctx.stroke();
-    line(ctx, 'Hola,', 95, 506, 29, '#54768e');
-    line(ctx, ['Adjunto la propuesta para su revisión.','Comparto los cambios para validarlos.','Remito el documento actualizado.','Necesitamos confirmar los siguientes pasos.'][variant % 4], 95, 574, 29, '#54768e');
-    line(ctx, ['Quedamos a la espera de los comentarios.','¿Podemos revisarlo durante esta semana?','La última versión incluye las observaciones.','Quedo pendiente de vuestra respuesta.'][variant % 4], 95, 620, 29, '#54768e');
-    line(ctx, 'Un saludo.', 95, 733, 29, '#54768e');
+    line(ctx, 'Hola,', 95, 506, 29, '#3d5667');
+    line(ctx, ['Adjunto la propuesta para su revisión.','Comparto los cambios para validarlos.','Remito el documento actualizado.','Necesitamos confirmar los siguientes pasos.'][variant % 4], 95, 574, 29, '#3d5667');
+    line(ctx, ['Quedamos a la espera de los comentarios.','¿Podemos revisarlo durante esta semana?','La última versión incluye las observaciones.','Quedo pendiente de vuestra respuesta.'][variant % 4], 95, 620, 29, '#3d5667');
+    line(ctx, 'Un saludo.', 95, 733, 29, '#3d5667');
     rounded(ctx, 93, 915, 490, 80, 12); ctx.fillStyle = '#eaf2f8'; ctx.fill();
     icon(ctx, 'document', 115, 930, 44); line(ctx, ['Propuesta.pdf','Detalle_operación.pdf','Borrador_v02.pdf','Resumen_solicitud.pdf','Proyecto.pdf','Documentación.pdf','Seguimiento.pdf'][variant % 7], 181, 964, 23, '#5b7b91');
     line(ctx, '1 archivo adjunto', 95, 1043, 18, '#94a8b7');
@@ -108,7 +110,7 @@ export function surfaceTexture(kind, variant = 0, resolution = 1024, content = n
       const firstBaseline = 290 - (rows.length - 1) * leading / 2;
       rows.forEach((text, index) => line(ctx, text, 62, firstBaseline + index * leading, fontSize, INK, 500));
     } else {
-      line(ctx, text[0], 62, 252, text[0].length > 27 ? 34 : 40, INK, 500); line(ctx, text[1], 62, 311, 27, '#7793a7');
+      line(ctx, text[0], 62, 252, text[0].length > 27 ? 34 : 40, INK, 500); line(ctx, text[1], 62, 311, 27, '#567082');
     }
     ctx.strokeStyle = '#d8e5ee'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(62, 380); ctx.lineTo(956, 380); ctx.stroke();
     ctx.fillStyle = `${palette[kind]}14`; rounded(ctx, 60, 438, kind === 'document' ? 164 : 205, 61, 10); ctx.fill();
@@ -116,13 +118,11 @@ export function surfaceTexture(kind, variant = 0, resolution = 1024, content = n
     line(ctx, 'Equipo', 845, 476, 20, '#91a9ba');
     if (kind === 'chat') { ctx.fillStyle = `${palette[kind]}18`; ctx.beginPath(); ctx.arc(737, 470, 14, 0, Math.PI * 2); ctx.fill(); }
   }
-  let image = c;
-  if (resolution !== 1024) {image = document.createElement('canvas'); image.width = resolution; image.height = Math.round(h * resolution / w); image.getContext('2d').drawImage(c, 0, 0, image.width, image.height);}
-  const t = new THREE.CanvasTexture(image); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.userData.subject = subject; cache.set(key, t); return t;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.userData.subject = subject; cache.set(key, t); return t;
 }
 export function paperGrain() {
-  const c = document.createElement('canvas'); c.width = c.height = 256;
-  const ctx = c.getContext('2d'); ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, 256, 256); grain(ctx, 256, 256, 72, 813);
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const ctx = c.getContext('2d'); ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, 512, 512); grain(ctx, 512, 512, 48, 813);
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(5, 5); return t;
 }
 export function backdrop() {

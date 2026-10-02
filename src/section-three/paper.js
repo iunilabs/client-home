@@ -31,17 +31,17 @@ function shell(width, height, nx, ny, radius, thickness) {
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geo.setAttribute('paperSide', new THREE.Float32BufferAttribute(faces, 1)); geo.setIndex(indices); geo.computeVertexNormals();
   return {geo, base: new Float32Array(base)};
 }
-export function createPaper({kind, variant, width, height, grain, detailed = false, content = null}) {
+export function createPaper({kind, variant, width, height, grain, detailed = false, content = null, textureResolution = detailed ? 2048 : 512}) {
   const {geo, base} = shell(width, height, detailed ? 30 : 14, detailed ? 32 : 14, kind === 'note' || kind === 'letter' ? .015 : .045, kind === 'note' || kind === 'letter' ? .0028 : .004);
   const material = new THREE.MeshPhysicalMaterial({
-    map: surfaceTexture(kind, variant, detailed ? 1024 : 512, content), color: '#ffffff', roughness: .92, metalness: 0,
-    bumpMap: grain, bumpScale: .003, sheen: 0, sheenRoughness: .96, sheenColor: new THREE.Color('#d4e5f0'), specularIntensity: .045,
+    map: surfaceTexture(kind, variant, textureResolution, content), color: '#ffffff', roughness: .86, metalness: 0,
+    bumpMap: grain, bumpScale: .00065, sheen: .08, sheenRoughness: .95, sheenColor: new THREE.Color('#fff9ed'), specularIntensity: .18,
     clearcoat: 0, clearcoatRoughness: .9, side: THREE.FrontSide,
   });
   // The reverse is unprinted paper, not a mirrored software interface.
   material.onBeforeCompile = shader => {
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute float paperSide; varying float vPaperSide;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvPaperSide = paperSide;');
-    shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vPaperSide;').replace('#include <map_fragment>', '#include <map_fragment>\nif (vPaperSide > 0.5) diffuseColor.rgb = vec3(0.89, 0.925, 0.95);');
+    shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vPaperSide;').replace('#include <map_fragment>', '#include <map_fragment>\nif (vPaperSide > 0.5) diffuseColor.rgb = vec3(0.91, 0.90, 0.87);');
   };
   material.customProgramCacheKey = () => 'paper-shell-v2';
   const mesh = new THREE.Mesh(geo, material); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
