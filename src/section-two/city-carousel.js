@@ -223,6 +223,10 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     if (!touchGesture) return;
     const gesture = touchGesture;
     touchGesture = null;
+    // A completed, separate tap is intentional even while the previous drag's
+    // compatibility-click guard is still active. Keep that guard for drags,
+    // vertical swipes and canceled touches.
+    if (event.type === 'touchend' && !gesture.axis && !gesture.moved) suppressClickUntil = 0;
     if (gesture.axis === 'x') finishDrag(gesture, performance.now(), event.type === 'touchcancel');
     else motion.interrupt(performance.now());
   };

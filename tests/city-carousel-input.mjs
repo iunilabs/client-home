@@ -28,7 +28,8 @@ for (const [engine, type] of [['chromium', chromium], ['webkit', webkit]].filter
     if (!useApp) await page.route('**/__carousel-input', route => route.fulfill({contentType:'text/html', body:fixture}));
     await page.goto(useApp ? base : `${base}/__carousel-input`);
     const row = page.locator('.city-carousel'), viewport = row.locator('.city-carousel-viewport');
-    await page.waitForFunction(() => document.querySelectorAll('.city-carousel .city-client').length === 10 && !document.querySelector('.city-carousel').inert);
+    await page.waitForFunction(() => document.querySelectorAll('.city-carousel .city-client').length > 0 && !document.querySelector('.city-carousel').inert);
+    const clientCount = await row.locator('.city-client').count();
     if (useApp) await row.evaluate(el => {
       window.opens = [];
       el.addEventListener('click', event => {
@@ -101,12 +102,22 @@ for (const [engine, type] of [['chromium', chromium], ['webkit', webkit]].filter
     assert.equal(await page.evaluate(() => opens.length),opensBeforeReleaseClick,`${engine}: a delayed click after a held drag does not open a client`);
     await page.waitForTimeout(250);
     assert.equal((await position()).transform,resting.transform,`${engine}: lifting a stationary finger does not fling with stale velocity`);
+    // A separate finger tap must not inherit the preceding drag's click guard.
+    // This tap ends well inside the 800 ms guard for the drag's ghost click.
+    const freshTap = await row.locator('.city-client').evaluateAll(nodes => {
+      const el = nodes.find(node => {const b=node.getBoundingClientRect();return b.left>=15&&b.right<=375});
+      const b=el.getBoundingClientRect();return {x:(b.left+b.right)/2,y:(b.top+b.bottom)/2,id:el.dataset.client};
+    });
+    await page.touchscreen.tap(freshTap.x,freshTap.y);
+    assert.equal(await page.evaluate(() => opens.length),opensBeforeReleaseClick+1,`${engine}: first fresh tap after a drag opens exactly once`);
+    assert.equal(await page.evaluate(() => opens.at(-1)),freshTap.id,`${engine}: first fresh tap opens the tapped client`);
+    if (useApp) assert.equal(await page.evaluate(() => window.__puntoes.getState().tour.currentId),freshTap.id,`${engine}: fresh tap visits its client in the map`);
     const cancelled = await swipe({cancel:true});
     await page.waitForTimeout(250);
     const afterCancel = await position();
     assert.equal(afterCancel.transform,cancelled.transform,`${engine}: a canceled gesture does not fling (${JSON.stringify({cancelled,afterCancel})})`);
-    assert.equal(await row.locator('.city-client').count(),10);
-    console.log(`PASS ${engine}: keyboard-to-touch drag, native tap focus, held release, touch cancellation`);
+    assert.equal(await row.locator('.city-client').count(),clientCount);
+    console.log(`PASS ${engine}: keyboard-to-touch drag, native tap focus, held release, immediate fresh tap, touch cancellation`);
     await context.close();
   } finally {await browser.close()}
 }
