@@ -2,33 +2,38 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {cityGeometry, cityState} from '../src/section-two/city-state.js';
 
-const desktop = cityGeometry({top:4034, height:1764, viewport:720});
-const portrait = cityGeometry({top:4768, height:2068, viewport:844});
+const desktop = cityGeometry({top:4034, height:2916, viewport:720});
+const portrait = cityGeometry({top:4768, height:3418, viewport:844});
 
-test('adding the following chapter does not delay the accepted city entrance', () => {
-  assert.equal(desktop.start, 5168 * .77);
-  assert.equal(desktop.revealed, 5168 * .81);
+test('desktop copy follows the hands and leaves before the map', () => {
+  const sectionStart = 4034 - 720 + 90;
+  assert.equal(desktop.copyStart - sectionStart, 850);
+  assert.equal(desktop.start - desktop.copyStart, 800);
+  assert.equal(cityState(desktop.copyStart, desktop).copyOpacity, 0);
+  assert.equal(cityState(desktop.copyStart + 200, desktop).copyOpacity, 1);
+  assert.equal(cityState(desktop.start, desktop).copyOpacity, 0);
   assert.equal(cityState(desktop.start - 1, desktop).opacity, 0);
-  // The onset and zoom clock stay fixed, while the reveal has a slower pace.
-  assert.ok(cityState(desktop.revealed, desktop).opacity > 0);
-  assert.ok(cityState(desktop.revealed, desktop).opacity < .5);
+  assert.equal(cityState(desktop.start, desktop).opacity, 0);
+  assert.ok(cityState(desktop.start + 1, desktop).opacity > 0);
   assert.equal(cityState(desktop.fadeEnd, desktop).opacity, 1);
-  assert.ok((desktop.fadeEnd - desktop.start) / (desktop.revealed - desktop.start) > 2.5);
 });
 
 test('scroll continuously pulls back on desktop and portrait, in both directions', () => {
   for (const geometry of [desktop, portrait]) {
     let previous = Infinity;
     for (let i=0; i<=100; i++) {
-      const y=geometry.revealed+(geometry.end-geometry.revealed)*i/100;
+      const y=geometry.start+(geometry.end-geometry.start)*i/100;
       const state=cityState(y,geometry);
       assert.ok(state.zoom<=previous);
       assert.ok(Number.isFinite(state.zoom));
       previous=state.zoom;
       assert.deepEqual(state,cityState(y,geometry));
     }
-    assert.equal(cityState(geometry.revealed,geometry).zoom,1.5);
+    assert.equal(cityState(geometry.start,geometry).zoom,1.5);
     assert.equal(cityState(geometry.end,geometry).zoom,1);
+    const early = cityState(geometry.start + 100, geometry).zoom;
+    assert.ok(early < 1.5);
+    assert.ok(Math.abs(early - (1.5 - .5 * 100 / (geometry.end - geometry.start))) < 1e-10);
   }
 });
 

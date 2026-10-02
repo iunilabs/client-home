@@ -26,19 +26,22 @@ export function mobileTravelProfile(from, to, {width, height, viewportWidth, vie
 // take document space; adding stops does not add empty screens to scroll past.
 export function mobileTourGeometry({top, viewport}) {
   const handoff = top - viewport + 90;
-  const revealed = handoff + viewport * 1.35;
-  return {handoff, start: handoff + viewport * .55, fadeEnd: revealed, revealed,
+  const copyStart = handoff + 850;
+  const start = copyStart + 800;
+  const revealed = start + viewport * .8;
+  return {handoff, copyStart, start, fadeEnd: revealed, revealed,
     end: revealed, height: revealed + viewport - top, viewport};
 }
 
 export function mobileTourState({scroll, geometry}) {
-  const {viewport, start, fadeEnd, revealed} = geometry;
+  const {viewport, copyStart, start, fadeEnd, revealed} = geometry;
   const exit = clamp((scroll - revealed) / viewport);
   const opacity = exit < 1 ? smooth(start, fadeEnd, scroll) : 0;
   return {stopIndex: -1, phase: 0, previous: mobileTourHub, current: mobileTourHub,
     entrance: tourEase((scroll - start) / (fadeEnd - start)), travel: 1, cardProgress: 0,
     progress: clamp((scroll - start) / (revealed + viewport - start)), opacity,
-    copyOpacity: 1, namesOpacity: 0, exitY: exit * viewport,
+    copyOpacity: smooth(copyStart, copyStart + 160, scroll) * (1 - smooth(start - 200, start, scroll)),
+    namesOpacity: 0, exitY: exit * viewport,
     active: opacity > .01 && exit < 1, revealed: opacity >= .999, mode: 'tour'};
 }
 

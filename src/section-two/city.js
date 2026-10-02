@@ -123,6 +123,8 @@ export function createCity(section, options = {}) {
     const wasPortrait = section.classList.contains('city-mobile-tour');
     if (wasPortrait !== portrait) navigation.reset();
     section.classList.toggle('city-mobile-tour', portrait);
+    // Copy has its own beat before the map on both layouts.
+    section.append(copy);
     if (portrait && loading) deck.load();
     if (portrait) {
       // Keep the itinerary stable when Safari retracts its address bar.
@@ -209,7 +211,7 @@ export function createCity(section, options = {}) {
     if (portrait) {
       tour = navigation.update(state, {scroll, now, layout: {width: parseFloat(world.style.width), height: parseFloat(world.style.height),
         viewportWidth: document.documentElement.clientWidth, viewportHeight: innerHeight}, geometry, reduced});
-      state.copyOpacity = tour.copyOpacity;
+      // The introduction finishes before the mobile itinerary begins.
       if (tour.active) {state.opacity = 1; state.active = true; state.exitY = 0; state.revealed = true}
       state.stopIndex = tour.guidedCursor;
       state.current = tour.current;

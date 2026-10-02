@@ -20,10 +20,16 @@ function setup(route = mobileTourRoute) {
 test('one anchor preserves the hand entrance and removes empty itinerary scroll', () => {
   const short=mobileTourGeometry({top:5200,viewport:844,route:[]});
   assert.deepEqual(short,geometry);
-  assert.equal(geometry.revealed,5200-844+90+844*1.35);
+  assert.equal(geometry.revealed,5200-844+90+850+800+844*.8);
   assert.equal(geometry.end,geometry.revealed);
   assert.equal(geometry.height,geometry.revealed+844-5200);
   assert.equal(state(geometry.handoff).active,false);
+  assert.equal(geometry.copyStart - geometry.handoff, 850);
+  assert.equal(state(geometry.copyStart).copyOpacity, 0);
+  assert.equal(state(geometry.copyStart + 200).copyOpacity, 1);
+  assert.equal(state(geometry.start).copyOpacity, 0);
+  assert.equal(state(geometry.start).opacity, 0);
+  assert.ok(state(geometry.start + 100).opacity > 0);
   assert.equal(state(geometry.revealed+422).exitY,422);
 });
 
