@@ -1,0 +1,171 @@
+{
+  "version": "V17",
+  "generation": "Built-in image_gen localized edits; Sharp used only for registration, edge blending and WebP encoding.",
+  "sources": {
+    "telefonica": "https://espacio.fundaciontelefonica.com/visitanos/el-edificio/",
+    "indra": "https://eas.es/proyectos/indra-sede-social/",
+    "allianz": "https://wssre.com/proyectos/"
+  },
+  "assets": [
+    {
+      "file": "puntoes-city-mobile-v17-new-clients.webp",
+      "previous": "puntoes-city-mobile-v16-architecture.webp",
+      "width": 941,
+      "height": 1672,
+      "bytes": 886046,
+      "sha256": "950c1ce9c0ba9da45ce671622c7d73809ae4696028278e33c4bc28b65b02d933",
+      "rects": {
+        "telefonica": [
+          290,
+          710,
+          180,
+          260
+        ],
+        "indra": [
+          475,
+          710,
+          230,
+          260
+        ],
+        "allianz": [
+          292,
+          1240,
+          210,
+          230
+        ]
+      },
+      "outside_changed_channels_before_webp": 0
+    },
+    {
+      "file": "puntoes-city-v17-new-clients.webp",
+      "previous": "puntoes-city-v16-architecture.webp",
+      "width": 1672,
+      "height": 941,
+      "bytes": 802782,
+      "sha256": "a4d866d4e9cdafdbf32ecebcf460c5bf54ab661916a3203df36b8ca2ea40a848",
+      "rects": {
+        "telefonica": [
+          592,
+          380,
+          190,
+          210
+        ],
+        "indra": [
+          1053,
+          259,
+          170,
+          180
+        ],
+        "allianz": [
+          285,
+          567,
+          190,
+          200
+        ]
+      },
+      "outside_changed_channels_before_webp": 0
+    },
+    {
+      "file": "puntoes-city-v17-expanded-new-clients.webp",
+      "previous": "puntoes-city-v16-expanded-architecture.webp",
+      "width": 1672,
+      "height": 941,
+      "bytes": 774098,
+      "sha256": "aa932b6deaa7676c3915d5fc76443613ad5c0d660e8fcc07db530e48603744e4",
+      "rects": {
+        "telefonica": [
+          673,
+          410,
+          127,
+          140
+        ],
+        "indra": [
+          981,
+          330,
+          113,
+          120
+        ],
+        "allianz": [
+          469,
+          535,
+          127,
+          133
+        ]
+      },
+      "outside_changed_channels_before_webp": 0
+    }
+  ],
+  "tiles": [
+    {
+      "id": "telefonica",
+      "source_crop": {
+        "left": 290,
+        "top": 710,
+        "width": 180,
+        "height": 260
+      },
+      "native_width": 1044,
+      "native_height": 1507,
+      "asset_file": "puntoes-city-mobile-telefonica-detail-v17.webp",
+      "asset_bytes": 353318,
+      "asset_sha256": "3ba3fe10787ddc5faac08740059f18c8c530173d571b451b163bb67f877f749a",
+      "native_master_sha256": "3c06ba1a2a2b32c17c0b755198b3861a0731977a8d77f33fe2fcf8c92aeb7016",
+      "generation": "Built-in image_gen; exact prompt and architecture sources in NUEVAS-SEDES-V17.md",
+      "status": "Native new landmark detail; layout registered to matching V17 base crop."
+    },
+    {
+      "id": "indra",
+      "source_crop": {
+        "left": 475,
+        "top": 710,
+        "width": 230,
+        "height": 260
+      },
+      "native_width": 1179,
+      "native_height": 1334,
+      "asset_file": "puntoes-city-mobile-indra-detail-v17.webp",
+      "asset_bytes": 360176,
+      "asset_sha256": "7a100904f9b7b759e3bb4161e78a48d4e728eb748a870ebf3071eb451186645b",
+      "native_master_sha256": "79a08f008aedb3ab07e5098e9d68604fd9a484472ff20057876d22dd813c3ab7",
+      "generation": "Built-in image_gen; exact prompt and architecture sources in NUEVAS-SEDES-V17.md",
+      "status": "Native new landmark detail; layout registered to matching V17 base crop."
+    },
+    {
+      "id": "allianz",
+      "source_crop": {
+        "left": 292,
+        "top": 1240,
+        "width": 210,
+        "height": 230
+      },
+      "native_width": 1198,
+      "native_height": 1313,
+      "asset_file": "puntoes-city-mobile-allianz-detail-v17.webp",
+      "asset_bytes": 289210,
+      "asset_sha256": "170dc5473ab951d6d3cc25db01a688e80089baed7f1ec392f69b06d0f4df3b0e",
+      "native_master_sha256": "f143860ee719ab8c1ee06cafa683c98a88e5832325b115a1a682d38f6a1be416",
+      "generation": "Built-in image_gen; exact prompt and architecture sources in NUEVAS-SEDES-V17.md",
+      "status": "Native new landmark detail; layout registered to matching V17 base crop."
+    }
+  ],
+  "validation": {
+    "unit_tests": 124,
+    "unit_tests_passed": true,
+    "production_build_passed": true,
+    "browser_viewports": [
+      320,
+      390,
+      1440
+    ],
+    "browser_errors": 0,
+    "new_landmark_visits": [
+      "allianz",
+      "indra",
+      "telefonica"
+    ],
+    "native_mobile_details_decoded": true,
+    "return_visit_checked": true,
+    "previous_native_tiles_unchanged": true,
+    "previous_calibrated_footprints_excluded_from_clipping": true
+  }
+}

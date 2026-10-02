@@ -10,6 +10,10 @@ import mapfreUrl from './assets/puntoes-city-mobile-mapfre-detail-v14.webp';
 import mediasetUrl from './assets/puntoes-city-mobile-mediaset-detail-v16.webp';
 import reeUrl from './assets/puntoes-city-mobile-ree-detail-v14.webp';
 import siemensUrl from './assets/puntoes-city-mobile-siemens-detail-v14.webp';
+import telefonicaUrl from './assets/puntoes-city-mobile-telefonica-detail-v17.webp';
+import indraUrl from './assets/puntoes-city-mobile-indra-detail-v17.webp';
+import allianzUrl from './assets/puntoes-city-mobile-allianz-detail-v17.webp';
+import {detailBackgroundClip} from './city-detail-occlusion.js';
 import {smooth} from '../timeline.js';
 
 // Each native detail image reconstructs a precise V13 source rectangle.
@@ -29,6 +33,9 @@ export const cityDetails = {
   mediaset: {url: mediasetUrl, rect: [73, 652, 280, 380]},
   ree: {url: reeUrl, rect: [637, 700, 280, 280]},
   siemens: {url: siemensUrl, rect: [568, 937, 360, 320], feather: [8, 12]},
+  telefonica: {url: telefonicaUrl, rect: [290, 710, 180, 260], feather: [7, 4]},
+  indra: {url: indraUrl, rect: [475, 710, 230, 260], feather: [8, 5]},
+  allianz: {url: allianzUrl, rect: [292, 1240, 210, 230], feather: [8, 5]},
 };
 
 export function createCityDetail(core) {
@@ -40,6 +47,7 @@ export function createCityDetail(core) {
     const [x, y, width, height] = detail.rect;
     image.style.left = `${x / 941 * 100}%`; image.style.top = `${y / 1672 * 100}%`;
     image.style.width = `${width / 941 * 100}%`; image.style.height = `${height / 1672 * 100}%`;
+    image.style.clipPath = detailBackgroundClip(id, detail.rect);
     // Compact crops give their subject more native pixels. Keep the whole
     // building inside the opaque part; soften only the surrounding context.
     if (detail.feather) {

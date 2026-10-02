@@ -1,6 +1,6 @@
-import desktopUrl from './assets/puntoes-city-v16-architecture.webp';
-import portraitUrl from './assets/puntoes-city-mobile-v16-architecture.webp';
-import extendedDesktopUrl from './assets/puntoes-city-v16-expanded-architecture.webp';
+import desktopUrl from './assets/puntoes-city-v17-new-clients.webp';
+import portraitUrl from './assets/puntoes-city-mobile-v17-new-clients.webp';
+import extendedDesktopUrl from './assets/puntoes-city-v17-expanded-new-clients.webp';
 import {cityClients} from './city-clients.js';
 import {cityGeometry, cityState} from './city-state.js';
 import {createCityWater} from './city-water.js';
@@ -31,10 +31,10 @@ const sites = {
   siemens: {pinDesktop: [69, 60.5]},
   naturgy: {pinDesktop: [51.4, 59.8]},
   sabadell: {pinDesktop: [30.4, 74]},
-  // Neutral buildings in the existing illustration, not replicas of real HQs.
-  telefonica: {pinDesktop: [40.2, 53.9]},
-  indra: {pinDesktop: [68.5, 36.6]},
-  allianz: {pinDesktop: [22.8, 70.8]},
+  // V17 landmarks inspired by the researched real buildings.
+  telefonica: {pinDesktop: [41.2, 46.5]},
+  indra: {pinDesktop: [69.3, 35.3]},
+  allianz: {pinDesktop: [23.2, 69.5]},
 };
 
 export function createCity(section, options = {}) {

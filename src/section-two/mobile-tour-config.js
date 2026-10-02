@@ -17,10 +17,10 @@ export const mobileTourBuildings = {
   mediaset: {center: [21.838, 50.568], size: [18.385, 14.175], pin: [21.54, 49.55]},
   accenture: {center: [20.191, 33.553], size: [21.467, 8.493], pin: [22.742, 30.801]},
   collaborate: {center: [11.583, 9.809], size: [14.665, 8.852], pin: [10.733, 8.911]},
-  // Broader district framing retains map detail for these neutral buildings.
-  telefonica: {center: [36.8, 49.2], size: [25, 14], pin: [36.8, 47.2], detail: 'base'},
-  indra: {center: [61, 48], size: [25, 14], pin: [61, 46], detail: 'base'},
-  allianz: {center: [39, 80.2], size: [25, 14], pin: [39, 77.5], detail: 'base'},
+  // V17 illustrated real architecture; each has a dedicated native zoom tile.
+  telefonica: {center: [37.62, 48.15], size: [10.3, 10.1], pin: [37.1, 44.7]},
+  indra: {center: [63.02, 47.28], size: [18, 7.2], pin: [64.1, 45.8]},
+  allianz: {center: [40.06, 78.32], size: [10.3, 5.6], pin: [40, 76.8]},
 };
 
 export const mobileTourRoute = mobileTourOrder.map(id => ({id, ...mobileTourBuildings[id]}));

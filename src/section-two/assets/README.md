@@ -1,5 +1,15 @@
 # Ciudad de Puntoes · recursos y dirección visual
 
+## Actualización activa V17: tres nuevas sedes
+
+Los mapas usados por runtime son `puntoes-city-v17-new-clients.webp`, `puntoes-city-mobile-v17-new-clients.webp` y `puntoes-city-v17-expanded-new-clients.webp`. Incorporan Telefónica (Gran Vía 28), Indra (Alcobendas) y Allianz España (Ramírez de Arellano 35) en los barrios disponibles. El mapa ampliado conserva su extensión del 25 % por lado y el núcleo registrado; no se altera la ruta automática móvil.
+
+Los tres nuevos detalles móviles `puntoes-city-mobile-{telefonica,indra,allianz}-detail-v17.webp` son ilustraciones nativas generadas (1044 × 1507, 1179 × 1334 y 1198 × 1313), con un total de 1002704 bytes. Se solicitan por visita, con el mismo mecanismo de caché y carga del destino siguiente. Los doce detalles anteriores se conservan idénticos. Sus fondos se recortan únicamente donde las casas fueron sustituidas por nuevas sedes, sin recortar ningún edificio calibrado anterior.
+
+Fuentes y prompts exactos: [NUEVAS-SEDES-V17.md](NUEVAS-SEDES-V17.md). Rectángulos, hashes, pesos y preservación local: [new-client-buildings-v17-provenance.json](new-client-buildings-v17-provenance.json). image_gen realiza todas las ediciones arquitectónicas; Sharp registra los recortes, suaviza los bordes y codifica WebP. No hay dibujo de edificios con código. Los mapas conservan 1672 × 941 y 941 × 1672; su resolución general no se anuncia como aumentada. Antes de codificar, ningún canal fuera de las áreas de inserción cambia. WebP calidad 96 puede introducir diferencias de compresión.
+
+El resto del documento conserva el historial de elaboración.
+
 2 de octubre de 2026. Edición con la herramienta integrada image_gen, sin CLI ni API externa.
 
 ## Recursos activos

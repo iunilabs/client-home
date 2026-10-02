@@ -9,7 +9,8 @@ import {mobileBuildingView} from '../src/section-two/mobile-tour.js';
 // the actual detail controller and its actual smooth function unchanged.
 const source = await fs.readFile(new URL('../src/section-two/city-detail.js', import.meta.url), 'utf8');
 const executable = source.replace(/import (\w+Url) from '(\.\/assets\/[^']+)';/g, (_, name, url) => `const ${name} = ${JSON.stringify(url)};`)
-  .replace("'../timeline.js'", JSON.stringify(new URL('../src/timeline.js', import.meta.url).href));
+  .replace("'../timeline.js'", JSON.stringify(new URL('../src/timeline.js', import.meta.url).href))
+  .replace("'./city-detail-occlusion.js'", JSON.stringify(new URL('../src/section-two/city-detail-occlusion.js', import.meta.url).href));
 const {cityDetails, createCityDetail} = await import(`data:text/javascript;base64,${Buffer.from(executable).toString('base64')}`);
 const approvedHashes = {
   puntoes: '946c07371ea8c665882d79d25644b2ade7aea44926fa3eb0a60d78bf1d574f58',
@@ -19,16 +20,15 @@ const approvedHashes = {
   collaborate: 'efbe283915dbc13900e48eb915a2a3e6d87a54f860d85fcbe9b4f08bc8e802ce',
 };
 
-test('new public clients use explicit base-map framing without excessive mobile zoom', async () => {
+test('new public clients have native landmarks and dedicated mobile zoom detail', async () => {
   const fixture = JSON.parse(await fs.readFile(new URL('./fixtures/additional-city-clients.json', import.meta.url)));
-  const baseIds = Object.keys(mobileTourBuildings).filter(id => mobileTourBuildings[id].detail === 'base');
-  assert.deepEqual(baseIds.sort(), fixture.clients.map(client => client.id).sort());
-  for (const id of baseIds) {
+  for (const {id} of fixture.clients) {
+    assert.notEqual(mobileTourBuildings[id].detail, 'base');
+    assert.ok(cityDetails[id]);
     for (const [viewportWidth, viewportHeight] of [[320, 740], [390, 844]]) {
       const width = viewportHeight * 941 / 1672 * 1.04;
       const view = mobileBuildingView(mobileTourBuildings[id], {width, height: width * 1672 / 941, viewportWidth, viewportHeight});
-      assert.ok(view.zoom >= 1.5 && view.zoom <= 2.5, `${id}: keep a broad base-map view`);
-      assert.equal(cityDetails[id], undefined);
+      assert.ok(view.zoom > 2.5 && view.zoom <= 8, `${id}: useful native landmark close-up`);
     }
   }
 });
@@ -37,7 +37,7 @@ test('dedicated detail destinations, hub and invitation have matching source rec
   const detailIds = Object.keys(mobileTourBuildings).filter(id => mobileTourBuildings[id].detail !== 'base');
   assert.deepEqual(Object.keys(cityDetails).sort(), [...detailIds, 'puntoes'].sort());
   const provenance = JSON.parse(await fs.readFile(new URL('../src/section-two/assets/city-detail-provenance.json', import.meta.url)));
-  assert.equal(provenance.tiles.length, 12);
+  assert.equal(provenance.tiles.length, 15);
   for (const [id, {rect, feather = [14, 12]}] of Object.entries(cityDetails)) {
     const [x, y, w, h] = rect, stop = id === 'puntoes' ? mobileTourHub : mobileTourBuildings[id];
     assert.ok(x >= 0 && y >= 0 && x + w <= 941 && y + h <= 1672, `${id}: in V13 bounds`);
