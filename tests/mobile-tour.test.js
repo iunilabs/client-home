@@ -147,12 +147,30 @@ test('chapter jumps suspend capture, resets and resized anchors remain coherent'
   nav.reset({suspend:true});assert.equal(nav.getState().active,false);
 });
 
-test('city reduced motion shortens travel and card arrival without disabling navigation', () => {
-  const {nav}=setup();
-  const frame=now=>nav.update(state(geometry.revealed),{scroll:geometry.revealed,now,layout,geometry,reduced:true});
-  frame(0);nav.step(1,{now:10});const arrived=frame(120);
-  assert.equal(arrived.moving,false);assert.equal(arrived.current.id,'bbva');assert.equal(arrived.entry.progress,1);
-  assert.ok(nav.select('cepsa',{now:130}));assert.equal(frame(240).current.id,'cepsa');
+test('guided travel and cards keep the same smooth motion with either system preference', () => {
+  const normal=setup(), reduced=setup();
+  const frame=(subject,now,preference)=>subject.nav.update(state(geometry.revealed),
+    {scroll:geometry.revealed,now,layout,geometry,reduced:preference});
+  frame(reduced,0,true);
+  let now=10;
+  function compareTrip(request) {
+    assert.ok(request(normal.nav,now)); assert.ok(request(reduced.nav,now));
+    for (const elapsed of [0,110,500,1100,leg]) {
+      const a=frame(normal,now+elapsed,false), b=frame(reduced,now+elapsed,true);
+      assert.deepEqual(b.camera,a.camera);
+      assert.deepEqual(b.entry,a.entry);
+      assert.equal(b.moving,a.moving);
+      if (elapsed<=1100) assert.equal(b.moving,true);
+      else {
+        assert.equal(b.moving,false);
+        assert.deepEqual(b.camera,mobileCameraAt(mobileBuildingView(b.current,layout,b.current.id==='puntoes'),layout));
+      }
+    }
+    now+=leg+10;
+  }
+  for (const stop of mobileTourRoute) compareTrip((nav,time)=>nav.step(1,{now:time}));
+  for (const stop of mobileTourRoute) compareTrip((nav,time)=>nav.step(-1,{now:time}));
+  compareTrip((nav,time)=>nav.select('cepsa',{now:time}));
 });
 
 test('departures and arrivals accelerate and brake without an endpoint velocity jump', () => {

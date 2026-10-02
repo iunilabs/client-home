@@ -16,7 +16,7 @@ function blendCamera(from, to, t, layout, cruiseZoom) {
 export function createMobileTourNavigation({route = mobileTourRoute, onNavigate = () => {}} = {}) {
   let manualId = null;
   let active = false, cursor = -1, current = mobileTourHub, transition = null;
-  let camera = null, visited = [], geometry, cameraLayout, suspended = false, released = 0, lastScroll = null, reduced = false;
+  let camera = null, visited = [], geometry, cameraLayout, suspended = false, released = 0, lastScroll = null;
   const stopFor = id => id === 'puntoes' ? mobileTourHub : {id, ...mobileTourBuildings[id]};
   const itinerary = () => manualId ? [stopFor(manualId), stopFor('collaborate')] : route;
   const snapshot = () => ({active, currentId: current.id, guidedCursor: cursor, manualId,
@@ -43,8 +43,7 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
     const destination = cameraLayout && mobileBuildingView(current, cameraLayout, current.id === 'puntoes');
     const profile = camera && destination ? mobileTravelProfile(camera, destination, cameraLayout) :
       {duration: mobileTourTiming.logoTravel, cruiseZoom: 1.5};
-    transition = {from: camera, started: now, previous, mode: repeated ? 'fade' : 'slide',
-      ...profile, duration: reduced ? 100 : profile.duration};
+    transition = {from: camera, started: now, previous, mode: repeated ? 'fade' : 'slide', ...profile};
   }
   function canRelease(direction) {
     return active && !transition && (direction > 0 ? cursor === itinerary().length - 1 : cursor < 0);
@@ -79,8 +78,8 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
       cursor += direction > 0 ? 1 : -1;
       travel(cursor < 0 ? 'puntoes' : itinerary()[cursor].id, now); return true;
     },
-    update(state, {scroll, now, layout, geometry: bounds, reduced: preference = false}) {
-      geometry = bounds; cameraLayout = layout; reduced = preference;
+    update(state, {scroll, now, layout, geometry: bounds, reduced = false}) {
+      geometry = bounds; cameraLayout = layout;
       if (suspended && (scroll < bounds.start || scroll >= bounds.revealed + bounds.viewport)) suspended = false;
       // Arrival from outside can already have compositor inertia. Capture it
       // before that same gesture gets permission to visit a building.
@@ -100,7 +99,7 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
           const elapsed = Math.max(0, now - transition.started);
           const t = tourEase(elapsed / transition.duration);
           camera = blendCamera(transition.from, view, t, layout, transition.cruiseZoom);
-          progress = reduced ? tourEase(elapsed / 100) : tourEase((elapsed - mobileTourTiming.logoCardFrom) /
+          progress = tourEase((elapsed - mobileTourTiming.logoCardFrom) /
             (mobileTourTiming.logoCardUntil - mobileTourTiming.logoCardFrom));
           outgoingId = transition.previous;
           if (elapsed >= transition.duration) {camera = mobileCameraAt(view, layout); transition = null}
