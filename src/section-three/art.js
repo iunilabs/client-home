@@ -44,6 +44,38 @@ function icon(ctx, type, x, y, size) {
 function line(ctx, text, x, y, size = 27, color = INK, weight = 400, family = 'Manrope') {
   ctx.fillStyle = color; ctx.font = `${weight} ${size}px "${family}", Arial`; ctx.fillText(text, x, y);
 }
+function textBlock(ctx, text, {x, y, width, height, maxSize = 48, minSize = 24,
+  weight = 400, family = 'Manrope', color = INK, leading = 1.18, maxLines = 3, align = 'left'}) {
+  ctx.save();
+  function measure(size) {
+    const font = `${weight} ${size}px "${family}", Arial`; ctx.font = font;
+    const rows = [];
+    for (const paragraph of text.split('\n')) {
+      let row = '';
+      for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+        const next = row ? `${row} ${word}` : word;
+        if (row && ctx.measureText(next).width > width) {rows.push(row); row = word;}
+        else row = next;
+      }
+      rows.push(row);
+    }
+    const metrics = ctx.measureText('Ágj'), ascent = metrics.actualBoundingBoxAscent,
+      descent = metrics.actualBoundingBoxDescent, rowHeight = size * leading;
+    const usedHeight = ascent + descent + (rows.length - 1) * rowHeight;
+    return {font, rows, ascent, usedHeight, rowHeight,
+      fits: rows.length <= maxLines && usedHeight <= height && rows.every(row => ctx.measureText(row).width <= width)};
+  }
+  let low = minSize, high = maxSize, fitted = measure(minSize);
+  while (low <= high) {
+    const size = Math.floor((low + high) / 2), layout = measure(size);
+    if (layout.fits) {fitted = layout; low = size + 1;} else high = size - 1;
+  }
+  ctx.font = fitted.font; ctx.fillStyle = color; ctx.textAlign = align;
+  const left = x + (align === 'right' ? width : align === 'center' ? width / 2 : 0);
+  const baseline = y + (height - fitted.usedHeight) / 2 + fitted.ascent;
+  fitted.rows.forEach((row, index) => ctx.fillText(row, left, baseline + index * fitted.rowHeight));
+  ctx.restore();
+}
 function grain(ctx, w, h, amount, seed) {
   const pixels = ctx.getImageData(0, 0, w, h);
   let state = seed;
@@ -70,53 +102,44 @@ export function surfaceTexture(kind, variant = 0, resolution = 1024, content = n
   if (kind === 'note') {
     const adhesive = ctx.createLinearGradient(0, 0, 0, 145); adhesive.addColorStop(0, '#89b0c015'); adhesive.addColorStop(1, '#89b0c000');
     ctx.fillStyle = adhesive; ctx.fillRect(0, 0, w, 145);
-    line(ctx, variant === 0 ? 'BLOQUEADO' : 'PARA REVISAR', 95, 180, 22, '#6b8ba0', 500);
+    line(ctx, variant === 0 ? 'BLOQUEADO' : 'PARA REVISAR', 95, 180, 28, '#6b8ba0', 500);
     const phrases = noteContent[variant] ?? ['Revisar', `el punto ${variant + 1}.`]; subject = phrases.join(' ');
-    line(ctx, phrases[0], 92, 410, 89, '#35637b', 400, 'DM Serif'); line(ctx, phrases[1], 90, 528, variant === 0 ? 82 : 89, '#35637b', 400, 'DM Serif');
-    ctx.strokeStyle = '#658da388'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(97, 583); ctx.bezierCurveTo(250, 569, 435, 589, 660, 577); ctx.stroke();
-    line(ctx, variant === 0 ? 'El cliente vuelve a preguntar.' : `Nota ${String(variant + 1).padStart(2, '0')} · Por confirmar`, 97, 764, 29, '#64879b');
+    textBlock(ctx, phrases.join('\n'), {x: 92, y: 285, width: 840, height: 330, maxSize: 132, minSize: 80, family: 'DM Serif', color: '#35637b'});
+    ctx.strokeStyle = '#658da388'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(97, 650); ctx.bezierCurveTo(320, 636, 620, 660, 920, 644); ctx.stroke();
+    textBlock(ctx, variant === 0 ? 'El cliente vuelve a preguntar.' : `Nota ${String(variant + 1).padStart(2, '0')} · Por confirmar`, {x: 97, y: 735, width: 830, height: 105, maxSize: 38, minSize: 28, color: '#64879b', maxLines: 2});
     ctx.fillStyle = '#76a7c0'; ctx.beginPath(); ctx.arc(113, 893, 6, 0, Math.PI * 2); ctx.fill();
-    line(ctx, `Equipo · 09:${String(14 + variant).padStart(2, '0')}`, 139, 903, 22, '#7392a4');
+    line(ctx, `Equipo · 09:${String(14 + variant).padStart(2, '0')}`, 139, 903, 28, '#7392a4');
   } else if (kind === 'letter') {
-    icon(ctx, 'email', 90, 102, 88); line(ctx, 'HOY · 09:14', 748, 123, 19, '#91a4b3', 500);
-    line(ctx, ['De: Dirección financiera','De: Equipo de operaciones','De: Coordinación de proyecto','De: Área de gestión'][variant % 4], 95, 261, 24, '#6b869a');
-    subject = letterContent[variant] ?? `Revisión del expediente ${variant + 1}`; line(ctx, subject, 95, 363, subject.length > 26 ? 39 : 45, INK, 600);
-    ctx.strokeStyle = '#ccdce740'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(95, 413); ctx.lineTo(927, 413); ctx.stroke();
-    line(ctx, 'Hola,', 95, 506, 29, '#3d5667');
-    line(ctx, ['Adjunto la propuesta para su revisión.','Comparto los cambios para validarlos.','Remito el documento actualizado.','Necesitamos confirmar los siguientes pasos.'][variant % 4], 95, 574, 29, '#3d5667');
-    line(ctx, ['Quedamos a la espera de los comentarios.','¿Podemos revisarlo durante esta semana?','La última versión incluye las observaciones.','Quedo pendiente de vuestra respuesta.'][variant % 4], 95, 620, 29, '#3d5667');
-    line(ctx, 'Un saludo.', 95, 733, 29, '#3d5667');
-    rounded(ctx, 93, 915, 490, 80, 12); ctx.fillStyle = '#eaf2f8'; ctx.fill();
-    icon(ctx, 'document', 115, 930, 44); line(ctx, ['Propuesta.pdf','Detalle_operación.pdf','Borrador_v02.pdf','Resumen_solicitud.pdf','Proyecto.pdf','Documentación.pdf','Seguimiento.pdf'][variant % 7], 181, 964, 23, '#5b7b91');
-    line(ctx, '1 archivo adjunto', 95, 1043, 18, '#94a8b7');
+    icon(ctx, 'email', 90, 102, 88); line(ctx, 'HOY · 09:14', 748, 123, 24, '#91a4b3', 500);
+    textBlock(ctx, ['De: Dirección financiera','De: Equipo de operaciones','De: Coordinación de proyecto','De: Área de gestión'][variant % 4], {x: 95, y: 225, width: 832, height: 52, maxSize: 34, minSize: 26, color: '#6b869a', maxLines: 1});
+    subject = letterContent[variant] ?? `Revisión del expediente ${variant + 1}`;
+    textBlock(ctx, subject, {x: 95, y: 313, width: 832, height: 148, maxSize: 86, minSize: 48, weight: 600, maxLines: 2});
+    ctx.strokeStyle = '#ccdce740'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(95, 483); ctx.lineTo(927, 483); ctx.stroke();
+    line(ctx, 'Hola,', 95, 548, 40, '#3d5667');
+    textBlock(ctx, ['Adjunto la propuesta para su revisión.','Comparto los cambios para validarlos.','Remito el documento actualizado.','Necesitamos confirmar los siguientes pasos.'][variant % 4], {x: 95, y: 580, width: 832, height: 92, maxSize: 44, minSize: 32, color: '#3d5667', maxLines: 2});
+    textBlock(ctx, ['Quedamos a la espera de los comentarios.','¿Podemos revisarlo durante esta semana?','La última versión incluye las observaciones.','Quedo pendiente de vuestra respuesta.'][variant % 4], {x: 95, y: 704, width: 832, height: 92, maxSize: 44, minSize: 32, color: '#3d5667', maxLines: 2});
+    line(ctx, 'Un saludo.', 95, 867, 40, '#3d5667');
+    rounded(ctx, 93, 957, 834, 84, 12); ctx.fillStyle = '#eaf2f8'; ctx.fill();
+    icon(ctx, 'document', 115, 976, 44);
+    textBlock(ctx, ['Propuesta.pdf','Detalle_operación.pdf','Borrador_v02.pdf','Resumen_solicitud.pdf','Proyecto.pdf','Documentación.pdf','Seguimiento.pdf'][variant % 7], {x: 181, y: 974, width: 715, height: 49, maxSize: 32, minSize: 24, color: '#5b7b91', maxLines: 1});
+    line(ctx, '1 archivo adjunto', 95, 1110, 25, '#94a8b7');
   } else {
     icon(ctx, kind, 60, 58, 73);
     const titles = { email: 'Correo', chat: 'Mensaje interno', ticket: 'Incidencia', document: 'Documento', task: 'Solicitud' };
-    line(ctx, titles[kind], 160, 91, 28, '#446c88', 500);
-    line(ctx, ['09:14', '10:26', '09:42'][variant % 3], 864, 90, 18, '#91a9ba');
+    textBlock(ctx, titles[kind], {x: 160, y: 58, width: 640, height: 48, maxSize: 36, minSize: 28, color: '#446c88', weight: 500, maxLines: 1});
+    textBlock(ctx, ['09:14', '10:26', '09:42'][variant % 3], {x: 824, y: 59, width: 132, height: 45, maxSize: 27, minSize: 22, color: '#91a9ba', maxLines: 1, align: 'right'});
     subject = content?.message ?? channelContent[kind][variant] ?? `${titles[kind]} ${variant + 1}`;
     const secondary = kind === 'document' ? `${(1.2 + variant * .3).toFixed(1).replace('.', ',')} MB · Versión ${String(variant + 1).padStart(2, '0')}` : ['Pendiente de revisión', 'Compartido con el equipo', 'Esperando confirmación', 'Recibido esta mañana', 'En curso'][variant % 5];
-    const text = [subject, secondary];
-    if (content) {
-      const fontSize = 54, leading = 68;
-      ctx.font = `500 ${fontSize}px "Manrope", Arial`;
-      const rows = []; let row = '';
-      for (const word of subject.split(/\s+/)) {
-        const next = row ? `${row} ${word}` : word;
-        if (row && ctx.measureText(next).width > 894) {rows.push(row); row = word;}
-        else row = next;
-      }
-      if (row) rows.push(row);
-      const firstBaseline = 290 - (rows.length - 1) * leading / 2;
-      rows.forEach((text, index) => line(ctx, text, 62, firstBaseline + index * leading, fontSize, INK, 500));
-    } else {
-      line(ctx, text[0], 62, 252, text[0].length > 27 ? 34 : 40, INK, 500); line(ctx, text[1], 62, 311, 27, '#567082');
-    }
-    ctx.strokeStyle = '#d8e5ee'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(62, 380); ctx.lineTo(956, 380); ctx.stroke();
-    ctx.fillStyle = `${palette[kind]}14`; rounded(ctx, 60, 438, kind === 'document' ? 164 : 205, 61, 10); ctx.fill();
-    line(ctx, content?.status ?? (kind === 'document' ? 'PDF' : kind === 'ticket' ? 'Abierta' : 'Pendiente'), 82, 477, content ? 28 : 21, palette[kind], 500);
-    line(ctx, 'Equipo', 845, 476, 20, '#91a9ba');
-    if (kind === 'chat') { ctx.fillStyle = `${palette[kind]}18`; ctx.beginPath(); ctx.arc(737, 470, 14, 0, Math.PI * 2); ctx.fill(); }
+    textBlock(ctx, subject, {x: 62, y: 163, width: 894, height: 230, maxSize: 96, minSize: 40, weight: 500});
+    if (!content) textBlock(ctx, secondary, {x: 62, y: 415, width: 894, height: 36, maxSize: 32, minSize: 24, color: '#567082', maxLines: 1});
+    ctx.strokeStyle = '#d8e5ee'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(62, 470); ctx.lineTo(956, 470); ctx.stroke();
+    const status = content?.status ?? (kind === 'document' ? 'PDF' : kind === 'ticket' ? 'Abierta' : 'Pendiente');
+    ctx.font = '500 32px "Manrope", Arial';
+    const statusWidth = Math.min(430, Math.max(170, ctx.measureText(status).width + 48));
+    ctx.fillStyle = `${palette[kind]}14`; rounded(ctx, 60, 497, statusWidth, 76, 10); ctx.fill();
+    textBlock(ctx, status, {x: 82, y: 510, width: statusWidth - 44, height: 48, maxSize: 32, minSize: 24, color: palette[kind], weight: 500, maxLines: 1});
+    textBlock(ctx, 'Equipo', {x: 805, y: 513, width: 151, height: 42, maxSize: 28, minSize: 24, color: '#91a9ba', maxLines: 1, align: 'right'});
+    if (kind === 'chat') { ctx.fillStyle = `${palette[kind]}18`; ctx.beginPath(); ctx.arc(757, 535, 14, 0, Math.PI * 2); ctx.fill(); }
   }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.userData.subject = subject; cache.set(key, t); return t;
 }
