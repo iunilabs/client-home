@@ -87,7 +87,7 @@ try {
     await page.evaluate(() => {const j=window.__puntoes.getState().paper.journey;scrollTo(0,j.start+j.chaosRange);});
     await page.waitForFunction(() => window.__puntoes.getState().paper.resolution.progress === 0);
     assert.equal(await page.evaluate(() => window.__puntoes.getState().paper.performance.flatCards), 0, 'reverse scroll restores all flexible sheets');
-    assert.equal(await page.locator('[data-paper-copy]').evaluate(el => Number(getComputedStyle(el).opacity)), 0, 'section three copy has already faded before grouping');
+    assert.equal(await page.locator('[data-paper-copy]').evaluate(el => Number(getComputedStyle(el).opacity)), 1, 'reverse scroll restores the pain text before ordering');
     if (name === 'mobile') {
       await page.goto(origin + '?resolution=.6&capture=1');
       await page.waitForFunction(() => Math.abs(window.__puntoes?.getState().paper?.resolution.progress - .6) < .001);

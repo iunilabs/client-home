@@ -1,7 +1,7 @@
 /* Section-local styles: keep the existing header, hands and city untouched. */
 @font-face{font-family:Paper Hand;src:url('/fonts/Caveat.woff2') format('woff2');font-weight:400 700;font-display:swap}
-/* Keep the first 2000 px, then compress the remaining journey at 1.5x. */
-.paper-journey{position:relative;background:#f4f9fd;--paper-chaos-range:calc(2000px + (max(3140px,460svh) - 2000px)/1.5);height:calc(100svh + var(--paper-chaos-range) + 200svh)}
+/* Ordering follows the falls at 1900 px, with no right-hand grouping phase. */
+.paper-journey{position:relative;background:#f4f9fd;--paper-chaos-range:1900px;height:calc(100svh + var(--paper-chaos-range) + 200svh)}
 .paper-resolution-anchor{position:absolute;top:var(--paper-chaos-range);left:0;width:0;height:0;pointer-events:none}
 .paper-stage{position:sticky;top:0;z-index:4;height:100svh;overflow:hidden;background:radial-gradient(ellipse at 45% 35%,#fff,#f5faff 55%,#cee4f4)}
 .paper-stage canvas{display:block;width:100%;height:100%;opacity:0;filter:blur(calc(var(--paper-copy-reveal,0)*3px));transition:opacity .7s}

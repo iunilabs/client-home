@@ -42,17 +42,17 @@ try {
     await page.waitForTimeout(900);
     assert.equal((await state()).paper.visibleItems, count, `entrance at ${pixels} local pixels`);
   }
-  await paperProgress(.60);
+  await paperProgress(.99);
   const density = (await state()).paper;
   assert.equal(density.contentCount, 47); assert.equal(density.totalItems, 47);
   assert.equal(density.glass, 0); assert.equal(density.depthOfField, false);
   assert.equal(density.secondEntryPixels, 350);
-  assert.ok(density.lastFallEndPixels < density.groupingPixels, 'all falls finish before grouping');
+  assert.equal(density.orderingPixels,1900, 'ordering immediately follows the shortened falls');
   assert.equal(density.visibleItems, 47);
-  await paperProgress(.95); const grouped = (await state()).paper;
-  assert.equal(grouped.visibleItems, density.visibleItems, 'no fourth wave during grouping');
-  assert.ok(grouped.groupProgress > density.groupProgress);
-  await page.screenshot({path: output + '07-grouped-papers.png'});
+  await paperProgress(1); const ending = (await state()).paper;
+  assert.equal(ending.visibleItems, density.visibleItems, 'no fourth wave before ordering');
+  assert.equal(ending.groupProgress,0);
+  await page.screenshot({path: output + '07-before-ordering.png'});
   await paperProgress(.60);
   await page.screenshot({path: output + '03-papers-desktop.png'});
   await paperProgress(.33); const forward = (await state()).paper.hero;

@@ -1,4 +1,4 @@
-// Match the compressed section heights in style.css. Earlier entrances stay put.
+// Preserve the fall choreography's pixel calibration after cutting grouping.
 export const paperMotionPixels = pixels => Math.min(pixels, 2000) + Math.max(0, pixels - 2000) * 1.5;
 export const paperScrollPixels = pixels => Math.min(pixels, 2000) + Math.max(0, pixels - 2000) / 1.5;
 
@@ -11,6 +11,6 @@ export function paperTiming(scrollRange) {
     severalSpread: remaining * .075, severalDuration: remaining * .12,
     many: several + remaining * .18, manySpread: remaining * .16,
     manyDuration: remaining * .16,
-    group: several + remaining * .54, grouped: 1,
+    letterSettled: several + remaining * .54,
   };
 }

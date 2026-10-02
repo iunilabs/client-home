@@ -133,7 +133,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     p.anchor = [[-.87, -.68, 7.3], [.89, .71, 6.8], [-.84, .62, 6.7], [.92, -.65, 7.5]][i]; foreground.push(p);
   }
   [note, letter, ...heroes, ...foreground, ...field].forEach((piece, i) => {piece.workflowIndex = i;});
-  let layoutVersion = 0;
+  let layoutVersion = 0, fallMotionHeight = 3140;
   let portrait = false, target = 0, progress = 0, workflowTarget = 0, workflowProgress = 0, height = 0, active = false, force = true, shadowsInvalid = true, disposed = false, lost = false, lastState = null;
   const point = new THREE.Vector3();
   const input = createSceneInput({capture, reducedQuery, button: journey.querySelector('[data-paper-motion]'), onChange: () => {force = true;}});
@@ -150,6 +150,8 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
   function resize() {
     const previousMotion = paperJourneyState(journeyScroll, layout);
     layout = getPaperJourneyLayout(journey);
+    // Keep the original entrances and fall paths despite the shorter section.
+    fallMotionHeight = Math.max(3140, parseFloat(getComputedStyle(stageElement).height) * 4.6);
     journeyScroll = paperJourneyScrollAt(layout, previousMotion.workflow > 0 ? 'workflow' : 'chaos', previousMotion.workflow > 0 ? previousMotion.workflow : previousMotion.chaos) - layout.start;
     layoutVersion++; shadowsInvalid = true;
     portrait = innerWidth / innerHeight < .85;
@@ -237,10 +239,12 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     configureRenderer();
     breezeClock = capture || reducedQuery.matches ? 0 : seconds * .72;
     const idle = capture || reducedQuery.matches ? 0 : Math.sin(seconds * .45) * .035;
-    const copyScroll = scrollProgress * height, motionHeight = paperMotionPixels(height);
-    const p = paperMotionPixels(copyScroll) / motionHeight;
-    const timing = paperTiming(motionHeight), dense = smooth(timing.group, timing.grouped, p);
+    const copyScroll = scrollProgress * height, motionHeight = fallMotionHeight;
+    const timing = paperTiming(motionHeight);
     const workflow = workflowState(resolutionProgress, pieces.length);
+    const fallProgress = paperMotionPixels(copyScroll) / motionHeight;
+    // Remaining falls settle while ordering; no card teleports or appears late.
+    const p = mix(fallProgress, Math.max(fallProgress, timing.many + timing.manySpread + timing.manyDuration), workflow.ordered);
     key.shadow.normalBias = mix(.015, .08, workflow.ordered);
     const shadowSize = workflow.ordered > 0 ? (workflowBudget.scale < .8 ? 512 : 1024) : 2048;
     if (key.shadow.mapSize.x !== shadowSize) shadowsInvalid = true;
@@ -262,7 +266,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
       for (const piece of pieces) {piece.mesh.visible = true; piece.spawnProgress = 1; applyWorkflow(piece);}
     } else {
       const noteExit = smooth(timing.several, timing.many + timing.manySpread, p);
-      const letterExit = smooth(timing.many, timing.group, p);
+      const letterExit = smooth(timing.many, timing.letterSettled, p);
       const anchors = portrait ? [[-.24,.61],[.30,.29],[.05,-.35],[-.24,-.05],[.30,-.65]] : [[-.28,.51],[.47,.29],[.10,-.59],[-.32,-.17],[.49,-.24]];
       const schedule = [
         {piece: note, start: timing.first, duration: timing.firstDuration, anchor: [mix(portrait ? 0 : .1, -.5, noteExit), mix(-.02, .34, noteExit)], rotation: [-.05,-.08,-.13], scale: note.maxScale * mix(1, .75, noteExit), curl: .09, strength: 1.25},
@@ -272,13 +276,8 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
         ...foreground.map((piece, i) => ({piece, start: timing.many + timing.manySpread * i / 3, duration: timing.manyDuration, anchor: piece.anchor, rotation: [.10,-.12 + i * .07,(i % 2 ? -1 : 1) * .25], scale: piece.maxScale, curl: .08})),
       ];
       for (const {piece, start, duration, anchor, rotation, scale, curl, strength = .8} of schedule) {
-        // Every paper joins the same right-hand volume; none is left at its old anchor.
-        const isMessage = piece === note, isLetter = piece === letter;
-        const x = isMessage ? (portrait ? .58 : .47) : isLetter ? (portrait ? .55 : .66) : .56 + Math.sin(piece.phase * 2.3) * (portrait ? .12 : .18);
-        const y = isMessage ? -.08 : isLetter ? .18 : Math.sin(piece.phase * 3.7) * .40;
-        const finalScale = piece.maxScale * (isMessage ? (portrait ? .32 : .45) : isLetter ? (portrait ? .52 : .66) : field.includes(piece) ? .85 : (portrait ? .78 : .90));
-        const position = [mix(anchor[0], x, dense), mix(anchor[1], y, dense) + idle * (1 - dense) * Math.sin(piece.phase)];
-        falling(piece, p, start, duration, position, rotation.map((r, i) => mix(r, i === 2 ? Math.sin(piece.phase) * .25 : r * .55, dense)), mix(scale, finalScale, dense), curl, idle, strength, workflow.ordered > 0);
+        const position = [anchor[0], anchor[1] + idle * Math.sin(piece.phase)];
+        falling(piece, p, start, duration, position, rotation, scale, curl, idle, strength, workflow.ordered > 0);
         applyWorkflow(piece);
       }
     }
@@ -289,7 +288,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     renderer.info.autoReset = false; renderer.info.reset();
     const shadowsChanged = shadowsInvalid || !lastState || workflow.ordered < 1 || lastState.resolution.ordered < 1 || Math.abs(lastState.resolution.cursor - workflow.cursor) > .00001;
     renderer.shadowMap.needsUpdate = shadowsChanged; renderer.render(scene, camera); shadowsInvalid = false;
-    lastState = {progress: scrollProgress, resolution: workflow, visibleItems: pieces.filter(i => i.mesh.visible).length, groupProgress: dense, secondEntryPixels: paperScrollPixels(timing.several * motionHeight), lastEntryPixels: paperScrollPixels((timing.many + timing.manySpread) * motionHeight), lastFallEndPixels: paperScrollPixels((timing.many + timing.manySpread + timing.manyDuration) * motionHeight), groupingPixels: paperScrollPixels(timing.group * motionHeight), scrollRange: height, glass: 0, drawCalls: renderer.info.render.calls, geometries: renderer.info.memory.geometries, reducedMotion: reducedQuery.matches,
+    lastState = {progress: scrollProgress, resolution: workflow, visibleItems: pieces.filter(i => i.mesh.visible).length, groupProgress: 0, secondEntryPixels: paperScrollPixels(timing.several * motionHeight), lastEntryPixels: paperScrollPixels((timing.many + timing.manySpread) * motionHeight), lastFallEndPixels: paperScrollPixels((timing.many + timing.manySpread + timing.manyDuration) * motionHeight), orderingPixels: height, scrollRange: height, glass: 0, drawCalls: renderer.info.render.calls, geometries: renderer.info.memory.geometries, reducedMotion: reducedQuery.matches,
       hero: {position: note.mesh.position.toArray(), rotation: note.mesh.rotation.toArray().slice(0,3), bend: note.mesh.geometry.attributes.position.array[2]}, letterCorners: [0,30,992,1022].map(i => letter.deformedGeometry.attributes.position.array[i*3+2]), version: 4, depthOfField: false, parallax: {x: inputState.x, y: inputState.y, gyro: inputState.orientation}, cursorLight: {...lightState, intensity: cursorLight.intensity}, contentCount: new Set(pieces.map(i => i.subject)).size, totalItems: pieces.length, performance: {pixelRatio: renderer.getPixelRatio(), shadowSize: key.shadow.mapSize.x, shadowsUpdated: shadowsChanged,
         flatCards: pieces.filter(piece => piece.mesh.geometry !== piece.deformedGeometry).length, triangles: renderer.info.render.triangles}};
   }

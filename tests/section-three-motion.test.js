@@ -13,17 +13,17 @@ test('later choreography speeds up without shifting early entrances or scroll re
   }
 });
 
-test('paper entrances retain their pixel anchors and finish before grouping on every viewport', () => {
+test('paper entrances retain their pixel anchors without a grouping stage', () => {
   for (const range of [1794, 2944, 3882.4, 4600]) {
     const t = paperTiming(range);
     assert.ok(Math.abs(t.first * range - 80) < .001);
     assert.ok(Math.abs(t.several * range - 350) < .001);
     // The first fall leads the next batch; their animations can overlap.
     assert.ok(t.first < t.several);
-    assert.ok(t.first + t.firstDuration < t.group);
+    assert.ok(t.first + t.firstDuration < t.letterSettled);
     assert.ok(t.several + t.severalSpread + t.severalDuration < t.many + t.manySpread);
-    assert.ok(t.many + t.manySpread + t.manyDuration < t.group);
-    assert.ok(t.group < t.grouped && t.grouped <= 1);
+    assert.ok(t.many + t.manySpread + t.manyDuration < t.letterSettled);
+    assert.equal(t.group, undefined); assert.equal(t.grouped, undefined);
   }
 });
 

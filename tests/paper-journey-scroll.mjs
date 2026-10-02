@@ -11,6 +11,8 @@ try {
   await page.waitForFunction(()=>window.__puntoes?.getState().paper?.progress>.989);
   assert.equal(await page.locator('section[data-paper-journey]').count(),1);
   assert.equal(await page.locator('[data-paper-journey] section,.paper-chapters,section#resolucion').count(),0);
+  assert.equal(await page.evaluate(()=>window.__puntoes.getState().paper.journey.chaosRange),1900,'ordering starts at 1900px');
+  assert.equal(await page.evaluate(()=>window.__puntoes.getState().paper.groupProgress),0,'no right-hand grouping phase');
   const before=await page.evaluate(()=>{
     window.__journeyCanvas=document.querySelector('[data-paper-canvas]');
     return {y:scrollY,meter:Number(document.querySelector('[data-scroll-number]').textContent),subjects:window.__puntoes.getPaperReview().map(card=>card.subject)};
@@ -22,6 +24,7 @@ try {
   const after=await page.evaluate(()=>({meter:Number(document.querySelector('[data-scroll-number]').textContent),subjects:window.__puntoes.getPaperReview().map(card=>card.subject),sameCanvas:document.querySelector('[data-paper-canvas]')===window.__journeyCanvas}));
   assert.ok(after.meter>before.meter,'the meter continues instead of resetting at the seam');
   assert.deepEqual(after.subjects,before.subjects); assert.equal(after.sameCanvas,true);
+  assert.equal(await page.evaluate(()=>window.__puntoes.getState().paper.groupProgress),0);
   assert.equal(await page.locator('#chapter-count').textContent(),'03 / 03');
   await cdp.send('Input.synthesizeScrollGesture',{gestureSourceType:'touch',x:195,y:230,yDistance:550,speed:1400,preventFling:true});
   await page.waitForFunction(()=>window.__puntoes.getState().paper.resolution.progress===0);
