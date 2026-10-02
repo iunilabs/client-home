@@ -1,6 +1,6 @@
 # Recorrido móvil: gestos, tarjetas y logos
 
-Candidato local del 2 de octubre de 2026. A anchuras inferiores a 700 px se mantiene el itinerario configurado **Puntoes → BBVA → Naturgy → Banco Sabadell → obra**. Los diez clientes siguen disponibles en el carrusel, con una tarjeta por empresa y otra de colaboración. El ordenador conserva su ciudad explorable y sus fichas modales.
+Candidato local del 2 de octubre de 2026, actualizado tras la elección manual de clientes. A anchuras inferiores a 700 px se mantiene el itinerario configurado **Puntoes → BBVA → Naturgy → Banco Sabadell → obra**. Los diez clientes siguen disponibles en el carrusel, con una tarjeta por empresa y otra de colaboración. El ordenador conserva su ciudad explorable y sus fichas modales.
 
 ## Un gesto, una parada
 
@@ -39,7 +39,9 @@ Estas páginas **todavía no existen**. Este cambio reserva sus URLs; no crea p�
 
 Se conserva el contrato de `createCityCarousel`: callbacks `onSelect`, `onOpen`, y métodos `select`, `update`, `load`, `setModal`, `logoFor`. No se modifica `city-carousel.js`. El swipe horizontal de sus logos sigue siendo local al carrusel; una intención vertical se dedica al recorrido. Los diez logos conservan su estilo blanco y footer transparente.
 
-Seleccionar un logo cambia la cámara desde su posición visible. Si pertenece al itinerario, también cambia el cursor; si está fuera (como Cepsa), conserva la siguiente parada pendiente. La cámara y la tarjeta seleccionadas permanecen hasta un nuevo gesto, que viaja directamente desde esa posición. No se desplaza el documento al seleccionar logos.
+Seleccionar cualquiera de los diez logos cancela todas las empresas pendientes del itinerario normal, incluso si se toca la empresa ya enfocada. La secuencia restante pasa a ser **cliente elegido → colaboración → nuevo gesto de salida nativa**. Cambiar de logo reemplaza la elección y mantiene pendiente solo colaboración. La cámara y la tarjeta seleccionadas permanecen hasta un nuevo gesto, que viaja directamente a la obra. No se desplaza el documento al seleccionar logos.
+
+La reversa desde la obra vuelve al cliente elegido, luego a Puntoes; avanzar otra vez repite solo ese cliente y la obra. Volver desde la salida nativa conserva esa elección y no recupera empresas canceladas. Una nueva entrada hacia delante desde sección 1 o un recorrido reiniciado por navegación explícita restablece BBVA → Naturgy → Sabadell → obra. Las tarjetas conservan su pila e historial único; la numeración de cliente elegido y obra cambia a `01 / 02` y `02 / 02` en el recorrido manual.
 
 Tab y Enter mantienen el foco y activación normales de enlaces y logos. Las flechas verticales, PageUp/PageDown y espacio solicitan una parada cuando el foco no está en un control; se ignora la repetición automática. Home/End permiten abandonar el recorrido y sincronizan Lenis. Los enlaces de capítulos suspenden el anclaje antes de navegar; el enlace a confianza reinicia en Puntoes. Los cambios pequeños de altura conservan el anclaje para tolerar la barra de URL; cambios superiores al 20 % o de anchura lo recalculan sin perder la parada. El enlace a confianza usa ese mismo anclaje. Al cruzar 700 px se restablece la navegación de escritorio, y regresar a móvil reinicia su cursor.
 
@@ -54,3 +56,5 @@ Ejecutar `npm test`, `npm run build -- --base=/client-home/` y `npm run test:mob
 La regresión rápida `MOBILE_SCROLL_URL=http://127.0.0.1:4314/client-home/ node tests/mobile-access.mjs` comprueba en el último build el fragmento en frío, movimiento normal/reducido, Cepsa, enlaces después de reducir la altura y Atrás/Adelante.
 
 La prueba comprueba gestos lentos, largos, diagonales, horizontales y taps; mapa animado con documento fijo; residuos de rueda; swipe sobre tarjeta; salida proporcional e inversa; Cepsa y todas las empresas; artículos únicos y sus medidas; enlaces reales; entrada larga; carrusel horizontal; teclado; altura, escritorio/móvil y enlaces de capítulos. Los tests unitarios comprueban el estado y los límites sin depender del navegador. Chrome emulado no sustituye una prueba física de Safari/iOS, barra de URL dinámica ni gestos del sistema.
+
+La regresión de este contrato es `MOBILE_SCROLL_URL=http://127.0.0.1:4314/client-home/ node tests/mobile-manual.mjs`. Comprueba los diez logos desde Puntoes y etapas del itinerario, BBVA ya enfocado, cambio Cepsa → Naturgy, reversa sin empresas intermedias y salida nativa breve.

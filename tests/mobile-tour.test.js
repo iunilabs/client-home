@@ -66,19 +66,69 @@ test('final release does not write scroll; the next inverse crossing captures th
   const back=frame(time+20,geometry.revealed-10);assert.ok(back.active);assert.equal(back.current.id,'collaborate');
 });
 
-test('manual Cepsa retains its camera and pending guided stop; recovery never duplicates a card', () => {
+test('manual Cepsa retains its camera and leaves only collaboration; recovery never duplicates a card', () => {
   const {nav,frame}=setup(); nav.step(1,{now:0});frame(1400);
   assert.ok(nav.select('cepsa',{now:1500})); const selected=frame(2900),held=frame(3900);
   assert.equal(selected.current.id,'cepsa');assert.deepEqual(held.camera,selected.camera);
-  assert.equal(nav.getState().nextId,'naturgy');
+  assert.equal(nav.getState().nextId,'collaborate');
   nav.step(1,{now:4000}); const departure=frame(4000);
   assert.equal(departure.camera.focusX,selected.camera.focusX);
-  assert.equal(frame(5400).current.id,'naturgy');
+  assert.equal(frame(5400).current.id,'collaborate');
   nav.select('bbva',{now:5500});const repeated=frame(5500);
   assert.equal(repeated.entry.mode,'fade');
-  const order=frame(6900).order;assert.deepEqual(order,['cepsa','naturgy','bbva']);
+  const order=frame(6900).order;assert.deepEqual(order,['cepsa','collaborate','bbva']);
   assert.equal(new Set(order).size,order.length);
-  assert.deepEqual(promoteMobileCard(order,'cepsa'),['naturgy','bbva','cepsa']);
+  assert.deepEqual(promoteMobileCard(order,'cepsa'),['collaborate','bbva','cepsa']);
+});
+
+test('each logo cancels all pending companies at the hub, any default stop and reverse reentry', () => {
+  for (const id of Object.keys(mobileTourBuildings).filter(id=>id!=='collaborate')) {
+    for (const stage of [-1,0,1,2,3]) {
+      const {nav,frame,writes}=setup();let now=0;
+      for (let i=0;i<=stage;i++) {nav.step(1,{now});now+=1400;frame(now)}
+      assert.ok(nav.select(id,{now}));now+=1400;frame(now);
+      assert.equal(nav.getState().currentId,id);assert.equal(nav.getState().nextId,'collaborate');
+      nav.step(1,{now});now+=1400;frame(now);
+      assert.equal(nav.getState().currentId,'collaborate');assert.equal(nav.getState().previousId,id);
+      // Reverse cannot revive any of the canceled default companies.
+      nav.step(-1,{now});now+=1400;frame(now);assert.equal(nav.getState().currentId,id);
+      nav.step(-1,{now});now+=1400;frame(now);assert.equal(nav.getState().currentId,'puntoes');
+      nav.step(1,{now});now+=1400;frame(now);assert.equal(nav.getState().currentId,id);
+      nav.step(1,{now});now+=1400;frame(now);assert.equal(nav.getState().currentId,'collaborate');
+      const writesBefore=writes.length;
+      assert.ok(nav.release(1));assert.equal(writes.length,writesBefore);
+      frame(now+10,geometry.revealed+100);frame(now+20,geometry.revealed-10);
+      assert.equal(nav.getState().manualId,id);assert.equal(nav.getState().previousId,id);
+      // A logo chosen after returning still leaves only collaboration pending.
+      assert.ok(nav.select(id,{now:now+30}));now+=1500;frame(now);
+      assert.equal(nav.getState().currentId,id);assert.equal(nav.getState().nextId,'collaborate');
+    }
+  }
+});
+
+test('tapping BBVA already focused cancels default route, and changing logo replaces the choice', () => {
+  const {nav,frame}=setup();nav.step(1,{now:0});const before=frame(1400);
+  assert.ok(nav.select('bbva',{now:1500}));const same=frame(1500);
+  assert.deepEqual(same.camera,before.camera);assert.equal(same.moving,false);
+  assert.equal(nav.getState().nextId,'collaborate');
+  nav.select('cepsa',{now:1600});frame(3000);
+  nav.select('naturgy',{now:3100});frame(4500);
+  assert.equal(nav.getState().manualId,'naturgy');assert.equal(nav.getState().nextId,'collaborate');
+  nav.step(1,{now:4600});frame(6000);assert.equal(nav.getState().currentId,'collaborate');
+  nav.step(-1,{now:6100});frame(7500);assert.equal(nav.getState().currentId,'naturgy');
+  nav.reset();frame(7600);assert.equal(nav.getState().manualId,null);assert.equal(nav.getState().nextId,'bbva');
+  nav.step(1,{now:7700});frame(9100);assert.equal(nav.getState().nextId,'naturgy');
+});
+
+test('same-logo choice during travel still cancels companies, and a new forward entry resets the override', () => {
+  const {nav,frame}=setup();nav.step(1,{now:0});frame(300);
+  assert.ok(nav.select('bbva',{now:350}));assert.equal(nav.getState().manualId,'bbva');
+  assert.equal(nav.getState().nextId,'collaborate');assert.equal(nav.step(1,{now:400}),false);
+  frame(1400);nav.step(1,{now:1500});frame(2900);assert.equal(nav.getState().currentId,'collaborate');
+  nav.step(-1,{now:3000});frame(4400);nav.step(-1,{now:4500});frame(5900);
+  assert.ok(nav.release(-1));frame(6000,geometry.revealed-100);
+  frame(6100,geometry.revealed+10);
+  assert.equal(nav.getState().manualId,null);assert.equal(nav.getState().nextId,'bbva');
 });
 
 test('chapter jumps suspend capture, resets and resized anchors remain coherent', () => {

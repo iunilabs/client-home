@@ -89,7 +89,7 @@ try {
     assert.ok(Math.abs((await state()).y-anchor)<2,'reverse captures last stop');
     await swipe({distance:-120,y:height*.3});
     assert.equal((await state()).currentId,'sabadell');
-    // Off-route Cepsa keeps its view and rejoins from there on next gesture.
+    // Selecting Cepsa cancels other companies and leaves only collaboration.
     const cepsa=page.locator('.city-client[data-client="cepsa"]');
     await cepsa.focus(); await cepsa.tap(); await page.waitForTimeout(1400);
     assert.equal((await state()).currentId,'cepsa');

@@ -13,17 +13,23 @@ function blendCamera(from, to, t, layout) {
 }
 
 export function createMobileTourNavigation({route = mobileTourRoute, onNavigate = () => {}} = {}) {
+  let manualId = null;
   let active = false, cursor = -1, current = mobileTourHub, transition = null;
   let camera = null, visited = [], geometry, suspended = false, released = 0, lastScroll = null, reduced = false;
   const stopFor = id => id === 'puntoes' ? mobileTourHub : {id, ...mobileTourBuildings[id]};
-  const snapshot = () => ({active, currentId: current.id, guidedCursor: cursor,
-    nextId: route[cursor + 1]?.id ?? null, previousId: cursor < 0 ? null : cursor === 0 ? 'puntoes' : route[cursor - 1].id,
+  const itinerary = () => manualId ? [stopFor(manualId), stopFor('collaborate')] : route;
+  const snapshot = () => ({active, currentId: current.id, guidedCursor: cursor, manualId,
+    nextId: itinerary()[cursor + 1]?.id ?? null, previousId: cursor < 0 ? null : cursor === 0 ? 'puntoes' : itinerary()[cursor - 1].id,
     moving: Boolean(transition), visitedIds: [...visited], released});
 
   function enter(bounds, backwards = false) {
     geometry = bounds;
-    cursor = backwards ? route.length - 1 : -1;
-    current = cursor < 0 ? mobileTourHub : route[cursor];
+    // Reverse entry from the native exit preserves the selected client. A new
+    // forward entrance from section 1 starts the default itinerary again.
+    if (!backwards) manualId = null;
+    const stops = itinerary();
+    cursor = backwards ? stops.length - 1 : -1;
+    current = cursor < 0 ? mobileTourHub : stops[cursor];
     active = true; released = 0; suspended = false; transition = null;
     if (cursor >= 0) visited = promoteMobileCard(visited, current.id);
     onNavigate(bounds.revealed);
@@ -36,7 +42,7 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
     transition = {from: camera, started: now, previous, mode: repeated ? 'fade' : 'slide', duration: reduced ? 100 : mobileTourTiming.logoTravel};
   }
   function canRelease(direction) {
-    return active && !transition && (direction > 0 ? cursor === route.length - 1 : cursor < 0);
+    return active && !transition && (direction > 0 ? cursor === itinerary().length - 1 : cursor < 0);
   }
   return {
     getState: snapshot, enter, canRelease,
@@ -53,18 +59,20 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
     jump(top) {active = false; transition = null; released = 0; suspended = true; onNavigate(top)},
     select(id, {now = performance.now()} = {}) {
       if (!active || !mobileTourBuildings[id] || !camera) return false;
+      if (id !== 'collaborate') {
+        // Even tapping the already focused logo cancels the remaining default
+        // companies. Another logo replaces that choice, keeping only the work.
+        manualId = id;
+        cursor = 0;
+      } else cursor = itinerary().length - 1;
       if (current.id === id) return true;
-      const index = route.findIndex(stop => stop.id === id);
-      // Off-route visits keep the guided cursor. The next swipe travels from
-      // the selected camera to the pending stop, never through an interim view.
-      if (index >= 0) cursor = index;
       travel(id, now); return true;
     },
     step(direction, {now = performance.now()} = {}) {
       if (!active || transition) return false;
       if (canRelease(direction)) return this.release(direction);
       cursor += direction > 0 ? 1 : -1;
-      travel(cursor < 0 ? 'puntoes' : route[cursor].id, now); return true;
+      travel(cursor < 0 ? 'puntoes' : itinerary()[cursor].id, now); return true;
     },
     update(state, {scroll, now, layout, geometry: bounds, reduced: preference = false}) {
       geometry = bounds; reduced = preference;
@@ -98,7 +106,7 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
         entry: current.id === 'puntoes' ? null : {id: current.id, progress, mode},
         copyOpacity: ownedView ? current.id === 'puntoes' ? progress : 0 : state.copyOpacity};
     },
-    reset({suspend = false} = {}) {suspended = suspend; active = false; released = 0; cursor = -1;
+    reset({suspend = false} = {}) {manualId = null; suspended = suspend; active = false; released = 0; cursor = -1;
       current = mobileTourHub; transition = null; camera = null; visited = []; lastScroll = null},
   };
 }
