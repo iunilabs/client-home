@@ -1,0 +1,10 @@
+/* Section-local styles: keep the existing header, hands and city untouched. */
+.paper-section{position:relative;z-index:4;height:720svh;background:#f4f9fd}
+.paper-stage{position:sticky;top:0;height:100svh;overflow:hidden;background:radial-gradient(ellipse at 45% 35%,#fff,#f5faff 55%,#cee4f4)}
+.paper-stage canvas{display:block;width:100%;height:100%;opacity:0;transition:opacity .7s}
+.paper-ready .paper-stage canvas{opacity:1}
+.paper-motion{position:absolute;bottom:68px;right:var(--gutter);border:1px solid #86b4cd50;border-radius:3px;padding:9px 12px;background:#f4faffcc;color:#52758f;font:500 9px Manrope,Arial;letter-spacing:.04em;cursor:pointer}
+.paper-motion[hidden],.paper-fallback[hidden]{display:none}
+.paper-fallback{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-8deg);padding:60px 38px;width:min(360px,80vw);background:#e5f0f6;color:#35637b;box-shadow:0 20px 70px #365b7720;font-family:DM Serif,serif;font-size:42px;line-height:1.25}
+.paper-active .chapter-progress{color:#527894;text-shadow:none}
+@media(prefers-reduced-motion:reduce){.paper-stage canvas{transition:none}}

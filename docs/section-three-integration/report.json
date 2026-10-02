@@ -1,0 +1,37 @@
+{
+  "origin": "http://127.0.0.1:5185/",
+  "desktop": {
+    "firstSubject": "Era urgente. Sigue pendiente.",
+    "items": 75,
+    "contiguousBoundary": {
+      "city": {
+        "x": 0,
+        "y": -501.06781005859375,
+        "width": 1440,
+        "height": 1000,
+        "top": -501.06781005859375,
+        "right": 1440,
+        "bottom": 498.93218994140625,
+        "left": 0
+      },
+      "paper": {
+        "x": 0,
+        "y": 500,
+        "width": 1440,
+        "height": 1000,
+        "top": 500,
+        "right": 1440,
+        "bottom": 1500,
+        "left": 0
+      }
+    }
+  },
+  "mobile": {
+    "cityTourSequence": true,
+    "nativeExit": true,
+    "reverseReentry": true,
+    "noHorizontalOverflow": true
+  },
+  "errors": [],
+  "passed": true
+}

@@ -10,6 +10,7 @@
     "test": "node --test tests/*.test.js",
     "test:browser": "node tests/browser.mjs",
     "test:mobile-scroll": "node tests/mobile-scroll.mjs",
+    "test:paper-integration": "node tests/section-three-integration.mjs",
     "test:perspective": "node tests/browser.mjs",
     "test:models": "node tests/models.mjs",
     "test:hand": "node tests/hand.mjs",
