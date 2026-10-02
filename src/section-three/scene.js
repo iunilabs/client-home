@@ -187,7 +187,8 @@ export async function createPaperSection(journey) {
     const workflow = workflowState(resolutionProgress, pieces.length);
     key.shadow.normalBias = mix(.015, .08, workflow.ordered);
     // Local pixels keep the editorial entrance consistent across viewports.
-    stageElement.style.setProperty('--paper-copy-reveal', (smooth(1900, 2140, p * height) * (1 - smooth(0, .12, resolutionProgress))).toFixed(4));
+    const copyScroll = p * height;
+    stageElement.style.setProperty('--paper-copy-reveal', (smooth(1900, 2140, copyScroll) * (1 - smooth(2500, 2740, copyScroll)) * (1 - smooth(0, .12, resolutionProgress))).toFixed(4));
     workflowElement.style.setProperty('--workflow-reveal', workflow.reveal.toFixed(4));
     pendingCount.textContent = workflow.pending;
     doneCount.textContent = workflow.completed;
