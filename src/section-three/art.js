@@ -96,7 +96,8 @@ export function surfaceTexture(kind, variant = 0, resolution = 1024, content = n
     const secondary = kind === 'document' ? `${(1.2 + variant * .3).toFixed(1).replace('.', ',')} MB · Versión ${String(variant + 1).padStart(2, '0')}` : ['Pendiente de revisión', 'Compartido con el equipo', 'Esperando confirmación', 'Recibido esta mañana', 'En curso'][variant % 5];
     const text = [subject, secondary];
     if (content) {
-      ctx.font = '500 56px "Manrope", Arial';
+      const fontSize = 54, leading = 68;
+      ctx.font = `500 ${fontSize}px "Manrope", Arial`;
       const rows = []; let row = '';
       for (const word of subject.split(/\s+/)) {
         const next = row ? `${row} ${word}` : word;
@@ -104,7 +105,8 @@ export function surfaceTexture(kind, variant = 0, resolution = 1024, content = n
         else row = next;
       }
       if (row) rows.push(row);
-      rows.forEach((text, index) => line(ctx, text, 62, 222 + index * 68, 56, INK, 500));
+      const firstBaseline = 290 - (rows.length - 1) * leading / 2;
+      rows.forEach((text, index) => line(ctx, text, 62, firstBaseline + index * leading, fontSize, INK, 500));
     } else {
       line(ctx, text[0], 62, 252, text[0].length > 27 ? 34 : 40, INK, 500); line(ctx, text[1], 62, 311, 27, '#7793a7');
     }

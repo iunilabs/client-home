@@ -2,7 +2,7 @@
 
 La escena aprobada de papeles aparece después de la ciudad (`#confianza`), en `#posibilidades`. Sustituye el marcador anterior «La inteligencia, puesta en práctica» y utiliza la cabecera y el indicador de capítulo de la web.
 
-La primera tarjeta es un **mensaje interno**: «Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.», con el icono de conversación y el estado «Pendiente» del resto de mensajes. La frase se compone como un solo bloque, con la misma tipografía, tamaño y color en todas sus líneas. Empieza a entrar a los **90 px de scroll local**, independientemente del tamaño de pantalla. Desde el marcador **0180** se aleja y permanece al fondo.
+La primera tarjeta es un **mensaje interno**: «Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.», con el icono de conversación y el estado «Pendiente» del resto de mensajes. La frase se compone como un solo bloque de dos líneas, con la misma tipografía, tamaño y color en ambas. El texto aprovecha hasta el 85 % del ancho y se centra verticalmente en su zona de lectura. Empieza a entrar a los **90 px de scroll local**, independientemente del tamaño de pantalla. Desde el marcador **0180** se aleja y permanece al fondo.
 
 ## Revisar
 
