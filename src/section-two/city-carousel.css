@@ -1,0 +1,14 @@
+.city-carousel--interactive .city-carousel-viewport {
+  touch-action: pan-y;
+  overscroll-behavior-x: contain;
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.city-carousel--interactive .city-carousel-viewport:active {cursor: grabbing}
+.city-carousel--interactive .city-carousel-track {transition: none}
+.city-carousel--interactive.is-focused .city-carousel-viewport {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  cursor: auto;
+}

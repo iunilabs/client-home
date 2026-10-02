@@ -1,18 +1,24 @@
 import {cleanClientImage} from './client-image.js';
 import {smooth} from '../timeline.js';
+import {createCarouselMotion} from './carousel-motion.js';
+import './city-carousel.css';
 
-// Optical heights compensate for tall symbols, secondary lines and wide names.
-// The original proportions stay intact; a shared width cap prevents overflow.
 const logoHeights = {accenture: 58, bbva: 40, canal: 66, cepsa: 50, mapfre: 50, mediaset: 36, ree: 36, siemens: 38, naturgy: 50, sabadell: 40};
+const DRAG_THRESHOLD = 5;
 
 export function createCityCarousel(section, clients, {onSelect, onOpen}) {
   const carousel = section.querySelector('.city-carousel');
   const viewport = carousel.querySelector('.city-carousel-viewport');
   const track = carousel.querySelector('.city-carousel-track');
   const logos = new Map();
-  let offset = 0, lastTime = null, hovered = false, focused = false, modal = false, pointerFocus = false;
-  let tourMode = null, browsingUntil = 0, touching = false;
-  let touchScroll = null, suppressClickUntil = 0;
+  const motion = createCarouselMotion();
+  const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let focused = false, modal = false, openingClient = false, touchHeld = false, hovered = false, gestureEndedAt = -Infinity;
+  let tourMode = null, pointerGesture = null, touchGesture = null;
+  let pointerFocus = false, suppressClickUntil = 0, keyboardBrowsing = false;
+
+  carousel.dataset.motion = 'paused';
+  carousel.classList.add('city-carousel--interactive');
 
   for (const client of clients) {
     const item = document.createElement('li');
@@ -31,32 +37,38 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     logo.decoding = 'async';
     logo.draggable = false;
     logo.dataset.src = client.image;
-    // Published vector assets stay vector all the way to the rendered image.
     if (!client.clean) cleanClientImage(logo);
     const fallback = document.createElement('span');
     fallback.textContent = client.name;
     fallback.hidden = true;
     logo.addEventListener('error', () => {logo.hidden = true; fallback.hidden = false}, {once: true});
     button.append(logo, fallback);
-    button.addEventListener('pointerenter', () => {
+    button.addEventListener('pointerenter', event => {
+      // Touch browsers can synthesize a sticky hover after a tap. It must not
+      // select repeatedly or inhibit the carousel's inactivity timer.
+      if (event.pointerType === 'touch') return;
       if (!carousel.classList.contains('is-focused')) onSelect(client.id);
     });
     button.addEventListener('pointermove', event => {
-      if (event.movementX || event.movementY) onSelect(client.id);
+      if (event.pointerType !== 'touch' && (event.movementX || event.movementY)) onSelect(client.id);
     });
-    button.addEventListener('pointerleave', () => {
+    button.addEventListener('pointerleave', event => {
+      if (event.pointerType === 'touch') return;
       if (carousel.classList.contains('is-focused')) {
         onSelect(document.activeElement.closest('.city-client')?.dataset.client ?? null);
         return;
       }
-      if (!modal && document.activeElement !== button) onSelect(null);
+      if (!modal && !openingClient && document.activeElement !== button) onSelect(null);
     });
-    button.addEventListener('focus', () => {
-      onSelect(client.id);
-    });
+    button.addEventListener('focus', () => onSelect(client.id));
     button.addEventListener('click', event => {
-      if (event.detail && performance.now() < suppressClickUntil) return;
-      onOpen(client, button);
+      if (event.detail && performance.now() < suppressClickUntil) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      openingClient = true;
+      try {onOpen(client, button)} finally {openingClient = false}
       if (tourMode && !button.matches(':focus-visible')) button.blur();
     });
     logos.set(client.id, logo);
@@ -64,65 +76,185 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     track.append(item);
   }
 
-  carousel.addEventListener('pointerenter', () => {hovered = true});
-  carousel.addEventListener('pointerdown', event => {
-    pointerFocus = true;
-    if (tourMode && event.pointerType === 'touch') {
-      touching = true; browsingUntil = performance.now() + 3000;
-      viewport.scrollLeft += offset;
-      offset = 0; track.style.transform = 'translate3d(0,0,0)';
+  function stepFor(item) {
+    return item.getBoundingClientRect().width + parseFloat(getComputedStyle(track).columnGap || '0');
+  }
+
+  function setOffset(value) {
+    // Rotate only the real, fully clipped item. Offset adjustments preserve
+    // every visible pixel and each company's single DOM node.
+    while (track.firstElementChild && value >= stepFor(track.firstElementChild)) {
+      const first = track.firstElementChild;
+      value -= stepFor(first);
+      track.append(first);
     }
+    while (value < 0) {
+      const last = track.lastElementChild;
+      if (!last) break;
+      track.prepend(last);
+      value += stepFor(last);
+    }
+    motion.setOffset(value);
+    track.style.transform = `translate3d(${-value}px,0,0)`;
+  }
+
+  function enterKeyboardMode(button) {
+    keyboardBrowsing = true;
+    carousel.classList.add('is-focused');
+    // Keep the visual position while switching from translated motion to the
+    // native overflow viewport used for predictable keyboard focus scrolling.
+    viewport.scrollLeft = motion.offset;
+    track.style.transform = 'translate3d(0,0,0)';
+    motion.setOffset(0);
+    const b = button.getBoundingClientRect(), v = viewport.getBoundingClientRect();
+    if (b.left < v.left) viewport.scrollLeft += b.left - v.left;
+    else if (b.right > v.right) viewport.scrollLeft += b.right - v.right;
+  }
+
+  function leaveKeyboardMode() {
+    const saved = viewport.scrollLeft;
+    viewport.scrollLeft = 0;
+    keyboardBrowsing = false;
+    carousel.classList.remove('is-focused');
+    setOffset(motion.offset + saved);
+  }
+
+  function beginDrag(x, now, kind) {
+    if (keyboardBrowsing) {
+      const saved = viewport.scrollLeft;
+      viewport.scrollLeft = 0;
+      keyboardBrowsing = false;
+      carousel.classList.remove('is-focused');
+      setOffset(motion.offset + saved);
+    }
+    pointerFocus = true;
+    motion.beginDrag();
+    return {kind, startX: x, lastX: x, moved: false, travel: 0, samples: [{x: 0, time: now}]};
+  }
+
+  function dragTo(gesture, x, now) {
+    const delta = gesture.lastX - x;
+    if (!gesture.moved && Math.abs(x - gesture.startX) < DRAG_THRESHOLD) return;
+    gesture.lastX = x;
+    gesture.moved = true;
+    gesture.travel += delta;
+    suppressClickUntil = now + 800;
+    setOffset(motion.offset + delta);
+    gesture.samples.push({x: gesture.travel, time: now});
+    while (gesture.samples.length > 2 && now - gesture.samples[0].time > 120) gesture.samples.shift();
+  }
+
+  function finishDrag(gesture, now) {
+    if (!gesture) return;
+    pointerFocus = false;
+    gestureEndedAt = now;
+    let velocity = 0;
+    const samples = gesture.samples;
+    if (gesture.moved && samples.length > 1) {
+      const first = samples[0], last = samples[samples.length - 1];
+      const duration = (last.time - first.time) / 1000;
+      if (duration > 0) velocity = (last.x - first.x) / duration;
+    }
+    motion.endDrag(now, velocity);
+  }
+
+  // Mouse and pen use pointer capture. Touch uses axis locking below so a
+  // vertical swipe can continue scrolling the page while a horizontal one is
+  // owned by the logo strip.
+  viewport.addEventListener('pointerdown', event => {
+    if (event.pointerType === 'touch') {touchHeld = true; return}
+    if (event.button !== 0 || focused || modal) return;
+    pointerGesture = beginDrag(event.clientX, performance.now(), 'pointer');
   });
-  const releaseTouch = () => {pointerFocus = false; touching = false; if (tourMode) browsingUntil = performance.now() + 3000};
-  carousel.addEventListener('pointerup', releaseTouch);
-  carousel.addEventListener('pointercancel', releaseTouch);
-  viewport.addEventListener('scroll', () => {if (tourMode) browsingUntil = performance.now() + 3000}, {passive: true});
+  viewport.addEventListener('pointermove', event => {
+    if (!pointerGesture || event.pointerType === 'touch') return;
+    dragTo(pointerGesture, event.clientX, performance.now());
+    if (pointerGesture.moved && !viewport.hasPointerCapture?.(event.pointerId)) viewport.setPointerCapture?.(event.pointerId);
+  });
+  const finishPointer = event => {
+    // TouchEvents own the held-finger lifetime. Chromium may send pointercancel
+    // as soon as pan-y arbitration rejects a horizontal gesture; that is not a
+    // finger release and must not let automatic motion start underneath it.
+    if (event.pointerType === 'touch') return;
+    if (!pointerGesture) return;
+    finishDrag(pointerGesture, performance.now());
+    pointerGesture = null;
+  };
+  viewport.addEventListener('pointerup', finishPointer);
+  viewport.addEventListener('pointercancel', finishPointer);
+
   viewport.addEventListener('touchstart', event => {
-    if (!tourMode || event.touches.length !== 1) return;
+    if (event.touches.length !== 1 || focused || modal) return;
     const point = event.touches[0];
-    touchScroll = {x: point.clientX, y: point.clientY, left: viewport.scrollLeft, axis: null};
+    touchHeld = true;
+    touchGesture = {startX: point.clientX, startY: point.clientY, lastX: point.clientX, axis: null, moved: false, travel: 0, samples: [{x: 0, time: performance.now()}]};
   }, {passive: true});
   viewport.addEventListener('touchmove', event => {
-    if (!touchScroll || event.touches.length !== 1) return;
-    const point = event.touches[0], dx = touchScroll.x - point.clientX, dy = touchScroll.y - point.clientY;
-    if (!touchScroll.axis && Math.hypot(dx, dy) > 5) touchScroll.axis = Math.abs(dx) > Math.abs(dy) * 1.15 ? 'x' : 'y';
-    if (touchScroll.axis !== 'x') return;
+    const gesture = touchGesture;
+    if (!gesture || event.touches.length !== 1) return;
+    const point = event.touches[0], dx = gesture.startX - point.clientX, dy = gesture.startY - point.clientY;
+    if (!gesture.axis && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
+      gesture.axis = Math.abs(dx) > Math.abs(dy) * 1.15 ? 'x' : 'y';
+      if (gesture.axis === 'x') motion.beginDrag();
+    }
+    if (gesture.axis !== 'x') return;
     if (event.cancelable) event.preventDefault();
-    viewport.scrollLeft = touchScroll.left + dx;
-    browsingUntil = performance.now() + 3000;
-    suppressClickUntil = performance.now() + 600;
+    dragTo(gesture, point.clientX, performance.now());
   }, {passive: false});
-  for (const type of ['touchend', 'touchcancel']) viewport.addEventListener(type, () => {touchScroll = null}, {passive: true});
-  carousel.addEventListener('pointerleave', () => {
+  const finishTouch = event => {
+    // Keep the pause until the last finger leaves, even if a second finger
+    // briefly changes the gesture from one-contact to multi-contact.
+    if (event.touches.length) return;
+    if (!touchGesture) {touchHeld = false; return}
+    const gesture = touchGesture;
+    touchGesture = null;
+    touchHeld = false;
+    if (gesture.axis === 'x') finishDrag(gesture, performance.now());
+    else motion.interrupt(performance.now());
+  };
+  for (const type of ['touchend', 'touchcancel']) viewport.addEventListener(type, finishTouch, {passive: true});
+
+  carousel.addEventListener('pointerdown', event => {
+    if (event.pointerType === 'touch') pointerFocus = true;
+  });
+  carousel.addEventListener('pointerup', event => {if (event.pointerType === 'touch') pointerFocus = false});
+  carousel.addEventListener('pointercancel', event => {if (event.pointerType === 'touch') pointerFocus = false});
+  carousel.addEventListener('pointerleave', event => {
+    if (event.pointerType === 'touch') return;
     hovered = false;
-    if (!focused && !modal) onSelect(null);
+    if (!focused && !modal && !openingClient) onSelect(null);
+  });
+  carousel.addEventListener('pointerenter', event => {if (event.pointerType !== 'touch') hovered = true});
+  document.addEventListener('visibilitychange', () => {
+    const now = performance.now();
+    // The renderer stops its animation loop while hidden. Reset the frame
+    // clock and gesture so the first visible frame cannot integrate a long gap.
+    motion.interrupt(now);
+    if (document.hidden) {
+      pointerGesture = null;
+      touchGesture = null;
+      touchHeld = false;
+      pointerFocus = false;
+    }
   });
   carousel.addEventListener('focusin', event => {
-    focused = true;
-    // Moving the row between pointerdown and click would move the target out
-    // from under the pointer. Only keyboard focus switches to manual browsing.
     if (pointerFocus || !event.target.matches(':focus-visible')) return;
-    carousel.classList.add('is-focused');
-    offset = 0;
-    track.style.transform = 'translate3d(0,0,0)';
-    // Scroll only the logo viewport. scrollIntoView would also scroll the
-    // fixed scene's clipped ancestors and displace the whole city vertically.
-    const buttonBounds = event.target.getBoundingClientRect();
-    const viewportBounds = viewport.getBoundingClientRect();
-    if (buttonBounds.left < viewportBounds.left) viewport.scrollLeft += buttonBounds.left - viewportBounds.left;
-    else if (buttonBounds.right > viewportBounds.right) viewport.scrollLeft += buttonBounds.right - viewportBounds.right;
+    focused = true;
+    if (!keyboardBrowsing) enterKeyboardMode(event.target.closest('.city-client'));
+    else {
+      const b = event.target.getBoundingClientRect(), v = viewport.getBoundingClientRect();
+      if (b.left < v.left) viewport.scrollLeft += b.left - v.left;
+      else if (b.right > v.right) viewport.scrollLeft += b.right - v.right;
+    }
   });
   carousel.addEventListener('focusout', event => {
     if (carousel.contains(event.relatedTarget)) return;
     focused = false;
-    carousel.classList.remove('is-focused');
-    viewport.scrollLeft = 0;
-    if (!hovered && !modal) onSelect(null);
+    if (keyboardBrowsing) leaveKeyboardMode();
+    if (!modal && !openingClient) onSelect(null);
   });
 
   function update(now, state, reduced) {
-    const elapsed = lastTime === null ? 0 : Math.min(.08, (now - lastTime) / 1000);
-    lastTime = now;
     const isTour = state.mode === 'tour';
     if (isTour !== tourMode) {
       tourMode = isTour;
@@ -138,20 +270,22 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     carousel.style.opacity = opacity;
     carousel.inert = !state.ready || !state.active || state.opacity < .55 || opacity < .2;
     if (isTour) select(state.tourClient ?? null);
-    const paused = (hovered && !isTour) || focused || touching || now < browsingUntil || modal || reduced || !state.active || document.hidden;
-    carousel.dataset.paused = String(paused);
-    if (paused || opacity < .2) return;
+    const carouselReduced = reduced || reducedMotionQuery.matches;
+    motion.setReduced(carouselReduced);
+    const hoverPaused = hovered && !isTour && now - gestureEndedAt > 2000;
+    const blocked = focused || touchHeld || modal || carouselReduced || !state.active || document.hidden || keyboardBrowsing || opacity < .2 || hoverPaused;
+    const result = motion.frame(now, blocked, isTour ? 22 : 34);
+    carousel.dataset.paused = String(blocked || opacity < .2);
+    carousel.dataset.motion = opacity < .2 ? 'hidden' : result.phase;
+    if (opacity < .2 || keyboardBrowsing) return;
     if (isTour && viewport.scrollLeft) {
-      offset += viewport.scrollLeft; viewport.scrollLeft = 0;
+      setOffset(motion.offset + viewport.scrollLeft);
+      viewport.scrollLeft = 0;
     }
-    const first = track.firstElementChild;
-    const step = first.getBoundingClientRect().width + parseFloat(getComputedStyle(track).columnGap);
-    if (track.scrollWidth <= viewport.clientWidth || !step) return;
-    offset += elapsed * (isTour ? 22 : 34);
-    // Recycle the fully clipped item: one real button per company, no copies
-    // or duplicate links in the accessibility tree.
-    while (offset >= step) {track.append(track.firstElementChild); offset -= step}
-    track.style.transform = `translate3d(${-offset}px,0,0)`;
+    if (track.scrollWidth <= viewport.clientWidth) return;
+    // motion.frame returns px accumulated using real elapsed time; recycling
+    // maintains the same visible marks through drag, inertia and autoplay.
+    setOffset(motion.offset + result.delta);
   }
 
   function select(id) {
@@ -163,8 +297,11 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
   }
 
   return {
-    update, select,
-    setModal(value) {modal = value},
+    update, select, setActiveClient: select,
+    setModal(value) {
+      if (modal !== value) motion.interrupt(performance.now());
+      modal = value;
+    },
     load() {for (const logo of logos.values()) logo.src = logo.dataset.src},
     logoFor(id) {return logos.get(id)?.src},
   };
