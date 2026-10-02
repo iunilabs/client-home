@@ -131,6 +131,56 @@
       <p id="paper-description" class="scene-description">Un mensaje interno pendiente: Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer. Se convierte en una llegada continua de correos, mensajes, incidencias, documentos y solicitudes.</p>
       <p id="resolution-description" class="scene-description">En el mismo recorrido, las tarjetas se ordenan en una cola de trabajo. Después pasan una a una de pendientes a completadas, con una marca verde de confirmación.</p>
     </section>
+    <section id="contacto" class="contact-section" aria-labelledby="contact-title">
+      <div class="contact-layout">
+        <div class="contact-copy">
+          <p class="eyebrow"><span class="blue-dot"></span> 04 / HABLEMOS</p>
+          <h2 id="contact-title">El próximo paso<br /><em>empieza contigo.</em></h2>
+          <p class="contact-intro">Cuéntanos qué te gustaría transformar. Formación, consultoría o una idea que aún está tomando forma.</p>
+          <a class="contact-email" href="mailto:puntoes@puntoes.es">puntoes@puntoes.es <span aria-hidden="true">↗</span></a>
+        </div>
+        <form class="contact-form" action="https://www.puntoes.es/contacto/#wpcf7-f119-p14-o1" method="post" data-contact-form aria-labelledby="contact-title">
+          <input type="hidden" name="_wpcf7" value="119" />
+          <input type="hidden" name="_wpcf7_version" value="5.4.2" />
+          <input type="hidden" name="_wpcf7_locale" value="en_US" />
+          <input type="hidden" name="_wpcf7_unit_tag" value="wpcf7-f119-p14-o1" />
+          <input type="hidden" name="_wpcf7_container_post" value="14" />
+          <input type="hidden" name="_wpcf7_posted_data_hash" value="" />
+          <fieldset class="contact-fields">
+            <legend class="contact-sr-only">Tu consulta</legend>
+            <div class="contact-row">
+              <div class="contact-field"><label for="contact-name">Tu nombre</label>
+                <input id="contact-name" name="your-name" type="text" autocomplete="name" maxlength="120" required aria-describedby="contact-name-error" />
+                <span class="contact-field-error" id="contact-name-error" hidden></span>
+              </div>
+              <div class="contact-field"><label for="contact-email">Tu email</label>
+                <input id="contact-email" name="your-email" type="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="contact-email-error" />
+                <span class="contact-field-error" id="contact-email-error" hidden></span>
+              </div>
+            </div>
+            <div class="contact-field"><label for="contact-subject">¿Qué necesitas?</label>
+              <select id="contact-subject" name="your-subject" required aria-describedby="contact-subject-error">
+                <option value="" disabled selected>Selecciona una opción</option>
+                <option value="Formación">Formación</option>
+                <option value="Consultoría">Consultoría</option>
+                <option value="IA y automatización">IA y automatización</option>
+                <option value="Otra idea">Otra idea</option>
+              </select>
+              <span class="contact-field-error" id="contact-subject-error" hidden></span>
+            </div>
+            <div class="contact-field"><label for="contact-message">Cuéntanos un poco más</label>
+              <textarea id="contact-message" name="your-message" rows="5" maxlength="4000" required aria-describedby="contact-message-error" placeholder="¿Qué te gustaría mejorar o hacer posible?"></textarea>
+              <span class="contact-field-error" id="contact-message-error" hidden></span>
+            </div>
+            <div class="contact-actions">
+              <span class="contact-note">Todos los campos son obligatorios.</span>
+              <button class="contact-submit" type="submit"><span data-contact-button>Hablemos</span><span aria-hidden="true">↗</span></button>
+            </div>
+          </fieldset>
+          <p class="contact-status" data-contact-status role="status" aria-live="polite" tabindex="-1"></p>
+        </form>
+      </div>
+    </section>
   </main>
   <footer><a href="#inicio">Puntoes · volver al inicio ↑</a>
     <details class="model-credits">

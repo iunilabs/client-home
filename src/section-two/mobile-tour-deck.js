@@ -35,8 +35,7 @@ export function createMobileTourDeck(section, route, clients, {onClose = () => {
     if (invitation) {
       const contact = document.createElement('a');
       contact.className = 'tour-card-contact';
-      contact.href = 'https://www.puntoes.es/contacto/';
-      contact.target = '_blank'; contact.rel = 'noopener noreferrer';
+      contact.href = '#contacto';
       contact.textContent = 'Hablemos ↗';
       card.append(contact);
     } else {

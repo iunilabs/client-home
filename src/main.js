@@ -1,4 +1,6 @@
 import './section-three/style.css';
+import './contact.css';
+import {initContactForm} from './contact.js';
 import {getPaperJourneyLayout,paperJourneyScrollAt} from './section-three/journey.js';
 import {turnState} from './section-two/turn.js';
 import {createCity} from './section-two/city.js';
@@ -11,6 +13,8 @@ import {populateClients} from './clients.js';
 import {createScrollMeter} from './scroll-meter.js';
 import {createPerspectiveInput} from './perspective-input.js';
 populateClients();
+initContactForm(document.querySelector('[data-contact-form]'));
+const contactSection=document.querySelector('#contacto');
 const trustSection=document.querySelector('#confianza'),resolutionAnchor=document.querySelector('#resolucion'),paperJourney=document.querySelector('[data-paper-journey]');
 const city=createCity(trustSection,{readScrollTarget:()=>lenis.targetScroll,onExtentChange:()=>{scrollLimit=Math.max(0,document.documentElement.scrollHeight-innerHeight);lenis.resize()},onNavigate:top=>{lenis.reset();lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top)}});
 const motionPreference={matches:false};
@@ -39,8 +43,11 @@ history.scrollRestoration='manual';if(!location.hash)window.scrollTo({top:0,beha
 const lenis=new Lenis({autoRaf:false,lerp:.075,smoothWheel:true,syncTouch:false,overscroll:false});
 let experience=null,perspectiveInput=null,offsets=[],scrollLimit=0,pointer={x:0,y:0},smoothPointer={x:0,y:0},renderProgress=0,lastFrame=0,lastScroll=performance.now(),disposed=false,activeIndex=-1;
 function updateOffsets(preservePaper=false){
+ const contactWasVisible=preservePaper&&document.body.classList.contains('contact-active');
+ if(contactWasVisible)city.prepareNavigation(false);
  const previousPaper=preservePaper?paperScene?.getState():null;
  city.resize();paperLayout=getPaperJourneyLayout(paperJourney);paperScene?.resize();scrollLimit=Math.max(0,document.documentElement.scrollHeight-innerHeight);handoffStart=trustSection.offsetTop-innerHeight+90;turnDistance=innerHeight*1.35;offsets=chapters.map(c=>c.offsetTop);offsets.push(Math.max(chapters.at(-1).offsetTop+1,scrollLimit));lenis?.resize();
+ if(contactWasVisible){city.finishNavigation();renderProgress=readProgress(scrollY);return;}
  if(previousPaper?.active&&previousPaper.progress>0){
   const resolving=previousPaper.resolutionTarget>0||document.body.classList.contains('resolution-active');
   const p=resolving?previousPaper.resolutionTarget:previousPaper.targetProgress;
@@ -81,6 +88,7 @@ function activate(progress){
  document.querySelector('.replay').inert=progress<4.5||progress>5;
  const nextActive=!cityIsHeld()&&visualScroll>=paperJourney.offsetTop-innerHeight*.5;
  document.body.classList.toggle('next-active',nextActive);
+ document.body.classList.toggle('contact-active',!cityIsHeld()&&visualScroll>=contactSection.offsetTop-innerHeight*.25);
  const resolving=nextActive&&visualScroll>=(paperLayout.start+paperLayout.chaosRange);document.body.classList.toggle('resolution-active',resolving);
  if(nextActive){document.querySelector('#chapter-label').textContent=resolving?'DEL PENDIENTE AL HECHO':'EL TRABAJO PENDIENTE';document.querySelector('#chapter-count').textContent='03 / 03'}else if(progress>5){document.querySelector('#chapter-label').textContent='UN PUNTO EN COMÚN';document.querySelector('#chapter-count').textContent='02 / 03'}else{document.querySelector('#chapter-label').textContent=labels[index];document.querySelector('#chapter-count').textContent=`${String(index+1).padStart(2,'0')} / 05`}
 }
