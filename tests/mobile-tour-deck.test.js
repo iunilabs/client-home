@@ -56,7 +56,7 @@ test('returning to Puntoes hides cached clients; a new first swipe displays only
   const order = ['bbva', 'naturgy'];
   update({order, entry: {id: 'bbva', progress: 1}, retreat: 1});
   update({order, entry: {id: 'naturgy', progress: .35}, outgoingId: 'bbva', moving: true, retreat: 1});
-  assert.deepEqual(visible(), ['bbva', 'naturgy']);
+  assert.deepEqual(visible(), ['bbva']);
   assert.deepEqual(current(), ['bbva']);
   assert.equal(cards.naturgy.inert, true);
   update({order, entry: {id: 'naturgy', progress: 1}, retreat: 1});
@@ -89,14 +89,21 @@ test('an interrupted entrance cannot turn an unseen card into a complete outgoin
   assert.deepEqual(current(), ['naturgy']);
 });
 
-test('a settled pass retains its bounded pile but travel exposes only the actual outgoing client', () => {
-  const {update, visible, current} = setup();
+test('mobile summaries fade sequentially and never expose a historical card behind the current one', () => {
+  const {update, visible, current, cards} = setup();
   const order = ['bbva', 'naturgy', 'sabadell'];
   for (const id of order) update({order, entry: {id, progress: 1}, retreat: 1});
-  assert.deepEqual(visible(), order);
+  assert.deepEqual(visible(), ['sabadell']);
   update({order: [...order, 'cepsa'], entry: {id: 'cepsa', progress: .3}, outgoingId: 'sabadell', moving: true, retreat: 1});
-  assert.deepEqual(visible(), ['sabadell', 'cepsa']);
+  assert.deepEqual(visible(), ['sabadell']);
   assert.deepEqual(current(), ['sabadell']);
+  for (let step = 0; step <= 100; step++) {
+    update({order: [...order, 'cepsa'], entry: {id: 'cepsa', progress: step / 100}, outgoingId: 'sabadell', moving: step < 100, retreat: 1});
+    assert.ok(visible().length <= 1, `overlapping summaries at progress ${step / 100}`);
+    for (const card of Object.values(cards)) if (card.style.visibility === 'hidden') assert.equal(card.inert, true);
+  }
+  assert.deepEqual(visible(), ['cepsa']);
+  assert.deepEqual(current(), ['cepsa']);
 });
 
 test('manual counters follow the remaining itinerary and hidden layers cannot receive focus', () => {

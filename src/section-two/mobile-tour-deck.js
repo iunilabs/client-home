@@ -94,13 +94,20 @@ export function createMobileTourDeck(section, route, clients, {onClose = () => {
         }
         const index = renderOrder.indexOf(card.dataset.client);
         const stack = mobileCardStack(index, {stopIndex: incomingIndex < 0 ? renderOrder.length : incomingIndex, cardProgress: entry?.progress ?? 0});
-        const visible = showing && index >= 0 && stack.incoming > 0 && !stack.buried;
+        // On phones, replace the summary rather than keeping a visible pile.
+        // Finish fading the outgoing card before revealing the incoming one.
+        const progress = entry?.progress ?? 0;
+        const hasOutgoing = outgoingId !== entry?.id && renderOrder.includes(outgoingId);
+        const mobileOpacity = !entry ? Number(card.dataset.client === outgoingId) :
+          card.dataset.client === entry.id ? (hasOutgoing ? Math.max(0, progress * 2 - 1) : progress) :
+          card.dataset.client === outgoingId ? Math.max(0, 1 - progress * 2) : 0;
+        const visible = showing && index >= 0 && (desktop ? stack.incoming > 0 && !stack.buried : mobileOpacity > 0);
         const fade = card.dataset.client === entry?.id && entry.mode === 'fade';
         card.style.zIndex = index + 1;
         card.style.visibility = visible ? 'visible' : 'hidden';
-        card.style.opacity = fade ? stack.incoming : 1;
-        card.dataset.entrance = fade ? 'fade' : 'slide';
-        card.style.transform = fade ? `translate3d(${stack.offsetX}px,${(1 - stack.incoming) * 4 + stack.offsetY}px,0) rotate(${stack.rotation}deg) scale(${stack.scale})` :
+        card.style.opacity = desktop ? (fade ? stack.incoming : 1) : mobileOpacity;
+        card.dataset.entrance = !desktop || fade ? 'fade' : 'slide';
+        card.style.transform = !desktop ? `translate3d(0,${(1 - mobileOpacity) * 8}px,0)` : fade ? `translate3d(${stack.offsetX}px,${(1 - stack.incoming) * 4 + stack.offsetY}px,0) rotate(${stack.rotation}deg) scale(${stack.scale})` :
           `translate3d(${stack.offsetX}px,calc(${(1 - stack.incoming) * 100}% + ${(1 - stack.incoming) * 64 + stack.offsetY}px),0) rotate(${stack.rotation}deg) scale(${stack.scale})`;
         card.inert = !visible || card.dataset.client !== readable;
         card.setAttribute('aria-hidden', String(card.inert));
