@@ -211,7 +211,7 @@ try {
     await page.goto(base+'?scroll=970');
     await page.waitForFunction(()=>window.__puntoes?.getState().city?.ready);
     await page.waitForTimeout(300);
-    const before=await page.locator('#confianza').evaluate(el=>el.offsetTop-innerHeight+90+innerHeight*1.35-160);
+    const before=anchor-160;
     await page.evaluate(top=>scrollTo({top,behavior:'instant'}),before);
     await page.waitForTimeout(200);
     await swipe({distance:350,y:height*.75,samples:70,delay:20,arrival:'puntoes'});
