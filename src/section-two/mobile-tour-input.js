@@ -46,13 +46,17 @@ export function createSwipeIntent(x, y, consumed = false) {
   };
 }
 
-export function createMobileTourInput(frame, navigation, {lock = {set() {}}, readTarget = () => scrollY} = {}) {
+export function createMobileTourInput(frame, navigation, {lock = {set() {}}, readTarget = () => scrollY, onInterrupt = () => {}} = {}) {
   const wheel = createWheelBurst();
-  let touch = null, geometry, available = false, lastScroll = null, skipEntry = false;
+  let touch = null, geometry, available = false, lastScroll = null, skipEntry = false, navigating = false;
   const excluded = target => target.closest('input,textarea,select,[contenteditable],dialog[open],[data-lenis-prevent]') ||
     target.closest('a') && !target.closest('.city-tour-card');
   const eligible = () => available && navigation.getState().active;
   const block = event => {if (event.cancelable) event.preventDefault(); event.stopImmediatePropagation()};
+  function interruptNavigation() {
+    if (!navigating) return;
+    navigating = false; skipEntry = false; lastScroll = window.scrollY; onInterrupt();
+  }
   const crossing = (from, delta) => {
     if (!available || !geometry) return false;
     // A native exit can cross the fractional anchor again after scrollY rounds
@@ -65,9 +69,12 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, rea
   };
   function onWheel(event) {
     if (!available || event.ctrlKey || event.metaKey || Math.abs(event.deltaX) >= Math.abs(event.deltaY) || excluded(event.target)) return;
-    const now = wheelEventTime(event), active = eligible();
+    const now = wheelEventTime(event);
     const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1);
     const pending = wheel.isPending(now, delta);
+    if (navigating && pending) {wheel.push(delta, now, true); block(event); return}
+    interruptNavigation();
+    const active = eligible();
     if (active && !pending && navigation.canRelease(Math.sign(delta))) {
       navigation.release(Math.sign(delta)); lock.set(false); return;
     }
@@ -80,6 +87,7 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, rea
   function onStart(event) {
     touch = null;
     if (event.touches.length !== 1 || !available || excluded(event.target)) return;
+    interruptNavigation();
     const p = event.touches[0];
     if (eligible() && (navigation.canRelease(1) || navigation.canRelease(-1))) lock.set(false);
     touch = {intent: createSwipeIntent(p.clientX, p.clientY, navigation.getState().moving),
@@ -113,13 +121,20 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, rea
     const topKey = event.key === 'Home' || event.metaKey && event.key === 'ArrowUp';
     const endKey = event.key === 'End' || event.metaKey && event.key === 'ArrowDown';
     if (topKey || endKey) {
+      // During an explicit trip, update() has held its entry-check position at
+      // the chapter start. Drop that history before jumping outside, otherwise
+      // the next update can mistake the jump for a fresh forward entrance.
+      if (navigating) navigation.reset({suspend: true});
+      interruptNavigation();
       skipEntry = true; lastScroll = null; lock.set(false); block(event);
       navigation.jump(topKey ? 0 : Math.max(0, document.documentElement.scrollHeight - innerHeight)); return;
     }
     if (event.metaKey || event.ctrlKey || event.altKey || excluded(event.target)) return;
-    if (!eligible() || event.target.closest('a,button')) return;
+    if (event.target.closest('a,button')) return;
     const direction = ['ArrowDown', 'PageDown', ' '].includes(event.key) ? 1 : ['ArrowUp', 'PageUp'].includes(event.key) ? -1 : 0;
     if (!direction) return;
+    if (!event.repeat) interruptNavigation();
+    if (!eligible()) return;
     const step = event.shiftKey && event.key === ' ' ? -1 : direction;
     if (!event.repeat && navigation.canRelease(step)) {navigation.release(step); lock.set(false); return}
     block(event); if (!event.repeat) navigation.step(step);
@@ -129,12 +144,13 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, rea
   return {
     update(value, bounds) {
       geometry = bounds;
-      if (!value && available) {lock.set(false); touch = null; lastScroll = null}
+      if (!value && available) {lock.set(false); touch = null; lastScroll = null; navigating = false}
       if (value && !available) {wheel.consume(); if (touch) touch.intent.consume()}
       available = value;
     },
     reconcile(scroll) {
       if (!available || !geometry) return scroll;
+      if (navigating) return scroll;
       if (skipEntry && (scroll < geometry.start || scroll >= geometry.revealed + geometry.viewport)) skipEntry = false;
       if (!skipEntry && !navigation.getState().active && lastScroll !== null && crossing(lastScroll, scroll - lastScroll)) {
         lock.set(true);navigation.enter(geometry, scroll < lastScroll);
@@ -151,7 +167,14 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, rea
       }
       lock.set(false);return scroll;
     },
-    prepareNavigation() {skipEntry = true;lastScroll = null;touch = null;lock.set(false)},
+    prepareNavigation() {navigating = true;skipEntry = true;lastScroll = null;touch = null;lock.set(false)},
+    finishNavigation() {
+      if (!navigating) return false;
+      navigating = false;skipEntry = false;lastScroll = null;return true;
+    },
+    // Only the navigation controller's implicit-entry checks use this held
+    // position. City rendering keeps the actual scroll state throughout.
+    navigationScroll: scroll => navigating ? geometry.start : scroll,
     lock() {lock.set(true)},
     dispose() {for (const [type, handler] of events) window.removeEventListener(type, handler, true)},
   };

@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDocumentScrollLock,createEndLatch,cityEntryPoint,cityMapPoint} from '../src/section-two/scroll-guard.js';
 import {createMobileTourNavigation} from '../src/section-two/mobile-tour-navigation.js';
-import {mobileTourGeometry,mobileTourState} from '../src/section-two/mobile-tour.js';
+import {mobileTourGeometry,mobileTourState,mobileTourCamera} from '../src/section-two/mobile-tour.js';
 
 test('compositor lock is idempotent and restores the previous inline overflow and priority',()=>{
   const values=new Map([['overflow',{value:'auto',priority:'important'}]]);
@@ -103,5 +103,80 @@ for(const mode of ['scroll','wheel']) test(`fractional anchor preserves native r
     assert.equal(nav.getState().manualId,null,'a new forward entrance starts the default route');
   } finally {
     input.dispose();if(previousWindow===undefined)delete globalThis.window;else globalThis.window=previousWindow;
+  }
+});
+
+test('explicit mobile navigation crosses from below the chapter without inverse capture or changing the visual camera',()=>{
+  const previousWindow=globalThis.window;
+  const geometry=mobileTourGeometry({top:5200,viewport:568});
+  const layout={width:400,height:710,viewportWidth:320,viewportHeight:568};
+  const nav=createMobileTourNavigation();
+  globalThis.window={scrollY:geometry.revealed+geometry.viewport+100,addEventListener(){},removeEventListener(){}};
+  const input=createMobileTourInput(null,nav);input.update(true,geometry);
+  try {
+    input.prepareNavigation();nav.reset({suspend:true});
+    for(const y of [window.scrollY,geometry.revealed+500,geometry.revealed+200,geometry.revealed+2,geometry.revealed]) {
+      window.scrollY=y;const scroll=input.reconcile(y),state=mobileTourState({scroll,geometry});
+      const tour=nav.update(state,{scroll:input.navigationScroll(scroll),now:1000,layout,geometry});
+      assert.equal(tour.active,false);assert.equal(tour.currentId,'puntoes');
+      assert.deepEqual(tour.camera,mobileTourCamera(state,layout),'the controller guard leaves the actual scroll camera intact');
+    }
+    assert.ok(input.finishNavigation());nav.reset({suspend:true});nav.enter(geometry);
+    assert.equal(nav.getState().currentId,'puntoes');assert.equal(nav.getState().active,true);
+    assert.equal(input.finishNavigation(),false,'a completion can activate its destination only once');
+    input.prepareNavigation();nav.reset({suspend:true});
+    input.reconcile(geometry.revealed+geometry.viewport+100);
+    assert.ok(input.finishNavigation());nav.reset({suspend:true});
+    const scroll=geometry.revealed+geometry.viewport+100;
+    nav.update(mobileTourState({scroll,geometry}),{scroll:input.navigationScroll(scroll),now:2000,layout,geometry});
+    assert.equal(nav.getState().active,false,'an external fragment remains outside the tour after completion');
+  } finally {input.dispose();if(previousWindow===undefined)delete globalThis.window;else globalThis.window=previousWindow}
+});
+
+for(const mode of ['wheel','touch','key']) test(`fresh ${mode} interrupts explicit mobile navigation and restores natural inverse entry`,()=>{
+  const previousWindow=globalThis.window,handlers=new Map();let interrupted=0;
+  const geometry=mobileTourGeometry({top:5200,viewport:568});
+  const nav=createMobileTourNavigation();
+  globalThis.window={scrollY:geometry.revealed+200,addEventListener:(name,fn)=>handlers.set(name,fn),removeEventListener(){}};
+  const input=createMobileTourInput(null,nav,{readTarget:()=>window.scrollY,onInterrupt:()=>interrupted++});input.update(true,geometry);
+  const event={target:{closest:()=>null},cancelable:true,preventDefault(){},stopImmediatePropagation(){}};
+  try {
+    input.prepareNavigation();nav.reset({suspend:true});input.reconcile(window.scrollY);
+    if(mode==='wheel')handlers.get('wheel')({...event,timeStamp:1000,deltaX:0,deltaY:-250,deltaMode:0});
+    if(mode==='touch') {
+      handlers.get('touchstart')({...event,touches:[{clientX:100,clientY:100}]});
+      handlers.get('touchmove')({...event,touches:[{clientX:100,clientY:350}]});
+    }
+    if(mode==='key') {handlers.get('keydown')({...event,key:'PageUp',repeat:false});input.reconcile(geometry.revealed)}
+    assert.equal(interrupted,1);assert.equal(nav.getState().active,true);assert.equal(nav.getState().currentId,'collaborate');
+    assert.equal(input.finishNavigation(),false,'an interrupted destination cannot overwrite a natural capture');
+    assert.equal(input.navigationScroll(geometry.revealed),geometry.revealed);
+  } finally {input.dispose();if(previousWindow===undefined)delete globalThis.window;else globalThis.window=previousWindow}
+});
+
+test('Home, End and Cmd boundary keys clear the held entry history when interrupting explicit navigation',()=>{
+  const saved={window:globalThis.window,document:globalThis.document,innerHeight:globalThis.innerHeight};
+  const geometry=mobileTourGeometry({top:5200,viewport:568});
+  const layout={width:400,height:710,viewportWidth:320,viewportHeight:568};
+  const end=geometry.revealed+geometry.viewport+100;
+  globalThis.document={documentElement:{scrollHeight:end+568}};globalThis.innerHeight=568;
+  try {
+    for(const [key,metaKey] of [['Home',false],['End',false],['ArrowUp',true],['ArrowDown',true]]) {
+      const handlers=new Map();let interrupted=0;
+      globalThis.window={scrollY:geometry.revealed+200,addEventListener:(name,fn)=>handlers.set(name,fn),removeEventListener(){}};
+      const nav=createMobileTourNavigation({onNavigate:top=>window.scrollY=top});
+      const input=createMobileTourInput(null,nav,{onInterrupt:()=>interrupted++});input.update(true,geometry);
+      input.prepareNavigation();nav.reset({suspend:true});
+      const state=mobileTourState({scroll:window.scrollY,geometry});
+      nav.update(state,{scroll:input.navigationScroll(window.scrollY),now:1000,layout,geometry});
+      handlers.get('keydown')({key,metaKey,target:{closest:()=>null},cancelable:true,preventDefault(){},stopImmediatePropagation(){}});
+      const scroll=input.reconcile(window.scrollY);
+      nav.update(mobileTourState({scroll,geometry}),{scroll:input.navigationScroll(scroll),now:2000,layout,geometry});
+      assert.equal(window.scrollY,['Home','ArrowUp'].includes(key)?0:end);
+      assert.equal(nav.getState().active,false,`${key} is not a forward entrance from the held position`);
+      assert.equal(interrupted,1);assert.equal(input.finishNavigation(),false);input.dispose();
+    }
+  } finally {
+    for(const [key,value] of Object.entries(saved)) {if(value===undefined)delete globalThis[key];else globalThis[key]=value}
   }
 });

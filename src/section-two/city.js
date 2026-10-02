@@ -53,7 +53,7 @@ export function createCity(section, options = {}) {
   });
   const pan = createCityPan(section);
   const perspective = createCityPerspective();
-  let loading = false, ready = false, geometry, lastWidth = 0, lastHeight = 0, water = null, waterSources = '', tourViewport = innerHeight;
+  let loading = false, ready = false, geometry, lastWidth = 0, lastHeight = 0, water = null, waterSources = '', tourViewport = innerHeight, mobileEntryPending = false;
 
   const documentLock = createDocumentScrollLock(document.documentElement);
   const navigate = top => {if (options.onNavigate) options.onNavigate(top);else window.scrollTo({top, behavior: 'instant'})};
@@ -63,7 +63,8 @@ export function createCity(section, options = {}) {
     if (innerWidth < 700 && navigation.getState().active) input.lock();
     navigate(top);
   }});
-  const input = createMobileTourInput(frame, navigation, {lock: documentLock, readTarget: options.readScrollTarget});
+  const input = createMobileTourInput(frame, navigation, {lock: documentLock, readTarget: options.readScrollTarget,
+    onInterrupt: () => {mobileEntryPending = false; navigate(window.scrollY)}});
   const endGuard = createDesktopEndGuard({lock: documentLock, navigate, readTarget: options.readScrollTarget,
     blocked: () => dialog.isOpen || Boolean(document.querySelector('dialog[open]'))});
   const detail = createCityDetail(core);
@@ -221,7 +222,7 @@ export function createCity(section, options = {}) {
     const mobile = innerWidth < 700 || matchMedia('(pointer: coarse)').matches;
     let position, tour;
     if (portrait) {
-      tour = navigation.update(state, {scroll, now, layout: {width: parseFloat(world.style.width), height: parseFloat(world.style.height),
+      tour = navigation.update(state, {scroll: input.navigationScroll(scroll), now, layout: {width: parseFloat(world.style.width), height: parseFloat(world.style.height),
         viewportWidth: document.documentElement.clientWidth, viewportHeight: innerHeight}, geometry, reduced});
       // The introduction finishes before the mobile itinerary begins.
       if (tour.active) {state.opacity = 1; state.active = true; state.exitY = 0; state.revealed = true}
@@ -281,9 +282,16 @@ export function createCity(section, options = {}) {
   resize();
   return {update, resize, load, dialog,
     anchorScroll: scroll => innerWidth < 700 ? input.reconcile(scroll) : endGuard.reconcile(scroll),
-    prepareNavigation: enter => {input.prepareNavigation(); endGuard.prepareNavigation(); navigation.reset({suspend: !enter || cityEntryPoint(geometry, innerWidth < 700) !== null})},
+    prepareNavigation: enter => {mobileEntryPending = enter; input.prepareNavigation(); endGuard.prepareNavigation(); navigation.reset({suspend: innerWidth < 700 || !enter || cityEntryPoint(geometry, false) !== null})},
     getEndGuardState: endGuard.getState,
-    finishNavigation: endGuard.finishNavigation,
+    finishNavigation() {
+      const completed = input.finishNavigation(); endGuard.finishNavigation();
+      if (completed && innerWidth < 700) {
+        navigation.reset({suspend: true});
+        if (mobileEntryPending) navigation.enter(geometry);
+      }
+      mobileEntryPending = false;
+    },
     entryScrollAt: () => cityEntryPoint(geometry, innerWidth < 700),
     getTourState: navigation.getState,
     dispose() {input.dispose(); endGuard.dispose(); documentLock.set(false); water?.dispose(); pan.dispose(); perspective.dispose()}, scrollAt: progress => cityMapPoint(geometry, progress, innerWidth < 700)};
