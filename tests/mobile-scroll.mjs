@@ -209,10 +209,11 @@ try {
     // Long approach from section 1 must land at the hub, consume the same swipe.
     // Use a chapter link to reset, then approach normally from the preceding area.
     await page.goto(base+'?scroll=970');
-    await page.waitForFunction(()=>window.__puntoes?.getState().city?.ready);
+    await page.waitForFunction(()=>window.__puntoes?.getState().city);
     await page.waitForTimeout(300);
     const before=anchor-160;
     await page.evaluate(top=>scrollTo({top,behavior:'instant'}),before);
+    await page.waitForFunction(()=>window.__puntoes.getState().city.ready);
     await page.waitForTimeout(200);
     await swipe({distance:350,y:height*.75,samples:70,delay:20,arrival:'puntoes'});
     assert.equal((await state()).currentId,'puntoes'); assert.ok((await state()).active,JSON.stringify({before,anchor,state:await state()}));
