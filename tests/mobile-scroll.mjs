@@ -150,7 +150,7 @@ try {
     const footer=await page.locator('.city-carousel').boundingBox();
     assert.ok(metrics.rect.y>100 && metrics.rect.bottom < footer.y,'whole card fits above logos');
     assert.ok(metrics.scroll<=metrics.client+1,'card has no hidden overflowing contents');
-    assert.equal(metrics.intro,'3'); assert.equal(metrics.overflow,'hidden');
+    assert.equal(metrics.intro,'none'); assert.equal(metrics.overflow,'hidden');
     assert.ok((await bbva.locator('a').getAttribute('href')).endsWith('/clientes/bbva/'));
     await page.screenshot({path:`${out}/${width}-bbva.png`});
     // A swipe that outlasts the entire trip still owns only one stop.
@@ -314,10 +314,12 @@ try {
   assert.ok(await desktop.evaluate(()=>scrollY)>desktopY+30,'desktop keeps continuous scroll');
   const logo=desktop.locator('.city-client[data-client="bbva"]');
   await logo.focus();await logo.click();
-  assert.ok(await desktop.locator('#city-case').evaluate(el=>el.open),'desktop case dialog retained');
+  await desktop.waitForFunction(()=>window.__puntoes.getState().city.focus?.client==='bbva'&&!window.__puntoes.getState().city.focus.moving);
+  assert.equal(await desktop.locator('.city-tour-card.is-current').getAttribute('data-client'),'bbva','desktop uses the shared inline card');
+  assert.equal(await desktop.locator('#city-case').count(),0,'desktop popup removed');
   await desktop.keyboard.press('Escape');
   await desktop.close();
-  report.desktop={handPoseAuthority:hand.s.poseAuthority,continuousScroll:true,caseDialog:true};
+  report.desktop={handPoseAuthority:hand.s.poseAuthority,continuousScroll:true,inlineCard:true};
   report.passed=true;
 } catch(error) {report.error=error.stack;process.exitCode=1;console.error(error)}
 finally {await fs.writeFile(`${out}/REPORT.json`,JSON.stringify(report,null,2)+'\n');await browser.close()}

@@ -189,7 +189,8 @@ try {
   await page.mouse.move(selectableNode.x, selectableNode.y);
   await page.waitForFunction(() => document.querySelector('.city-carousel').dataset.paused === 'true');
   await page.mouse.click(selectableNode.x, selectableNode.y);
-  await page.waitForFunction(() => Boolean(document.querySelector('#city-case[open]')));
+  await page.waitForFunction(id => window.__puntoes.getState().city.focus?.client === id, selectable);
+  assert.equal(await page.locator('.city-tour-card.is-current').getAttribute('data-client'), selectable, 'desktop opens the shared inline card');
   assert.equal(await desktopStrip.locator(`.city-client[data-client="${selectable}"]`).evaluate(node => node.classList.contains('is-selected')), true, 'a deliberate click still selects and opens its client');
   await page.keyboard.press('Escape');
   await desktopContext.close();

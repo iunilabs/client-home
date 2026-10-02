@@ -3,10 +3,10 @@ import portraitUrl from './assets/puntoes-city-mobile-v16-architecture.webp';
 import extendedDesktopUrl from './assets/puntoes-city-v16-expanded-architecture.webp';
 import {cityClients} from './city-clients.js';
 import {cityGeometry, cityState} from './city-state.js';
-import {createClientDialog} from './client-dialog.js';
 import {createCityWater} from './city-water.js';
 import {createCityCarousel} from './city-carousel.js';
 import {createCityPan} from './city-pan.js';
+import {cityFocusTarget, createCityFocusMotion} from './city-focus.js';
 import {createCityPerspective} from './city-perspective.js';
 import {cityExtent} from './city-extent.js';
 import {mobileTourRoute, mobileTourBuildings} from './mobile-tour-config.js';
@@ -47,11 +47,10 @@ export function createCity(section, options = {}) {
   const backdrop = section.querySelector('.city-backdrop');
   const list = section.querySelector('.city-buildings');
   const markers = [];
-  const dialog = createClientDialog({
-    onOpen() {carousel.setModal(true); options.onOpen?.()},
-    onClose() {carousel.setModal(false); options.onClose?.()},
-  });
   const pan = createCityPan(section);
+  const focus = createCityFocusMotion();
+  let focusedClient = null, desktopOpener = null, closingOpener = null, desktopView = null, overviewZoom = 1, focusPending = false;
+  let overviewPosition = {x: 0, y: 0};
   const perspective = createCityPerspective();
   let loading = false, ready = false, geometry, lastWidth = 0, lastHeight = 0, water = null, waterSources = '', tourViewport = innerHeight, mobileEntryPending = false;
 
@@ -61,7 +60,7 @@ export function createCity(section, options = {}) {
     () => {if (boundaryInitialized) options.onExtentChange?.()});
   const navigate = top => {if (options.onNavigate) options.onNavigate(top);else window.scrollTo({top, behavior: 'instant'})};
   const invitation = {id: 'collaborate', name: '¿Quieres colaborar?', invitation: true};
-  const deck = createMobileTourDeck(section, mobileTourRoute, [...cityClients, invitation]);
+  const deck = createMobileTourDeck(section, mobileTourRoute, [...cityClients, invitation], {onClose: () => closeDesktopCard()});
   const navigation = createMobileTourNavigation({onNavigate: top => {
     if (innerWidth < 700 && navigation.getState().active) input.lock();
     navigate(top);
@@ -69,7 +68,7 @@ export function createCity(section, options = {}) {
   const input = createMobileTourInput(frame, navigation, {lock: documentLock, boundary, readTarget: options.readScrollTarget,
     onInterrupt: () => {mobileEntryPending = false; navigate(window.scrollY)}});
   const endGuard = createDesktopEndGuard({lock: documentLock, navigate, readTarget: options.readScrollTarget,
-    blocked: () => dialog.isOpen || Boolean(document.querySelector('dialog[open]'))});
+    blocked: () => Boolean(document.querySelector('dialog[open]'))});
   const detail = createCityDetail(core);
   for (const client of [...cityClients, invitation]) {
     const site = sites[client.id];
@@ -85,8 +84,7 @@ export function createCity(section, options = {}) {
     button.type = 'button';
     button.className = 'city-pin';
     button.setAttribute('aria-label', client.invitation ? client.name : `Ver caso de ${client.name}`);
-    button.setAttribute('aria-haspopup', 'dialog');
-    button.setAttribute('aria-controls', 'city-case');
+    button.setAttribute('aria-controls', `tour-card-${client.id}`);
     button.setAttribute('aria-expanded', 'false');
     const dot = document.createElement('span');
     dot.className = 'city-pin-dot';
@@ -97,9 +95,9 @@ export function createCity(section, options = {}) {
     label.setAttribute('aria-hidden', 'true');
     button.append(dot, label);
     button.addEventListener('pointerenter', () => select(client.id));
-    button.addEventListener('pointerleave', () => {if (!dialog.isOpen && document.activeElement !== button) select(null)});
+    button.addEventListener('pointerleave', () => {if (document.activeElement !== button) select(null)});
     button.addEventListener('focus', () => select(client.id));
-    button.addEventListener('blur', () => {if (!dialog.isOpen) select(null)});
+    button.addEventListener('blur', () => select(null));
     button.addEventListener('click', () => open(client, button));
     item.append(button);
     markers.push(button);
@@ -108,10 +106,9 @@ export function createCity(section, options = {}) {
 
   const carousel = createCityCarousel(section, cityClients, {onSelect(id) {
     select(id);
-    const marker = markers.find(button => button.parentElement.dataset.client === id);
-    if (innerWidth >= 700 && marker) pan.reveal(marker.getBoundingClientRect());
   }, onOpen: open});
   function select(id) {
+    id = id ?? focusedClient;
     list.classList.toggle('has-selection', Boolean(id));
     for (const button of markers) button.classList.toggle('is-selected', button.parentElement.dataset.client === id);
     carousel.select(id);
@@ -122,17 +119,53 @@ export function createCity(section, options = {}) {
       navigation.select(client.id, {now: performance.now(), scroll: window.scrollY, geometry});
       return;
     }
-    if (client.invitation) dialog.openInvitation(trigger);
-    else dialog.open(client, trigger, carousel.logoFor(client.id));
+    if (!focusedClient && !focus.moving) overviewPosition = {x: desktopView?.x ?? 0, y: desktopView?.y ?? 0};
+    desktopOpener?.setAttribute('aria-expanded', 'false');
+    desktopOpener = trigger; closingOpener = null; focusedClient = client.id;
+    trigger.setAttribute('aria-expanded', 'true');
+    deck.load(); deck.show(client.id);
+    focus.travel(desktopView ?? {x: 0, y: 0, zoom: overviewZoom}, desktopTarget(client.id), performance.now(), cityMotion.matches);
+    focusPending = true;
   }
+
+  function desktopTarget(id) {
+    const width = parseFloat(world.style.width), height = parseFloat(world.style.height);
+    const coreWidth = parseFloat(core.style.width), coreHeight = parseFloat(core.style.height);
+    const [x, y] = sites[id].pinDesktop;
+    const cardRight = deck.bounds().right;
+    const zoom = Math.max(1.65, Math.min(2.6, (innerWidth - cardRight - 48) / (coreWidth * .16)));
+    return cityFocusTarget({width, height, viewportWidth: document.documentElement.clientWidth, viewportHeight: innerHeight,
+      point: {x: (parseFloat(core.style.left) + coreWidth * x / 100) / width,
+        y: (parseFloat(core.style.top) + coreHeight * y / 100) / height},
+      originX: (parseFloat(world.style.transformOrigin) || 50) / 100,
+      originY: (parseFloat(world.style.transformOrigin.split(' ')[1]) || 50) / 100, zoom, cardRight});
+  }
+  function closeDesktopCard(animate = true, restoreFocus = true) {
+    const opener = desktopOpener;
+    closingOpener = restoreFocus ? opener : null;
+    desktopOpener?.setAttribute('aria-expanded', 'false'); desktopOpener = null; focusedClient = null;
+    deck.hide(); select(null);
+    if (animate && desktopView) {
+      focus.travel(desktopView, {...overviewPosition, zoom: overviewZoom}, performance.now(), cityMotion.matches); focusPending = true;
+    } else {focus.reset(); focusPending = false; pan.moveTo(0, 0);}
+  }
+  function onDesktopKey(event) {
+    if (innerWidth >= 700 && focusedClient && event.key === 'Escape' && !document.querySelector('dialog[open]')) {
+      event.preventDefault(); closeDesktopCard();
+    }
+  }
+  window.addEventListener('keydown', onDesktopKey);
 
   function resize() {
     const viewport = innerHeight;
     const portrait = innerWidth < 700;
     const initialOutsideTarget = !geometry && location.hash === '#posibilidades';
     const wasPortrait = section.classList.contains('city-mobile-tour');
+    const previousMapStart = geometry && Math.min(geometry.end, geometry.fadeEnd);
+    const focusProgress = focusedClient && !portrait && !wasPortrait && geometry ?
+      Math.max(0, Math.min(1, (window.scrollY - previousMapStart) / (geometry.end - previousMapStart))) : null;
     if (!portrait) boundary.set(false);
-    if (wasPortrait !== portrait) navigation.reset();
+    if (wasPortrait !== portrait) {closeDesktopCard(false, false); navigation.reset();}
     section.classList.toggle('city-mobile-tour', portrait);
     // Copy has its own beat before the map on both layouts.
     section.append(copy);
@@ -155,6 +188,7 @@ export function createCity(section, options = {}) {
     }
     input.update(portrait, geometry);
     endGuard.update(!portrait, geometry);
+    if (focusProgress !== null) navigate(cityMapPoint(geometry, focusProgress, false));
     const aspect = image.naturalWidth && (image.naturalHeight > image.naturalWidth) === portrait ?
       image.naturalWidth / image.naturalHeight : portrait ? 941 / 1672 : 1672 / 941;
     const available = document.documentElement.clientWidth;
@@ -171,6 +205,9 @@ export function createCity(section, options = {}) {
       layer.style.left = `${extent.coreLeft}px`; layer.style.top = `${extent.coreTop}px`;
     }
     lastWidth = innerWidth; lastHeight = viewport;
+    if (!portrait && focusedClient && desktopView) {
+      focus.travel(desktopView, desktopTarget(focusedClient), performance.now(), cityMotion.matches); focusPending = true;
+    }
     water?.resize();
   }
 
@@ -194,8 +231,7 @@ export function createCity(section, options = {}) {
       waterSources = key;
       water?.dispose();
       water = createCityWater(world, image, {extension: portrait ? null : extension});
-      if (portrait) deck.load();
-      else carousel.load();
+      deck.load(); carousel.load();
     }
     image.addEventListener('load', imagesReady);
     extension.addEventListener('load', imagesReady);
@@ -255,11 +291,21 @@ export function createCity(section, options = {}) {
         next: tour.nextId});
     }
     const view = perspective.update(now, {active: interactive && mobile, reduced,
-      paused: dialog.isOpen || pan.isDragging || (portrait && tour.moving)});
+      paused: Boolean(document.querySelector('dialog[open]')) || pan.isDragging || (portrait ? tour.moving : focus.moving)});
     const reserve = Math.max(Math.abs(view.x), Math.abs(view.y)) * .0085;
     if (!portrait) {
-      position = pan.update(world, state.zoom, reduced, interactive && !dialog.isOpen, reserve);
-      deck.hide();
+      overviewZoom = state.zoom;
+      if (focusedClient && (!state.active || state.exitY > 1)) closeDesktopCard(false, false);
+      const camera = focus.update(now);
+      if (camera) state.zoom = camera.zoom;
+      position = pan.update(world, state.zoom, camera ? false : reduced, interactive && !focus.moving, reserve);
+      if (camera) {
+        if (focus.moving) position = camera;
+        else if (focusPending) {pan.moveTo(camera.x, camera.y); focusPending = false;}
+        if (!focusedClient && !focus.moving) focus.reset();
+      }
+      desktopView = {x: position.x, y: position.y, zoom: state.zoom};
+      if (focusedClient && interactive) deck.show(focusedClient); else deck.hide();
       delete section.dataset.cityStop;
       delete section.dataset.cityCard;
       navigation.reset();
@@ -268,6 +314,7 @@ export function createCity(section, options = {}) {
     const depth = Math.max(parseFloat(world.style.width), parseFloat(world.style.height)) * 2.5;
     const tilt = view.hasReading ? ` perspective(${depth}px) rotateX(${view.x}deg) rotateY(${view.y}deg)` : '';
     world.style.transform = `translate3d(calc(-50% + ${position.x}px),calc(-50% + ${position.y}px),0) scale(${state.zoom})${tilt}`;
+    if (!portrait) world.style.setProperty('--city-pin-scale', Math.min(1, 1.4 / state.zoom));
     section.dataset.cityPerspective = view.state;
     copy.style.opacity = state.copyOpacity;
     copy.setAttribute('aria-hidden', String(state.copyOpacity < .1));
@@ -287,14 +334,24 @@ export function createCity(section, options = {}) {
     frame.setAttribute('aria-hidden', String(!state.active));
     document.body.classList.toggle('city-active', state.active);
     section.dataset.cityProgress = state.progress.toFixed(3);
-    water?.update(now, state.active && !dialog.isOpen, reduced);
+    water?.update(now, state.active && !document.querySelector('dialog[open]'), reduced);
     carousel.update(now, {...state, ready: mapReady, tourClient: tour?.entry?.id}, reduced);
-    return {...state, ready: mapReady};
+    if (closingOpener && !focus.moving) {
+      const opener = closingOpener; closingOpener = null;
+      // The original roof may be outside the restored view. Keep keyboard
+      // navigation in the map without stealing focus moved during the return.
+      if (document.activeElement === document.body) {
+        const client = opener.closest('[data-client]')?.dataset.client;
+        const target = !opener.inert ? opener : section.querySelector(`.city-client[data-client="${client}"]`) ?? section.querySelector('.city-client');
+        target?.focus({preventScroll: true});
+      }
+    }
+    return {...state, ready: mapReady, focus: portrait ? null : {client: focusedClient, moving: focus.moving, camera: desktopView}};
   }
 
   resize();
   boundaryInitialized = true;
-  return {update, resize, load, dialog,
+  return {update, resize, load,
     anchorScroll: scroll => innerWidth < 700 ? input.reconcile(scroll) : endGuard.reconcile(scroll),
     prepareNavigation: enter => {mobileEntryPending = enter; input.prepareNavigation(); endGuard.prepareNavigation(); navigation.reset({suspend: innerWidth < 700 || !enter || cityEntryPoint(geometry, false) !== null})},
     getEndGuardState: endGuard.getState,
@@ -309,5 +366,5 @@ export function createCity(section, options = {}) {
     },
     entryScrollAt: () => cityEntryPoint(geometry, innerWidth < 700),
     getTourState: navigation.getState,
-    dispose() {input.dispose(); endGuard.dispose(); documentLock.set(false); boundary.dispose(); water?.dispose(); pan.dispose(); perspective.dispose()}, scrollAt: progress => cityMapPoint(geometry, progress, innerWidth < 700)};
+    dispose() {window.removeEventListener('keydown', onDesktopKey); input.dispose(); endGuard.dispose(); documentLock.set(false); boundary.dispose(); water?.dispose(); pan.dispose(); perspective.dispose()}, scrollAt: progress => cityMapPoint(geometry, progress, innerWidth < 700)};
 }

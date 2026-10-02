@@ -1,6 +1,8 @@
 // Illustrative editorial copy requested for the prototype; these are not verified projects.
 export const caseStudies = {
   sabadell: {
+    cardTitle: 'Aprender para estar más cerca.',
+    cardIntro: 'IA aplicada al trabajo diario, con más tiempo para atender a cada cliente.',
     title: 'Avanzar, sin perder la cercanía.',
     intro: 'Un itinerario de aprendizaje para conectar las posibilidades de la IA con el trabajo de quienes acompañan a cada cliente.',
     challenge: 'Acercar nuevas herramientas a los equipos, con ejemplos que tengan sentido en su día a día.',
@@ -8,6 +10,8 @@ export const caseStudies = {
     goal: 'Más confianza al utilizar la tecnología. Más espacio para una relación cercana.'
   },
   accenture: {
+    cardTitle: 'Del conocimiento a la práctica.',
+    cardIntro: 'Herramientas de IA para investigar, organizar información y preparar entregables.',
     title: 'El conocimiento también se transforma.',
     intro: 'Un programa para que los equipos incorporen la IA a su trabajo diario, con criterio y autonomía.',
     challenge: 'Pasar de probar herramientas a saber cuándo, cómo y para qué utilizarlas.',
@@ -15,6 +19,8 @@ export const caseStudies = {
     goal: 'Personas más autónomas. Un conocimiento que se comparte y permanece.'
   },
   bbva: {
+    cardTitle: 'Más tiempo para cada persona.',
+    cardIntro: 'Asistentes de IA para consultar información y preparar respuestas con criterio.',
     title: 'La tecnología, al servicio de la confianza.',
     intro: 'Una experiencia de aprendizaje que conecta la inteligencia artificial con la atención a las personas.',
     challenge: 'Encontrar tiempo para escuchar mejor, en un entorno lleno de información y tareas repetitivas.',
@@ -22,6 +28,8 @@ export const caseStudies = {
     goal: 'Menos fricción en el trabajo. Más atención a cada conversación.'
   },
   canal: {
+    cardTitle: 'Ideas para cuidar lo esencial.',
+    cardIntro: 'IA para consultar documentación y compartir conocimiento entre equipos.',
     title: 'Lo esencial también necesita nuevas ideas.',
     intro: 'Acercar la IA a los equipos que cuidan un recurso que todos compartimos.',
     challenge: 'Convertir información técnica dispersa en conocimiento útil para el día a día.',
@@ -29,6 +37,8 @@ export const caseStudies = {
     goal: 'Conocimiento más accesible para las personas que sostienen un servicio esencial.'
   },
   cepsa: {
+    cardTitle: 'Aprender juntos. Aplicarlo cada día.',
+    cardIntro: 'Formación práctica para analizar documentos y preparar informes con IA.',
     title: 'La energía de aprender juntos.',
     intro: 'Un recorrido de formación para llevar la IA de la curiosidad a las decisiones cotidianas.',
     challenge: 'Conectar nuevas herramientas con procesos complejos, sin perder el criterio de los especialistas.',
@@ -36,6 +46,8 @@ export const caseStudies = {
     goal: 'Equipos que entienden la tecnología y saben dónde puede aportar valor.'
   },
   mapfre: {
+    cardTitle: 'Menos fricción. Más claridad.',
+    cardIntro: 'IA para localizar respuestas, resumir documentos y preparar comunicaciones.',
     title: 'Cuidar mejor empieza por comprender mejor.',
     intro: 'Explorar cómo la IA puede liberar tiempo y mejorar el acceso al conocimiento de los equipos.',
     challenge: 'Trabajar con documentación extensa sin que la información se convierta en una barrera.',
@@ -43,6 +55,8 @@ export const caseStudies = {
     goal: 'Más claridad para trabajar. Más tiempo para las personas.'
   },
   mediaset: {
+    cardTitle: 'Más espacio para crear.',
+    cardIntro: 'Explorar la IA para investigar y desarrollar ideas, sin perder la mirada propia.',
     title: 'Nuevas herramientas. La misma mirada.',
     intro: 'Un espacio para explorar la IA sin renunciar a la creatividad ni a la voz propia.',
     challenge: 'Integrar nuevas posibilidades en un trabajo que depende del criterio editorial y de las ideas.',
@@ -50,6 +64,8 @@ export const caseStudies = {
     goal: 'Más espacio para crear, con una mirada que sigue siendo humana.'
   },
   ree: {
+    cardTitle: 'Conectar el conocimiento.',
+    cardIntro: 'IA para consultar documentación técnica y compartir lo que sabe cada equipo.',
     title: 'Conectar conocimiento, conectar futuro.',
     intro: 'Poner la IA al alcance de los equipos técnicos, desde sus preguntas y su experiencia.',
     challenge: 'Hacer más accesible el conocimiento de una organización especializada.',
@@ -57,6 +73,8 @@ export const caseStudies = {
     goal: 'La experiencia de las personas, conectada con nuevas formas de trabajar.'
   },
   siemens: {
+    cardTitle: 'Del potencial a la práctica.',
+    cardIntro: 'Aplicar la IA a documentos, soluciones y comunicación técnica del día a día.',
     title: 'Del potencial a la práctica.',
     intro: 'Convertir las posibilidades de la IA en pequeños avances concretos para los equipos.',
     challenge: 'Encontrar usos relevantes en un entorno técnico, más allá de las demostraciones genéricas.',
@@ -64,6 +82,8 @@ export const caseStudies = {
     goal: 'Aprendizaje que se convierte en práctica y una tecnología que se entiende.'
   },
   naturgy: {
+    cardTitle: 'El cambio empieza en el equipo.',
+    cardIntro: 'Una adopción de la IA cercana y práctica, con ejercicios para cada área.',
     title: 'El cambio se mueve con las personas.',
     intro: 'Acompañar a los equipos en una adopción de la IA cercana, gradual y útil.',
     challenge: 'Dar confianza a personas con experiencias y niveles de conocimiento distintos.',
@@ -79,4 +99,5 @@ export function getCaseStudy(id) {
 }
 
 export const collaborationStory = {title: 'El próximo punto puede ser el tuyo.',
+  cardIntro: 'Cuéntanos qué quieres transformar. Demos forma al siguiente proyecto juntos.',
   intro: 'Hay un lugar para las ideas que merecen hacerse realidad. Cuéntanos qué quieres transformar y construyamos el siguiente proyecto juntos.'};
