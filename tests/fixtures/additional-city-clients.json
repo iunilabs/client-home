@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-10-02",
+  "page": "https://www.puntoes.es/",
+  "context": "Nuestros Clientes, lista de empresas",
+  "clients": [
+    {
+      "id": "telefonica",
+      "name": "Telefónica",
+      "publishedNames": [
+        "TELEFÓNICA DE ESPAÑA",
+        "TELEFONICA I+D",
+        "TELEFONICA SOLUCIONES"
+      ],
+      "logoSource": "https://www.telefonica.com/es/wp-content/themes/telefonica-theme/img/svg/symbol/sprite.svg",
+      "logoSymbol": "isotype-text"
+    },
+    {
+      "id": "indra",
+      "name": "Indra",
+      "publishedNames": [
+        "INDRA SISTEMAS"
+      ],
+      "logoSource": "https://www.indragroup.com/cms-content/2025/06/indra-group-logo-dark.svg"
+    },
+    {
+      "id": "allianz",
+      "name": "Allianz",
+      "publishedNames": [
+        "ALLIANZ CIA SEGUROS Y REASEGUROS, S.A."
+      ],
+      "logoSource": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Allianz.svg",
+      "logoReference": "https://commons.wikimedia.org/wiki/File:Allianz.svg"
+    }
+  ]
+}

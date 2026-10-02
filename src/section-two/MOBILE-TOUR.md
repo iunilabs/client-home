@@ -1,6 +1,6 @@
 # Recorrido móvil: gestos, tarjetas y logos
 
-Recorrido móvil del 2 de octubre de 2026, actualizado tras la elección manual de clientes. A anchuras inferiores a 700 px se mantiene el itinerario configurado **Puntoes → BBVA → Naturgy → Banco Sabadell → obra**. Los diez clientes siguen disponibles en el carrusel, con una tarjeta por empresa y otra de colaboración. El ordenador conserva su ciudad explorable y sus fichas modales.
+Recorrido móvil del 2 de octubre de 2026, actualizado tras la elección manual de clientes. A anchuras inferiores a 700 px se mantiene el itinerario configurado **Puntoes → BBVA → Naturgy → Banco Sabadell → obra**. Los trece clientes siguen disponibles en el carrusel, con una tarjeta por empresa y otra de colaboración. El ordenador conserva su ciudad explorable y sus fichas modales.
 
 ## Un gesto, una parada
 
@@ -80,3 +80,9 @@ La regresión `node tests/mobile-section-two-regression.mjs` comprueba gestos r�
 Los textos están en `case-studies.js`: título y resumen, cada uno de una o dos líneas a partir de 320 px. La caja usa altura natural y mínimo reducido; conserva la tipografía y no recorta el texto. No muestra avisos de contenido provisional.
 
 Fuentes revisadas: [inicio y clientes](https://www.puntoes.es/), [quiénes somos](https://www.puntoes.es/quienes-somos/), [formación](https://www.puntoes.es/formacion/) y sus áreas de desarrollo, Agile, datos, Office y proyectos; [consultoría](https://www.puntoes.es/consultoria/), [conducción](https://www.puntoes.es/formacion/conduccion/) y [contacto](https://www.puntoes.es/contacto/). [BBVA](https://www.puntoes.es/bbva-customer-solutions/) publica colaboración desde 2009 y apoyo a la gestión de clientes. Para el resto de empresas listadas sin un caso detallado, los textos son frases generales sobre talento y tecnología, sin atribuir proyectos concretos. Sabadell procede de información directa del usuario: arquitectura front-end desde diciembre de 2025; se omiten los nombres de iniciativas por privacidad.
+
+## Clientes añadidos desde la lista pública
+
+Telefónica, Indra y Allianz están documentados en `tests/fixtures/additional-city-clients.json`, con sus denominaciones en puntoes.es y fuentes de logos. Se añaden en `city-clients.js` al mapa y carrusel, sin cambiar el itinerario automático. Para incluirlos en ese recorrido, editar únicamente `mobileTourOrder`. Sus tarjetas mantienen frases generales; no se atribuyen proyectos específicos.
+
+Sus puntos usan edificios neutrales existentes, con coordenadas de escritorio en `city.js` y centros/encuadres móviles en `mobile-tour-config.js`. Los tres nuevos destinos muestran un barrio más amplio para evitar ampliar excesivamente la imagen base. No se presentan como reproducciones de sus sedes reales.

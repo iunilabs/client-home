@@ -1,9 +1,7 @@
 # Contexto
 
-Objetivo actual: alargar el fade out del texto de la sección de tarjetas. Worktree activo `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`, base pública `3ee8a5b`.
+Objetivo: añadir clientes publicados por Puntoes que faltaban en sección 2. Worktree aislado `puntoes-paper-copy-1900`; base pública `bc49001`. Principal intacto.
 
-Secciones 3/4 unidas; ordenación desde 1900 px, sin agrupación derecha. Entradas conservadas 80/350 px. Fade out en `src/section-three/scene.js` pasa del 12% al 24% del recorrido de resolución: dura el doble y termina al completar el orden. Caídas, procesamiento, renderer compartido y precarga intactos.
+Añadidos Telefónica, Indra y Allianz: 13 logos y 14 tarjetas/puntos contando colaboración. Fuentes de relación y logos documentadas en fixture adicional y LOGOS-FUENTES. Tarjetas breves generales; sin atribuir proyectos. Nuevas ubicaciones usan edificios neutrales existentes. Encuadre móvil amplio, declarado `detail: base`; originales conservan sus detalles nativos. Itinerario BBVA–Naturgy–Sabadell–obra intacto; nuevos clientes accesibles por logos. Composición de sección 1 intacta.
 
-Conservados los últimos textos breves del mapa publicados en `3ee8a5b`: fuentes oficiales, Sabadell según usuario; eliminadas muestras ficticias.
-
-Unitarias y build correctos. QA móvil/escritorio: opacidad 1 al inicio, 0,5 a mitad, 0 al completar orden; retroceso restaura 1, sin errores JS. Siguiente: publicar y verificar https://iunilabs.github.io/client-home/.
+Archivos: `city-clients.js`, `city.js`, `mobile-tour-config.js`, `city-carousel.js`, `case-studies.js`, tres SVG, documentación y pruebas de detalles/scroll. Build y 122 pruebas correctos. QA en 320, 390 y 1440 px: textos de máximo dos líneas, logos cargados, cámara y tarjetas correctas. Puntos finales revisados sobre tejados. Siguiente: build, commit, push y verificar Pages.

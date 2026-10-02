@@ -116,8 +116,8 @@ try {
       for (const frame of [before, ...frames, held, released]) {
         assert.equal(frame.currentId, 'bbva', `${direction}: horizontal browsing does not visit a building`);
         assert.ok(Math.abs(frame.y - anchor) < 2, `${direction}: horizontal browsing keeps the document pinned`);
-        assert.equal(frame.logos.length, 10);
-        assert.equal(new Set(frame.logos.map(logo => logo.id)).size, 10, `${direction}: recycling retains ten unique client buttons`);
+        assert.equal(frame.logos.length, 13);
+        assert.equal(new Set(frame.logos.map(logo => logo.id)).size, 13, `${direction}: recycling retains thirteen unique client buttons`);
       }
       return {direction, fromX, toX, y, before, frames, held, released, continuity, visibleTravel};
     }
@@ -129,8 +129,8 @@ try {
     await load();
     const anchor=(await state()).y;
     assert.equal((await state()).currentId,'puntoes');
-    assert.equal(await page.locator('.city-client').count(),10);
-    assert.equal(await page.locator('.city-tour-card').count(),11);
+    assert.equal(await page.locator('.city-client').count(),13);
+    assert.equal(await page.locator('.city-tour-card').count(),14);
     assert.equal(await page.locator('.city-tour-controls,.city-perspective-control, .city-tour-card details').count(),0);
     assert.equal(await page.locator('.city-carousel').evaluate(el=>getComputedStyle(el).backgroundImage),'none');
     // Taps and ambiguous or horizontal movement never advance the tour.

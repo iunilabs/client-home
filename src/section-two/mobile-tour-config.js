@@ -1,6 +1,6 @@
 // EDIT THIS LIST to select and order the mobile itinerary.
 // Accepted mobile itinerary: three companies plus the construction invitation.
-// All ten companies remain available through the logo footer, independently.
+// All map clients remain available through the logo footer, independently.
 // 'collaborate' is the optional construction-site invitation.
 export const mobileTourOrder = ['bbva', 'naturgy', 'sabadell', 'collaborate'];
 
@@ -17,6 +17,10 @@ export const mobileTourBuildings = {
   mediaset: {center: [21.838, 50.568], size: [18.385, 14.175], pin: [21.54, 49.55]},
   accenture: {center: [20.191, 33.553], size: [21.467, 8.493], pin: [22.742, 30.801]},
   collaborate: {center: [11.583, 9.809], size: [14.665, 8.852], pin: [10.733, 8.911]},
+  // Broader district framing retains map detail for these neutral buildings.
+  telefonica: {center: [36.8, 49.2], size: [25, 14], pin: [36.8, 47.2], detail: 'base'},
+  indra: {center: [61, 48], size: [25, 14], pin: [61, 46], detail: 'base'},
+  allianz: {center: [39, 80.2], size: [25, 14], pin: [39, 77.5], detail: 'base'},
 };
 
 export const mobileTourRoute = mobileTourOrder.map(id => ({id, ...mobileTourBuildings[id]}));

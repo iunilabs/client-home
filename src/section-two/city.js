@@ -31,6 +31,10 @@ const sites = {
   siemens: {pinDesktop: [69, 60.5]},
   naturgy: {pinDesktop: [51.4, 59.8]},
   sabadell: {pinDesktop: [30.4, 74]},
+  // Neutral buildings in the existing illustration, not replicas of real HQs.
+  telefonica: {pinDesktop: [40.2, 53.9]},
+  indra: {pinDesktop: [68.5, 36.6]},
+  allianz: {pinDesktop: [22.8, 70.8]},
 };
 
 export function createCity(section, options = {}) {

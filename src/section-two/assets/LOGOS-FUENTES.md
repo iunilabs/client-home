@@ -14,5 +14,8 @@ Revisión del 1 de octubre de 2026. Nueve SVG reales y un PNG oficial de alta re
 | Siemens | `assets/logos/siemens.svg` | [SVG de Wikimedia](https://commons.wikimedia.org/wiki/File:Siemens_AG_logo.svg), basado en el SVG de la cabecera oficial de Siemens y contrastado con su [portal de prensa](https://press.siemens.com/global/en). El enlace antiguo al SVG oficial redirige ahora a HTML. |
 | Naturgy | `assets/logos/naturgy.svg` | [SVG enlazado por su web oficial](https://stproportalcorporativo.blob.core.windows.net/uploads/2022/10/logo-naturgy.svg). |
 | Banco Sabadell | `assets/sabadell.svg` | [SVG oficial de comunicación](https://comunicacion.grupbancsabadell.com/wp-content/uploads/Logo_BS_BW.svg), ya incorporado en la primera entrega. |
+| Telefónica | `assets/logos/telefonica.svg` | [Sprite oficial de su cabecera](https://www.telefonica.com/es/wp-content/themes/telefonica-theme/img/svg/symbol/sprite.svg), símbolo `isotype-text`, conservando paths y definiciones. |
+| Indra | `assets/logos/indra.svg` | [SVG de la cabecera oficial de Indra Group](https://www.indragroup.com/cms-content/2025/06/indra-group-logo-dark.svg). El listado de Puntoes usa «Indra Sistemas». |
+| Allianz | `assets/logos/allianz.svg` | [SVG de Wikimedia](https://commons.wikimedia.org/wiki/File:Allianz.svg), atribuido a Allianz y procedente de su web oficial. La descarga directa del servidor oficial devuelve 403. |
 
 Las rutas de archivo son relativas a `src/section-two`. Los logos identifican las organizaciones; los derechos de marca pertenecen a sus propietarios. No se afirma una licencia abierta. Se comprueba ausencia de scripts, handlers, elementos `foreignObject` y referencias externas activas en los archivos nuevos.

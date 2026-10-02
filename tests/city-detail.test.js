@@ -19,8 +19,23 @@ const approvedHashes = {
   collaborate: 'efbe283915dbc13900e48eb915a2a3e6d87a54f860d85fcbe9b4f08bc8e802ce',
 };
 
-test('all ten customers, hub and invitation have matching source rectangles', async () => {
-  assert.deepEqual(Object.keys(cityDetails).sort(), [...Object.keys(mobileTourBuildings), 'puntoes'].sort());
+test('new public clients use explicit base-map framing without excessive mobile zoom', async () => {
+  const fixture = JSON.parse(await fs.readFile(new URL('./fixtures/additional-city-clients.json', import.meta.url)));
+  const baseIds = Object.keys(mobileTourBuildings).filter(id => mobileTourBuildings[id].detail === 'base');
+  assert.deepEqual(baseIds.sort(), fixture.clients.map(client => client.id).sort());
+  for (const id of baseIds) {
+    for (const [viewportWidth, viewportHeight] of [[320, 740], [390, 844]]) {
+      const width = viewportHeight * 941 / 1672 * 1.04;
+      const view = mobileBuildingView(mobileTourBuildings[id], {width, height: width * 1672 / 941, viewportWidth, viewportHeight});
+      assert.ok(view.zoom >= 1.5 && view.zoom <= 2.5, `${id}: keep a broad base-map view`);
+      assert.equal(cityDetails[id], undefined);
+    }
+  }
+});
+
+test('dedicated detail destinations, hub and invitation have matching source rectangles', async () => {
+  const detailIds = Object.keys(mobileTourBuildings).filter(id => mobileTourBuildings[id].detail !== 'base');
+  assert.deepEqual(Object.keys(cityDetails).sort(), [...detailIds, 'puntoes'].sort());
   const provenance = JSON.parse(await fs.readFile(new URL('../src/section-two/assets/city-detail-provenance.json', import.meta.url)));
   assert.equal(provenance.tiles.length, 12);
   for (const [id, {rect, feather = [14, 12]}] of Object.entries(cityDetails)) {

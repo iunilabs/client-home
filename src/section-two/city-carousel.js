@@ -3,7 +3,7 @@ import {smooth} from '../timeline.js';
 import {createCarouselMotion} from './carousel-motion.js';
 import './city-carousel.css';
 
-const logoHeights = {accenture: 58, bbva: 40, canal: 66, cepsa: 50, mapfre: 50, mediaset: 36, ree: 36, siemens: 38, naturgy: 50, sabadell: 40};
+const logoHeights = {accenture: 58, bbva: 40, canal: 66, cepsa: 50, mapfre: 50, mediaset: 36, ree: 36, siemens: 38, naturgy: 50, sabadell: 40, telefonica: 44, indra: 44, allianz: 44};
 const DRAG_THRESHOLD = 5;
 const POINTER_FOCUS_DELAY = 1000;
 const VELOCITY_SAMPLE_WINDOW = 120;

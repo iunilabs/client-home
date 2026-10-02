@@ -44,6 +44,18 @@ export const caseStudies = {
     cardTitle: 'El cambio empieza aquí.',
     cardIntro: 'Talento y tecnología para avanzar juntos.'
   },
+  telefonica: {
+    cardTitle: 'Conectar para avanzar.',
+    cardIntro: 'Talento y tecnología que acercan personas.'
+  },
+  indra: {
+    cardTitle: 'Ideas que se transforman.',
+    cardIntro: 'Conocimiento para afrontar nuevos retos.'
+  },
+  allianz: {
+    cardTitle: 'Confianza para avanzar.',
+    cardIntro: 'Aprendizaje que acompaña el cambio.'
+  },
 };
 
 export function getCaseStudy(id) {
