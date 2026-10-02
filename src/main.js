@@ -10,7 +10,7 @@ import {createScrollMeter} from './scroll-meter.js';
 import {createPerspectiveInput} from './perspective-input.js';
 populateClients();
 const trustSection=document.querySelector('#confianza'),nextSection=document.querySelector('#posibilidades');
-const city=createCity(trustSection,{readScrollTarget:()=>lenis.targetScroll,onOpen:()=>lenis.stop(),onClose:()=>lenis.start(),onNavigate:top=>{lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top)}});
+const city=createCity(trustSection,{readScrollTarget:()=>lenis.targetScroll,onOpen:()=>lenis.stop(),onClose:()=>lenis.start(),onNavigate:top=>{lenis.reset();lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top)}});
 const motionPreference={matches:false};
 let handoffStart=0,turnDistance=0,sectionProgress=0;
 function readProgress(y){return y<=handoffStart?5*y/handoffStart:5+(y-handoffStart)/turnDistance}
