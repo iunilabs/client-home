@@ -31,8 +31,31 @@ function shell(width, height, nx, ny, radius, thickness) {
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geo.setAttribute('paperSide', new THREE.Float32BufferAttribute(faces, 1)); geo.setIndex(indices); geo.computeVertexNormals();
   return {geo, base: new Float32Array(base)};
 }
+// A settled sheet keeps its rounded outline and physical thickness, but no
+// longer needs the interior grid used for curl and flutter.
+function flatShell(width, height, radius, thickness) {
+  const outline = [];
+  for (const [x, y, start] of [[width/2-radius,height/2-radius,0],[-width/2+radius,height/2-radius,Math.PI/2],[-width/2+radius,-height/2+radius,Math.PI],[width/2-radius,-height/2+radius,Math.PI*1.5]]) {
+    for (let i = 0; i <= 4; i++) {const angle = start + i * Math.PI/8; outline.push([x + Math.cos(angle)*radius, y + Math.sin(angle)*radius]);}
+  }
+  const positions = [], uvs = [], faces = [], indices = [], count = outline.length + 1;
+  for (let side = 0; side < 2; side++) {
+    const z = (side === 0 ? 1 : -1) * thickness/2, offset = side*count;
+    for (const [x,y] of [[0,0], ...outline]) {positions.push(x,y,z); uvs.push(x/width+.5,y/height+.5); faces.push(side);}
+    for (let i = 0; i < outline.length; i++) {const a = offset+1+i, b = offset+1+(i+1)%outline.length; indices.push(...(side === 0 ? [offset,a,b] : [offset,b,a]));}
+  }
+  for (let i = 0; i < outline.length; i++) {const a = 1+i, b = 1+(i+1)%outline.length; indices.push(a,a+count,b+count,a,b+count,b);}
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs,2));
+  geometry.setAttribute('paperSide', new THREE.Float32BufferAttribute(faces,1));
+  geometry.setIndex(indices); geometry.computeVertexNormals(); geometry.computeBoundingBox();
+  return geometry;
+}
 export function createPaper({kind, variant, width, height, grain, detailed = false, content = null, textureResolution = detailed ? 2048 : 512}) {
-  const {geo, base} = shell(width, height, detailed ? 30 : 14, detailed ? 32 : 14, kind === 'note' ? .015 : Math.min(width, height) * .07, kind === 'note' || kind === 'letter' ? .0028 : .004);
+  const radius = kind === 'note' ? .015 : Math.min(width, height) * .07, thickness = kind === 'note' || kind === 'letter' ? .0028 : .004;
+  const {geo, base} = shell(width, height, detailed ? 30 : 14, detailed ? 32 : 14, radius, thickness);
+  const flat = flatShell(width, height, radius, thickness);
   const material = new THREE.MeshPhysicalMaterial({
     map: surfaceTexture(kind, variant, textureResolution, content), color: '#ffffff', roughness: .86, metalness: 0,
     bumpMap: grain, bumpScale: .00065, sheen: .08, sheenRoughness: .95, sheenColor: new THREE.Color('#fff9ed'), specularIntensity: .18,
@@ -44,6 +67,12 @@ export function createPaper({kind, variant, width, height, grain, detailed = fal
     shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vPaperSide;').replace('#include <map_fragment>', '#include <map_fragment>\nif (vPaperSide > 0.5) diffuseColor.rgb = vec3(0.94, 0.95, 0.96);');
   };
   material.customProgramCacheKey = () => 'paper-shell-v2';
+  // Ordered paper is matte: diffuse lighting retains the grain, real shadows
+  // and depth without evaluating sheen/specular reflections on every layer.
+  const workflowMaterial = new THREE.MeshLambertMaterial({map: material.map, color: material.color,
+    bumpMap: grain, bumpScale: material.bumpScale, side: THREE.FrontSide});
+  workflowMaterial.onBeforeCompile = material.onBeforeCompile;
+  workflowMaterial.customProgramCacheKey = material.customProgramCacheKey;
   const mesh = new THREE.Mesh(geo, material); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
   const pendingMap = material.map;
   let completedMap = null;
@@ -53,6 +82,7 @@ export function createPaper({kind, variant, width, height, grain, detailed = fal
   }
   function setCompleted(completed) {
     material.map = completed ? prepareCompleted() : pendingMap;
+    workflowMaterial.map = material.map;
   }
   const coefficients = new Float64Array(base.length / 3 * 10);
   for (let i = 0, j = 0; i < base.length; i += 3, j += 10) {
@@ -80,5 +110,7 @@ export function createPaper({kind, variant, width, height, grain, detailed = fal
     }
     geo.attributes.position.needsUpdate = true; geo.computeVertexNormals(); geo.computeBoundingBox();
   }
-  return {mesh, deform, prepareCompleted, setCompleted, textures: () => [pendingMap, completedMap].filter(Boolean), width, height, kind, subject: pendingMap.userData.subject};
+  return {mesh, deform, prepareCompleted, setCompleted, setFlat: value => {mesh.geometry = value ? flat : geo;},
+    setWorkflowMaterial: value => {mesh.material = value ? workflowMaterial : material;}, materials: () => [material, workflowMaterial],
+    deformedGeometry: geo, geometries: () => [geo, flat], textures: () => [pendingMap, completedMap].filter(Boolean), width, height, kind, subject: pendingMap.userData.subject};
 }

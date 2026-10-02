@@ -69,11 +69,15 @@ try {
       const p = WORKFLOW.processStart + (WORKFLOW.finished - WORKFLOW.processStart) * (i + .5) / 47;
       const {cards, state} = await progress(p);
       assert.equal(state.resolution.completed, i);
+      assert.equal(state.performance.flatCards, 46, 'only the travelling card keeps its flexible grid');
+      assert.ok(state.performance.triangles < 18000, 'stationary layers do not consume the old dense meshes');
+      assert.ok(state.performance.shadowSize <= 1024);
       assert.equal(cards.filter(c => c.travel > 0 && c.travel < 1).length, 1);
       assert.equal(cards.find(c => c.travel > 0 && c.travel < 1).index, i);
       if ([0,23,46].includes(i)) await page.screenshot({path: output + name + '-transfer-' + i + '.png'});
     }
     const final = await progress(1);
+    assert.equal(final.state.performance.flatCards, 47);
     assert.equal(final.state.resolution.completed, 47); assert.equal(final.cards.filter(c => c.completed).length, 47);
     assert.ok(final.cards.every(c => c.screen.left > 0), 'all completed papers are on the right');
     assert.equal(await page.locator('[data-pending-count]').textContent(), '0');
@@ -82,6 +86,7 @@ try {
     await progress(.3); assert.ok((await page.evaluate(() => window.__puntoes.getPaperReview())).every(c => !c.completed));
     await page.evaluate(() => {const el=document.querySelector('#posibilidades');scrollTo(0,el.offsetTop+(el.offsetHeight-innerHeight));});
     await page.waitForFunction(() => window.__puntoes.getState().paper.resolution.progress === 0);
+    assert.equal(await page.evaluate(() => window.__puntoes.getState().paper.performance.flatCards), 0, 'reverse scroll restores all flexible sheets');
     assert.equal(await page.locator('[data-paper-copy]').evaluate(el => Number(getComputedStyle(el).opacity)), 0, 'section three copy has already faded before grouping');
     if (name === 'mobile') {
       await page.goto(origin + '?resolution=.6&capture=1');

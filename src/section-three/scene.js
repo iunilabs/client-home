@@ -53,7 +53,8 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = .98;
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.shadowMap.autoUpdate = false;
-    if (renderer.getPixelRatio() !== pixelBudget.pixelRatio) pixelBudget.resize();
+    const budget = workflowProgress > 0 ? workflowBudget : pixelBudget;
+    if (renderer.getPixelRatio() !== budget.pixelRatio) budget.resize();
   }
   const scene = new THREE.Scene(); scene.fog = new THREE.FogExp2('#e7f2fa', .003);
   const backgroundTexture = backdrop();
@@ -93,6 +94,8 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     renderer.setPixelRatio(ratio);
   }}, () => Math.min(devicePixelRatio, innerWidth < 700 ? 3 : 2,
     Math.sqrt(5_200_000 / (innerWidth * innerHeight))), {minScale: .8});
+  const workflowBudget = createRenderBudget(renderer, () => Math.min(devicePixelRatio, 2,
+    Math.sqrt(2_000_000 / (innerWidth * innerHeight))), {minScale: .6, slowInterval: .024, fastInterval: .018});
 
   await fonts; await preparation.yield();
   const grain = paperGrain();
@@ -130,7 +133,8 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     p.anchor = [[-.87, -.68, 7.3], [.89, .71, 6.8], [-.84, .62, 6.7], [.92, -.65, 7.5]][i]; foreground.push(p);
   }
   [note, letter, ...heroes, ...foreground, ...field].forEach((piece, i) => {piece.workflowIndex = i;});
-  let portrait = false, target = 0, progress = 0, workflowTarget = 0, workflowProgress = 0, height = 0, active = false, force = true, disposed = false, lost = false, lastState = null;
+  let layoutVersion = 0;
+  let portrait = false, target = 0, progress = 0, workflowTarget = 0, workflowProgress = 0, height = 0, active = false, force = true, shadowsInvalid = true, disposed = false, lost = false, lastState = null;
   const point = new THREE.Vector3();
   const input = createSceneInput({capture, reducedQuery, button: journey.querySelector('[data-paper-motion]'), onChange: () => {force = true;}});
   let inputState = input.update(1 / 60, performance.now()), breezeClock = 0, frameDelta = 1 / 60;
@@ -144,6 +148,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     workflowTarget = clamp((y - journey.offsetTop - painSection.offsetHeight) / Math.max(1, resolutionSection.offsetHeight - innerHeight));
   }
   function resize() {
+    layoutVersion++; shadowsInvalid = true;
     portrait = innerWidth / innerHeight < .85;
     camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
     for (const piece of pieces) {
@@ -171,6 +176,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
   resize();
 
   function pose(piece, x, y, rx, ry, rz, scale, curl, twist, flutter, phase, deferDeformation = false) {
+    piece.setFlat(false); piece.setWorkflowMaterial(false); piece.workflowPoseKey = null;
     const {mesh} = piece; atScreen(x, y, piece.depth, mesh.position);
     mesh.rotation.set(clamp(rx, -piece.tilt, piece.tilt), clamp(ry, -piece.tilt, piece.tilt), clamp(rz, -.35, .35), 'YXZ');
     mesh.scale.setScalar(Math.min(scale, piece.maxScale));
@@ -181,6 +187,11 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     if (!deferDeformation) piece.deform(pose.curl, pose.twist, pose.flutter, pose.phase, pose.corners);
   }
   function orderedPose(piece, workflow, card) {
+    piece.setWorkflowMaterial(workflow.ordered === 1);
+    const flat = workflow.ordered === 1 && (card.travel === 0 || card.travel === 1);
+    const stableKey = flat ? `${layoutVersion}/${card.travel}` : null;
+    if (stableKey && piece.workflowPoseKey === stableKey) return;
+    piece.workflowPoseKey = stableKey; piece.setFlat(flat);
     const {mesh} = piece, initial = piece.pose ?? {curl:0, twist:0, flutter:0, phase:0, corners:[0,0,0,0]}, order = workflow.ordered, air = 1 - order;
     const rx = mesh.rotation.x * air, ry = mesh.rotation.y * air;
     const curl = initial.curl * air + Math.sin(card.move * Math.PI) * .015;
@@ -198,7 +209,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     mesh.position.y = mix(mesh.position.y, point.y, order);
     mesh.position.z = piece.depth;
     mesh.rotation.set(rx, ry, mix(mesh.rotation.z, card.rotation, order), 'YXZ');
-    piece.deform(curl, twist, flutter, initial.phase, corners);
+    if (!flat) piece.deform(curl, twist, flutter, initial.phase, corners);
   }
   function falling(piece, p, start, duration, anchor, rotation, scale, curl, idle, strength = 1, deferDeformation = false) {
     piece.start = start; const t = clamp((p - start) / duration); piece.spawnProgress = t; piece.mesh.visible = p > start;
@@ -226,6 +237,9 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     const timing = paperTiming(height), dense = smooth(timing.group, timing.grouped, p);
     const workflow = workflowState(resolutionProgress, pieces.length);
     key.shadow.normalBias = mix(.015, .08, workflow.ordered);
+    const shadowSize = workflow.ordered > 0 ? (workflowBudget.scale < .8 ? 512 : 1024) : 2048;
+    if (key.shadow.mapSize.x !== shadowSize) shadowsInvalid = true;
+    key.shadow.mapSize.setScalar(shadowSize);
     // Local pixels keep the editorial entrance consistent across viewports.
     const copyScroll = p * height;
     stageElement.style.setProperty('--paper-copy-reveal', (smooth(1200, 1700, copyScroll) * (1 - smooth(2500, 2740, copyScroll)) * (1 - smooth(0, .12, resolutionProgress))).toFixed(4));
@@ -235,37 +249,45 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     workflowTotal.textContent = `${workflow.completed} / ${pieces.length}`;
     workflowStatus.textContent = workflow.ordered < 1 ? 'Ordenando el trabajo' : workflow.pending ? 'Resolviendo uno a uno' : 'Todo completado';
     workflowFill.style.width = `${workflow.fraction * 100}%`;
-    const noteExit = smooth(timing.several, timing.many + timing.manySpread, p);
-    const letterExit = smooth(timing.many, timing.group, p);
-    const anchors = portrait ? [[-.24,.61],[.30,.29],[.05,-.35],[-.24,-.05],[.30,-.65]] : [[-.28,.51],[.47,.29],[.10,-.59],[-.32,-.17],[.49,-.24]];
-    const schedule = [
-      {piece: note, start: timing.first, duration: timing.firstDuration, anchor: [mix(portrait ? 0 : .1, -.5, noteExit), mix(-.02, .34, noteExit)], rotation: [-.05,-.08,-.13], scale: note.maxScale * mix(1, .75, noteExit), curl: .09, strength: 1.25},
-      {piece: letter, start: timing.several, duration: timing.severalDuration, anchor: [mix(portrait ? .03 : .2, -.08, letterExit), mix(.08, -.35, letterExit)], rotation: [-.08,-.10,.19], scale: letter.maxScale * mix(1, .75, letterExit), curl: .23},
-      ...heroes.map((piece, i) => ({piece, start: timing.several + timing.severalSpread * (i + 1) / 5, duration: timing.severalDuration, anchor: anchors[i], rotation: [[-.08,-.10,.11],[.06,.12,-.18],[-.08,-.12,.15],[.10,.10,-.15],[-.10,-.08,-.10]][i], scale: piece.maxScale, curl: .08})),
-      ...field.map((piece, i) => ({piece, start: (i < 8 ? timing.several : timing.many) + piece.waveOffset * (i < 8 ? timing.severalSpread : timing.manySpread), duration: i < 8 ? timing.severalDuration : timing.manyDuration, anchor: piece.scatter, rotation: [piece.rot[0] * .10, piece.rot[1] * .10, piece.rot[2] * .35], scale: piece.maxScale, curl: piece.kind === 'letter' ? .23 : piece.kind === 'note' ? .12 : .07})),
-      ...foreground.map((piece, i) => ({piece, start: timing.many + timing.manySpread * i / 3, duration: timing.manyDuration, anchor: piece.anchor, rotation: [.10,-.12 + i * .07,(i % 2 ? -1 : 1) * .25], scale: piece.maxScale, curl: .08})),
-    ];
-    for (const {piece, start, duration, anchor, rotation, scale, curl, strength = .8} of schedule) {
-      // Every paper joins the same right-hand volume; none is left at its old anchor.
-      const isMessage = piece === note, isLetter = piece === letter;
-      const x = isMessage ? (portrait ? .58 : .47) : isLetter ? (portrait ? .55 : .66) : .56 + Math.sin(piece.phase * 2.3) * (portrait ? .12 : .18);
-      const y = isMessage ? -.08 : isLetter ? .18 : Math.sin(piece.phase * 3.7) * .40;
-      const finalScale = piece.maxScale * (isMessage ? (portrait ? .32 : .45) : isLetter ? (portrait ? .52 : .66) : field.includes(piece) ? .85 : (portrait ? .78 : .90));
-      const position = [mix(anchor[0], x, dense), mix(anchor[1], y, dense) + idle * (1 - dense) * Math.sin(piece.phase)];
-      if (workflow.ordered < 1) falling(piece, p, start, duration, position, rotation.map((r, i) => mix(r, i === 2 ? Math.sin(piece.phase) * .25 : r * .55, dense)), mix(scale, finalScale, dense), curl, idle, strength, workflow.ordered > 0);
-      else {piece.mesh.visible = true; piece.start = start; piece.spawnProgress = 1;}
+    function applyWorkflow(piece) {
       const card = cardWorkflow(workflow, piece.workflowIndex, pieces.length, innerWidth, innerHeight, portrait, piece.width / piece.height);
       if (workflow.ordered > 0) orderedPose(piece, workflow, card);
-      piece.setCompleted(card.done);
-      piece.completed = card.done;
-      piece.travel = card.travel;
+      piece.setCompleted(card.done); piece.completed = card.done; piece.travel = card.travel;
     }
+    if (workflow.ordered === 1) {
+      for (const piece of pieces) {piece.mesh.visible = true; piece.spawnProgress = 1; applyWorkflow(piece);}
+    } else {
+      const noteExit = smooth(timing.several, timing.many + timing.manySpread, p);
+      const letterExit = smooth(timing.many, timing.group, p);
+      const anchors = portrait ? [[-.24,.61],[.30,.29],[.05,-.35],[-.24,-.05],[.30,-.65]] : [[-.28,.51],[.47,.29],[.10,-.59],[-.32,-.17],[.49,-.24]];
+      const schedule = [
+        {piece: note, start: timing.first, duration: timing.firstDuration, anchor: [mix(portrait ? 0 : .1, -.5, noteExit), mix(-.02, .34, noteExit)], rotation: [-.05,-.08,-.13], scale: note.maxScale * mix(1, .75, noteExit), curl: .09, strength: 1.25},
+        {piece: letter, start: timing.several, duration: timing.severalDuration, anchor: [mix(portrait ? .03 : .2, -.08, letterExit), mix(.08, -.35, letterExit)], rotation: [-.08,-.10,.19], scale: letter.maxScale * mix(1, .75, letterExit), curl: .23},
+        ...heroes.map((piece, i) => ({piece, start: timing.several + timing.severalSpread * (i + 1) / 5, duration: timing.severalDuration, anchor: anchors[i], rotation: [[-.08,-.10,.11],[.06,.12,-.18],[-.08,-.12,.15],[.10,.10,-.15],[-.10,-.08,-.10]][i], scale: piece.maxScale, curl: .08})),
+        ...field.map((piece, i) => ({piece, start: (i < 8 ? timing.several : timing.many) + piece.waveOffset * (i < 8 ? timing.severalSpread : timing.manySpread), duration: i < 8 ? timing.severalDuration : timing.manyDuration, anchor: piece.scatter, rotation: [piece.rot[0] * .10, piece.rot[1] * .10, piece.rot[2] * .35], scale: piece.maxScale, curl: piece.kind === 'letter' ? .23 : piece.kind === 'note' ? .12 : .07})),
+        ...foreground.map((piece, i) => ({piece, start: timing.many + timing.manySpread * i / 3, duration: timing.manyDuration, anchor: piece.anchor, rotation: [.10,-.12 + i * .07,(i % 2 ? -1 : 1) * .25], scale: piece.maxScale, curl: .08})),
+      ];
+      for (const {piece, start, duration, anchor, rotation, scale, curl, strength = .8} of schedule) {
+        // Every paper joins the same right-hand volume; none is left at its old anchor.
+        const isMessage = piece === note, isLetter = piece === letter;
+        const x = isMessage ? (portrait ? .58 : .47) : isLetter ? (portrait ? .55 : .66) : .56 + Math.sin(piece.phase * 2.3) * (portrait ? .12 : .18);
+        const y = isMessage ? -.08 : isLetter ? .18 : Math.sin(piece.phase * 3.7) * .40;
+        const finalScale = piece.maxScale * (isMessage ? (portrait ? .32 : .45) : isLetter ? (portrait ? .52 : .66) : field.includes(piece) ? .85 : (portrait ? .78 : .90));
+        const position = [mix(anchor[0], x, dense), mix(anchor[1], y, dense) + idle * (1 - dense) * Math.sin(piece.phase)];
+        falling(piece, p, start, duration, position, rotation.map((r, i) => mix(r, i === 2 ? Math.sin(piece.phase) * .25 : r * .55, dense)), mix(scale, finalScale, dense), curl, idle, strength, workflow.ordered > 0);
+        applyWorkflow(piece);
+      }
+    }
+
     camera.updateMatrixWorld();
     const lightState = cursorSurface.update(camera, inputState.pointer, pieces.map(piece => piece.mesh), !inputState.hovering, frameDelta);
     cursorLight.intensity *= .028;
-    renderer.info.autoReset = false; renderer.info.reset(); renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera);
+    renderer.info.autoReset = false; renderer.info.reset();
+    const shadowsChanged = shadowsInvalid || !lastState || workflow.ordered < 1 || lastState.resolution.ordered < 1 || Math.abs(lastState.resolution.cursor - workflow.cursor) > .00001;
+    renderer.shadowMap.needsUpdate = shadowsChanged; renderer.render(scene, camera); shadowsInvalid = false;
     lastState = {progress: p, resolution: workflow, visibleItems: pieces.filter(i => i.mesh.visible).length, groupProgress: dense, secondEntryPixels: timing.several * height, lastEntryPixels: (timing.many + timing.manySpread) * height, lastFallEndPixels: (timing.many + timing.manySpread + timing.manyDuration) * height, groupingPixels: timing.group * height, scrollRange: height, glass: 0, drawCalls: renderer.info.render.calls, geometries: renderer.info.memory.geometries, reducedMotion: reducedQuery.matches,
-      hero: {position: note.mesh.position.toArray(), rotation: note.mesh.rotation.toArray().slice(0,3), bend: note.mesh.geometry.attributes.position.array[2]}, letterCorners: [0,30,992,1022].map(i => letter.mesh.geometry.attributes.position.array[i*3+2]), version: 4, depthOfField: false, parallax: {x: inputState.x, y: inputState.y, gyro: inputState.orientation}, cursorLight: {...lightState, intensity: cursorLight.intensity}, contentCount: new Set(pieces.map(i => i.subject)).size, totalItems: pieces.length};
+      hero: {position: note.mesh.position.toArray(), rotation: note.mesh.rotation.toArray().slice(0,3), bend: note.mesh.geometry.attributes.position.array[2]}, letterCorners: [0,30,992,1022].map(i => letter.deformedGeometry.attributes.position.array[i*3+2]), version: 4, depthOfField: false, parallax: {x: inputState.x, y: inputState.y, gyro: inputState.orientation}, cursorLight: {...lightState, intensity: cursorLight.intensity}, contentCount: new Set(pieces.map(i => i.subject)).size, totalItems: pieces.length, performance: {pixelRatio: renderer.getPixelRatio(), shadowSize: key.shadow.mapSize.x, shadowsUpdated: shadowsChanged,
+        flatCards: pieces.filter(piece => piece.mesh.geometry !== piece.deformedGeometry).length, triangles: renderer.info.render.triangles}};
   }
   const review = {
     subjects: pieces.map(piece => piece.subject),
@@ -308,8 +330,15 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
   renderer.setViewport(0, 0, 1, 1); renderer.setScissor(0, 0, 1, 1); renderer.setScissorTest(true);
   phaseStart = performance.now();
   renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera);
+  // Upload the settled shells too, so switching detail during section four is immediate.
+  for (const piece of pieces) {piece.setFlat(true); piece.setWorkflowMaterial(true);}
+  await renderer.compileAsync(scene, camera); configureRenderer();
+  renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera);
+  // Warm the flexible/diffuse combination used by the travelling card as well.
+  for (const piece of pieces) piece.setFlat(false);
+  renderer.shadowMap.needsUpdate = false; renderer.render(scene, camera);
   const warmRenderMs = performance.now() - phaseStart;
-  for (const piece of pieces) piece.mesh.visible = false;
+  for (const piece of pieces) {piece.setFlat(false); piece.setWorkflowMaterial(false); piece.mesh.visible = false;}
   renderer.setScissorTest(false); renderer.setViewport(0, 0, innerWidth, innerHeight);
   const preparationState = {...preparation.getState(), durationMs: performance.now() - preparationStart,
     sharedRenderer: Boolean(graphics), rendererMs, environmentMs, compileMs, warmRenderMs, pendingTextures: pieces.length, completedTextures: pieces.length, shadersReady: true};
@@ -331,8 +360,8 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
       active = nextActive; attachCanvas(active);
       input.setActive(active);
       inputState = input.update(dt, now);
-      if (!active) {cursorLight.intensity = 0; return;}
-      if (!capture) pixelBudget.update(now / 1000, reducedQuery.matches);
+      if (!active) {cursorLight.intensity = 0; pixelBudget.update(now / 1000, true); workflowBudget.update(now / 1000, true); return;}
+
       elapsed += dt; frameDelta = dt;
       updateTarget(y);
       camera.position.set(inputState.x * .50, inputState.y * .35, 18);
@@ -344,10 +373,11 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
       workflowProgress = Math.abs(nextWorkflow - workflowTarget) < .00001 ? workflowTarget : nextWorkflow;
       const cameraMoving = lastState && (Math.abs(lastState.parallax.x - inputState.x) > .0005 || Math.abs(lastState.parallax.y - inputState.y) > .0005);
       if (force || moving || cameraMoving || (!reducedQuery.matches && !capture && progress > .015 && workflowProgress < .30)) {
+        if (!capture) (workflowProgress > 0 ? workflowBudget : pixelBudget).update(now / 1000, reducedQuery.matches);
         const before = performance.now(); draw(progress, elapsed, workflowProgress); force = false;
         frames++; totalFrameTime += performance.now() - before;
         lastState.averageCpuMs = totalFrameTime / frames;
-      }
+      } else {pixelBudget.update(now / 1000, true); workflowBudget.update(now / 1000, true);}
     },
     resize,
     getState: () => ({...lastState, active, prepared: true, preparation: preparationState, targetProgress: target, resolutionTarget: workflowTarget, firstSubject: note.subject, firstKind: note.kind, firstEntryPixels: 80}),
@@ -358,7 +388,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
       canvas.removeEventListener('webglcontextlost', contextLost);
       canvas.removeEventListener('webglcontextrestored', contextRestored);
       const textures = new Set();
-      for (const piece of pieces) {piece.mesh.geometry.dispose(); piece.textures().forEach(texture => textures.add(texture)); piece.mesh.material.dispose();}
+      for (const piece of pieces) {piece.geometries().forEach(geometry => geometry.dispose()); piece.textures().forEach(texture => textures.add(texture)); piece.materials().forEach(material => material.dispose());}
       for (const texture of textures) texture.dispose();
       grain.dispose(); backgroundTexture.dispose(); background.geometry.dispose(); backgroundMaterial.dispose(); key.shadow.dispose();
       if (!graphics) {environment.dispose(); renderer.dispose();}
