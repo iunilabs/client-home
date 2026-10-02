@@ -159,7 +159,7 @@ export function createCity(section, options = {}) {
   function resize() {
     const viewport = innerHeight;
     const portrait = innerWidth < 700;
-    const initialOutsideTarget = !geometry && location.hash === '#posibilidades';
+    const initialOutsideTarget = !geometry && ['#posibilidades','#resolucion'].includes(location.hash);
     const wasPortrait = section.classList.contains('city-mobile-tour');
     const previousMapStart = geometry && Math.min(geometry.end, geometry.fadeEnd);
     const focusProgress = focusedClient && !portrait && !wasPortrait && geometry ?

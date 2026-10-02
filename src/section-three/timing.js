@@ -11,6 +11,6 @@ export function paperTiming(scrollRange) {
     severalSpread: remaining * .075, severalDuration: remaining * .12,
     many: several + remaining * .18, manySpread: remaining * .16,
     manyDuration: remaining * .16,
-    group: several + remaining * .54, grouped: several + remaining * .96,
+    group: several + remaining * .54, grouped: 1,
   };
 }

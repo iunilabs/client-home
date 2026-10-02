@@ -11,6 +11,7 @@ import {assignPaperLanes, paperDepthHalf} from './separation.js';
 import {workflowState, cardWorkflow} from '../section-four/workflow.js';
 import {createPreparationQueue} from './preparation.js';
 import './style.css';
+import {getPaperJourneyLayout,paperJourneyState,paperJourneyScrollAt} from './journey.js';
 
 let fontsReady;
 export function preparePaperFonts() {
@@ -21,8 +22,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
   const preparationStart = performance.now(), preparation = createPreparationQueue();
   const fonts = preparePaperFonts();
   await preparation.yield();
-  const painSection = journey.querySelector('#posibilidades');
-  const resolutionSection = journey.querySelector('#resolucion');
+  let layout = getPaperJourneyLayout(journey), journeyTarget = 0, journeyScroll = 0;
   const placeholder = journey.querySelector('[data-paper-canvas]');
   const canvas = graphics?.renderer.domElement ?? placeholder;
   const originalParent = graphics ? canvas.parentElement : null;
@@ -143,11 +143,14 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     return out.set(x * h * camera.aspect, y * h, z);
   }
   function updateTarget(y = scrollY) {
-    height = Math.max(1, painSection.offsetHeight - innerHeight);
-    target = clamp((y - journey.offsetTop) / height);
-    workflowTarget = clamp((y - journey.offsetTop - painSection.offsetHeight) / Math.max(1, resolutionSection.offsetHeight - innerHeight));
+    height = layout.chaosRange;
+    const state = paperJourneyState(y - journey.offsetTop, layout);
+    journeyTarget = state.local; target = state.chaos; workflowTarget = state.workflow;
   }
   function resize() {
+    const previousMotion = paperJourneyState(journeyScroll, layout);
+    layout = getPaperJourneyLayout(journey);
+    journeyScroll = paperJourneyScrollAt(layout, previousMotion.workflow > 0 ? 'workflow' : 'chaos', previousMotion.workflow > 0 ? previousMotion.workflow : previousMotion.chaos) - layout.start;
     layoutVersion++; shadowsInvalid = true;
     portrait = innerWidth / innerHeight < .85;
     camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
@@ -367,13 +370,14 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
       updateTarget(y);
       camera.position.set(inputState.x * .50, inputState.y * .35, 18);
       camera.lookAt(inputState.x * .09, inputState.y * .055, 0);
-      const next = reducedQuery.matches ? target : mix(progress, target, 1 - Math.exp(-dt * 9));
-      const nextWorkflow = reducedQuery.matches ? workflowTarget : mix(workflowProgress, workflowTarget, 1 - Math.exp(-dt * 9));
-      const moving = Math.abs(next - progress) > .000015 || Math.abs(nextWorkflow - workflowProgress) > .000015;
-      progress = Math.abs(next - target) < .00001 ? target : next;
-      workflowProgress = Math.abs(nextWorkflow - workflowTarget) < .00001 ? workflowTarget : nextWorkflow;
+      let next = reducedQuery.matches ? journeyTarget : mix(journeyScroll, journeyTarget, 1 - Math.exp(-dt * 9));
+      if (Math.abs(next - journeyTarget) < .05) next = journeyTarget;
+      const moving = Math.abs(next - journeyScroll) > .015 || (next === journeyTarget && next !== journeyScroll);
+      journeyScroll = next;
+      const motion = paperJourneyState(journeyScroll, layout);
+      progress = motion.chaos; workflowProgress = motion.workflow;
       const cameraMoving = lastState && (Math.abs(lastState.parallax.x - inputState.x) > .0005 || Math.abs(lastState.parallax.y - inputState.y) > .0005);
-      if (force || moving || cameraMoving || (!reducedQuery.matches && !capture && progress > .015 && workflowProgress < .30)) {
+      if (force || moving || cameraMoving || (!reducedQuery.matches && !capture && progress > .015 && workflowProgress < .24)) {
         if (!capture) (workflowProgress > 0 ? workflowBudget : pixelBudget).update(now / 1000, reducedQuery.matches);
         const before = performance.now(); draw(progress, elapsed, workflowProgress); force = false;
         frames++; totalFrameTime += performance.now() - before;
@@ -381,7 +385,8 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
       } else {pixelBudget.update(now / 1000, true); workflowBudget.update(now / 1000, true);}
     },
     resize,
-    getState: () => ({...lastState, active, prepared: true, preparation: preparationState, targetProgress: target, resolutionTarget: workflowTarget, firstSubject: note.subject, firstKind: note.kind, firstEntryPixels: 80}),
+    getState: () => ({...lastState, active, prepared: true, preparation: preparationState,
+      journey: {...paperJourneyState(journeyScroll, layout), target: journeyTarget / layout.totalRange, ...layout}, targetProgress: target, resolutionTarget: workflowTarget, firstSubject: note.subject, firstKind: note.kind, firstEntryPixels: 80}),
     getReview: () => review,
     dispose() {
       if (disposed) return; disposed = true; attachCanvas(false); input.dispose();

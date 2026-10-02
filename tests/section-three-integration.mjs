@@ -15,8 +15,8 @@ page.on('console', m => {if (m.type() === 'error') errors.push(m.text());});
 const state = () => page.evaluate(() => window.__puntoes.getState());
 async function paperProgress(p) {
   await page.evaluate(p => {
-    const section = document.querySelector('#posibilidades');
-    scrollTo(0, section.offsetTop + (section.offsetHeight - innerHeight) * p);
+    const {start,chaosRange} = window.__puntoes.getState().paper.journey;
+    scrollTo(0, start + chaosRange * p);
   }, p);
   await page.waitForFunction(p => Math.abs(window.__puntoes.getState().paper?.progress - p) < .001, p);
 }
@@ -25,7 +25,7 @@ try {
   await page.waitForFunction(() => window.__puntoes?.getState().render === 'webgl', null, {timeout: 60000});
   assert.equal((await state()).paper, null, 'paper scene stays unloaded at section one');
   assert.equal(await page.locator('.header').count(), 1);
-  assert.equal(await page.locator('#confianza + .paper-journey #posibilidades.paper-section').count(), 1);
+  assert.equal(await page.locator('#confianza + section#posibilidades.paper-journey').count(), 1);
   await page.screenshot({path: output + '01-hands.png'});
   console.log('Section one unchanged; paper scene loaded only near its section');
 

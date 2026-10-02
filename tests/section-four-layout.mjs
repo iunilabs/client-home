@@ -1,7 +1,7 @@
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir, writeFile} from 'node:fs/promises';
-import {WORKFLOW} from '../src/section-four/workflow.js';
+import {WORKFLOW,workflowState} from '../src/section-four/workflow.js';
 
 const origin = process.env.SECTION4_URL || 'http://127.0.0.1:4318/';
 const output = process.env.SECTION4_OUTPUT || '/tmp/puntoes-section-four-review/';
@@ -37,7 +37,7 @@ try {
     const original = await page.evaluate(() => window.__puntoes.getPaperReview());
     audit(original, false);
     async function progress(p) {
-      await page.evaluate(p => {const el = document.querySelector('#resolucion'); scrollTo(0, el.offsetTop + (el.offsetHeight - innerHeight) * p);}, p);
+      await page.evaluate(p => {const j = window.__puntoes.getState().paper.journey; scrollTo(0, j.start + j.chaosRange + j.workflowRange * p);}, p);
       await page.waitForFunction(p => Math.abs(window.__puntoes.getState().paper.resolution.progress - p) < .001, p);
       const cards = await page.evaluate(() => window.__puntoes.getPaperReview());
       const state = await page.evaluate(() => window.__puntoes.getState().paper);
@@ -62,7 +62,7 @@ try {
     const seam = await progress(0);
     for (let i = 0; i < original.length; i++) for (const edge of ['min','max']) for (let axis = 0; axis < 3; axis++)
       assert.ok(Math.abs(original[i][edge][axis] - seam.cards[i][edge][axis]) < .001, 'continuous section seam');
-    for (const p of [.08,.16,.24,.30]) await progress(p);
+    for (const p of [.04,.08,.16,WORKFLOW.ordered]) await progress(p);
     await page.screenshot({path: output + name + '-ordered.png'});
     // Inspect the only moving card halfway through each of the 47 transfers.
     for (let i = 0; i < 47; i++) {
@@ -83,8 +83,8 @@ try {
     assert.equal(await page.locator('[data-pending-count]').textContent(), '0');
     assert.equal(await page.locator('[data-done-count]').textContent(), '47');
     await page.screenshot({path: output + name + '-completed.png'});
-    await progress(.3); assert.ok((await page.evaluate(() => window.__puntoes.getPaperReview())).every(c => !c.completed));
-    await page.evaluate(() => {const el=document.querySelector('#posibilidades');scrollTo(0,el.offsetTop+(el.offsetHeight-innerHeight));});
+    await progress(WORKFLOW.ordered); assert.ok((await page.evaluate(() => window.__puntoes.getPaperReview())).every(c => !c.completed));
+    await page.evaluate(() => {const j=window.__puntoes.getState().paper.journey;scrollTo(0,j.start+j.chaosRange);});
     await page.waitForFunction(() => window.__puntoes.getState().paper.resolution.progress === 0);
     assert.equal(await page.evaluate(() => window.__puntoes.getState().paper.performance.flatCards), 0, 'reverse scroll restores all flexible sheets');
     assert.equal(await page.locator('[data-paper-copy]').evaluate(el => Number(getComputedStyle(el).opacity)), 0, 'section three copy has already faded before grouping');
@@ -96,7 +96,7 @@ try {
         await page.waitForTimeout(300);
         await page.waitForFunction(() => Math.abs(window.__puntoes.getState().paper.resolution.progress - .6) < .002);
         audit(await page.evaluate(() => window.__puntoes.getPaperReview()), true);
-        assert.equal(await page.locator('[data-done-count]').textContent(), '19');
+        assert.equal(await page.locator('[data-done-count]').textContent(), String(workflowState(.6,47).completed));
       }
     }
     // The live camera and native gestures must not reintroduce intersections or locks.

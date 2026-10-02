@@ -40,15 +40,15 @@ try {
   const entryMs = await page.evaluate(() => {
     const elapsed = performance.now() - window.__entryStart;
     if (document.querySelector('[data-paper-canvas]') !== window.__original3DCanvas) throw new Error('3D canvas was recreated');
-    const section = document.querySelector('#posibilidades');
-    scrollTo(0, section.offsetTop + (section.offsetHeight - innerHeight) * .1);
+    const {start,chaosRange} = window.__puntoes.getState().paper.journey;
+    scrollTo(0, start + chaosRange * .1);
     return Math.round(elapsed);
   });
   await page.waitForFunction(() => window.__puntoes.getState().paper.visibleItems === 1);
   await page.evaluate(() => {
     window.__resolutionStart = performance.now();
-    const section = document.querySelector('#resolucion');
-    scrollTo(0, section.offsetTop + (section.offsetHeight - innerHeight) * .97);
+    const {start,chaosRange,workflowRange} = window.__puntoes.getState().paper.journey;
+    scrollTo(0, start + chaosRange + workflowRange * .97);
   });
   await page.waitForFunction(() => window.__puntoes.getState().paper.resolution.completed === 47);
   const resolutionMs = await page.evaluate(() => Math.round(performance.now() - window.__resolutionStart));

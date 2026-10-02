@@ -23,7 +23,7 @@ test('paper entrances retain their pixel anchors and finish before grouping on e
     assert.ok(t.first + t.firstDuration < t.group);
     assert.ok(t.several + t.severalSpread + t.severalDuration < t.many + t.manySpread);
     assert.ok(t.many + t.manySpread + t.manyDuration < t.group);
-    assert.ok(t.group < t.grouped && t.grouped < 1);
+    assert.ok(t.group < t.grouped && t.grouped <= 1);
   }
 });
 

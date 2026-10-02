@@ -1,6 +1,6 @@
 import {clamp, smooth} from '../section-three/motion.js';
 
-export const WORKFLOW = {orderStart: .06, ordered: .30, processStart: .38, finished: .92};
+export const WORKFLOW = {orderStart: 0, ordered: .24, processStart: .24, finished: .92};
 
 export function workflowState(progress, count) {
   const p = clamp(progress);
@@ -9,7 +9,7 @@ export function workflowState(progress, count) {
   const completed = Math.min(count, Math.floor(cursor + 1e-8));
   return {progress: p, ordered, cursor, completed, pending: count - completed,
     activeIndex: completed < count && cursor > completed ? completed : null,
-    reveal: smooth(.12, .28, p), fraction: count ? completed / count : 1};
+    reveal: smooth(.04, .18, p), fraction: count ? completed / count : 1};
 }
 
 // One scroll interval owns one paper. Reversing scroll replays the same route.

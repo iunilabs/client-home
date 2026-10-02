@@ -34,7 +34,7 @@ try {
     let finalCards;
     for (let step = 0; step <= 100; step++) {
       const p = step / 100;
-      await page.evaluate(p => {const el = document.querySelector('#posibilidades'); scrollTo(0, el.offsetTop + (el.offsetHeight - innerHeight) * p);}, p);
+      await page.evaluate(p => {const j = window.__puntoes.getState().paper.journey; scrollTo(0, j.start + j.chaosRange * p);}, p);
       await page.waitForFunction(p => Math.abs(window.__puntoes.getState().paper.progress - p) < .001, p);
       const cards = await page.evaluate(() => window.__puntoes.getPaperReview());
       const count = audit(cards, step === 100);

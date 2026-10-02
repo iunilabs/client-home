@@ -1,7 +1,7 @@
 # Contexto
 
-Objetivo: fade out del texto desde 2000 px y recorrido posterior más rápido. Worktree aislado `puntoes-paper-copy-1900`; base pública `9d831d7`. Checkout principal intacto.
+Objetivo: unir las secciones 3 y 4 en un recorrido continuo y publicar en GitHub Pages. Worktree activo: `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`.
 
-Entrada conservada en 920–1420 px; salida ahora 2000–2240. Desde 2000, movimiento de tarjetas a 1,5× por píxel de scroll. Se comprime altura de sección 3 conservando trayectoria y entradas anteriores (primera 80, tanda 350). Sección 4 pasa de 400 a 300 svh, también 1,5× para su recorrido. Helpers `paperMotionPixels`/`paperScrollPixels` mantienen diagnóstico y reversibilidad. Blur 3 px y contenido intactos.
+Una sola sección `#posibilidades`, escenario y progreso; `#resolucion` queda como ancla de fase. `journey.js` calcula rangos contiguos; `scene.js` suaviza una única posición. Eliminado el viewport vacío entre agrupación y orden. Agrupación termina justo en la unión; orden y procesamiento arrancan sin pausas. Precarga, renderer compartido, presupuesto GPU y física conservados. Primera tarjeta 80 px, tanda 350, texto 920–1420, salida desde 2000 y recorrido posterior 1,5×.
 
-Archivos: `src/section-three/timing.js`, `scene.js`, `style.css`, `tests/section-three-motion.test.js`. Build y 120 pruebas correctos. QA correcto en móvil, escritorio y horizontal: timings, recorrido comprimido, final y retroceso. Siguiente: commit, push y verificar Pages.
+Archivos clave: `index.html`, `src/main.js`, `src/section-three/{journey,scene,timing}.js`, `style.css`, `src/section-four/workflow.js`. Build y pruebas unitarias correctos. QA: swipe único cruzando unión, retroceso, rotación, precarga, 47 trayectorias sin intersecciones en tres formatos; fluidez móvil emulada ~60 fps con CPU ralentizada. Siguiente: publicar y verificar https://iunilabs.github.io/client-home/.

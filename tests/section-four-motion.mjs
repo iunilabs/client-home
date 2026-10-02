@@ -22,8 +22,8 @@ try {
     for (let i=0; i<150; i++) {
       await new Promise(requestAnimationFrame);
       const now = performance.now(); gaps.push(now-previous); previous=now;
-      const section=document.querySelector('#resolucion'), p=.31+.61*i/149;
-      scrollTo(0,section.offsetTop+(section.offsetHeight-innerHeight)*p);
+      const j=window.__puntoes.getState().paper.journey, p=.31+.61*i/149;
+      scrollTo(0,j.start+j.chaosRange+j.workflowRange*p);
       const state=window.__puntoes.getState().paper;
       cpus.push(state.averageCpuMs);
       states.push({progress:state.resolution.progress,calls:state.drawCalls,performance:state.performance});
@@ -40,8 +40,8 @@ try {
     assert.ok(state.performance.pixelRatio<=2); assert.ok(state.performance.shadowSize<=1024);
   }
   // Camera movement changes lighting, but does not move the papers or key light.
-  await page.evaluate(() => {const section=document.querySelector('#resolucion'); scrollTo(0,section.offsetTop+(section.offsetHeight-innerHeight)*.33);});
-  await page.waitForFunction(() => Math.abs(window.__puntoes.getState().paper.resolution.progress - .33) < .001);
+  await page.evaluate(() => {const j=window.__puntoes.getState().paper.journey; scrollTo(0,j.start+j.chaosRange+j.workflowRange*.95);});
+  await page.waitForFunction(() => Math.abs(window.__puntoes.getState().paper.resolution.progress - .95) < .001);
   await page.evaluate(() => dispatchEvent(new DeviceOrientationEvent('deviceorientation',{beta:25,gamma:10})));
   await page.waitForTimeout(250);
   assert.equal(await page.evaluate(() => window.__puntoes.getState().paper.performance.shadowsUpdated),false, 'gyro does not rebuild stationary shadows');

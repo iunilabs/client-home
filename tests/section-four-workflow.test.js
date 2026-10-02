@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {workflowState, cardWorkflow, WORKFLOW} from '../src/section-four/workflow.js';
 
 test('all papers are ordered before the first one starts moving', () => {
-  for (const p of [0, .10, .29, .30, .37, WORKFLOW.processStart]) {
+  for (const p of [0, .08, .16, .23, WORKFLOW.processStart]) {
     const state = workflowState(p, 47);
     assert.equal(state.completed, 0);
     assert.equal(state.cursor, 0);
@@ -32,7 +32,7 @@ test('completion settles before the end and reverse scroll restores pending pape
   const before = workflowState(.5, 47);
   workflowState(.8, 47);
   assert.deepEqual(workflowState(.5, 47), before);
-  assert.equal(cardWorkflow(workflowState(.3, 47), 0, 47, 1440, 900, false).done, false);
+  assert.equal(cardWorkflow(workflowState(WORKFLOW.ordered, 47), 0, 47, 1440, 900, false).done, false);
 });
 
 test('tall papers fit mobile and landscape while retaining their aspect ratio', () => {
