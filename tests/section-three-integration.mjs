@@ -4,7 +4,7 @@ import {mkdir, writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 
 const origin = process.env.SECTION3_URL || 'http://127.0.0.1:5185/';
-const output = fileURLToPath(new URL('../docs/section-three-integration/', import.meta.url));
+const output = process.env.SECTION3_OUTPUT || fileURLToPath(new URL('../docs/section-three-integration/', import.meta.url));
 await mkdir(output, {recursive: true});
 const browser = await chromium.launch({headless: true, channel: 'chrome'});
 const errors = [], report = {origin};
@@ -29,22 +29,36 @@ try {
   await page.screenshot({path: output + '01-hands.png'});
   console.log('Section one unchanged; paper scene loaded only near its section');
 
-  await page.goto(origin + '?paper=.155&capture=1');
+  await page.goto(origin + '?paper=.10&capture=1');
   await page.waitForFunction(() => window.__puntoes?.getState().paper?.visibleItems === 1, null, {timeout: 60000});
-  await page.waitForFunction(() => Math.abs(window.__puntoes.getState().paper.progress - .155) < .001);
+  await page.waitForFunction(() => Math.abs(window.__puntoes.getState().paper.progress - .10) < .001);
   await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('[data-paper-canvas]')).opacity) > .99);
   assert.equal((await state()).paper.firstSubject, 'Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.');
-  assert.equal((await state()).paper.firstEntryPixels, 90);
+  assert.equal((await state()).paper.firstEntryPixels, 80);
   await page.screenshot({path: output + '02-first-paper-desktop.png'});
+  for (const [pixels, count] of [[79, 0], [81, 1], [649, 1], [651, 3]]) {
+    const range = (await state()).paper.scrollRange;
+    await paperProgress(pixels / range);
+    await page.waitForTimeout(900);
+    assert.equal((await state()).paper.visibleItems, count, `entrance at ${pixels} local pixels`);
+  }
   await paperProgress(.60);
   const density = (await state()).paper;
-  assert.equal(density.contentCount, 75); assert.equal(density.totalItems, 75);
+  assert.equal(density.contentCount, 47); assert.equal(density.totalItems, 47);
   assert.equal(density.glass, 0); assert.equal(density.depthOfField, false);
+  assert.equal(density.secondEntryPixels, 650);
+  assert.ok(density.lastFallEndPixels < density.groupingPixels, 'all falls finish before grouping');
+  assert.equal(density.visibleItems, 47);
+  await paperProgress(.95); const grouped = (await state()).paper;
+  assert.equal(grouped.visibleItems, density.visibleItems, 'no fourth wave during grouping');
+  assert.ok(grouped.groupProgress > density.groupProgress);
+  await page.screenshot({path: output + '07-grouped-papers.png'});
+  await paperProgress(.60);
   await page.screenshot({path: output + '03-papers-desktop.png'});
   await paperProgress(.33); const forward = (await state()).paper.hero;
   await paperProgress(.9); await paperProgress(.33); const reverse = (await state()).paper.hero;
   for (const axis of ['position', 'rotation']) for (let i = 0; i < 3; i++) assert.ok(Math.abs(forward[axis][i] - reverse[axis][i]) < .02);
-  console.log('New pain copy, 75 distinct subjects, reverse scroll and crisp rendering: passed');
+  console.log('New pain copy, 47 distinct subjects, reverse scroll and crisp rendering: passed');
 
   await page.goto(origin + '?paper=.33');
   await page.waitForFunction(() => window.__puntoes?.getState().paper?.progress > .329);
@@ -74,13 +88,13 @@ try {
   const mobileContext = await browser.newContext({viewport:{width:390,height:844}, isMobile:true, hasTouch:true});
   const mobile = await mobileContext.newPage();
   mobile.on('pageerror', e => errors.push(e.message));
-  await mobile.goto(origin + '?paper=.155&capture=1');
+  await mobile.goto(origin + '?paper=.10&capture=1');
   await mobile.waitForFunction(() => window.__puntoes?.getState().paper?.visibleItems === 1);
   // Native scroll positions round to whole pixels rather than exact fractions.
-  await mobile.waitForFunction(() => Math.abs(window.__puntoes.getState().paper.progress - .155) < .001);
+  await mobile.waitForFunction(() => Math.abs(window.__puntoes.getState().paper.progress - .10) < .001);
   await mobile.waitForFunction(() => Number(getComputedStyle(document.querySelector('[data-paper-canvas]')).opacity) > .99);
   assert.ok(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-  assert.equal(await mobile.evaluate(() => window.__puntoes.getState().paper.firstEntryPixels), 90);
+  assert.equal(await mobile.evaluate(() => window.__puntoes.getState().paper.firstEntryPixels), 80);
   assert.equal(await mobile.locator('#posibilidades').evaluate(el => getComputedStyle(el).position), 'relative', 'direct paper query restores the complete native range');
   await mobile.screenshot({path: output + '05-first-paper-mobile.png'});
   await mobile.goto(origin + '?city=0');
