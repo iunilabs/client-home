@@ -1,6 +1,6 @@
 # Prompts exactos V14 — estudio de nitidez móvil
 
-Herramienta integrada `image_gen`; sin CLI/API. V13 y cada recorte técnico se inspeccionaron con `view_image` antes de editar. No se alteraron los assets aprobados ni código.
+Herramienta integrada `image_gen`; sin CLI/API. V13 y cada recorte técnico se inspeccionaron con `view_image` antes de editar. Las cinco texturas aprobadas se conservan byte a byte. V2 amplía únicamente el controlador de detalle, sus recursos y las pruebas dedicadas.
 
 ## Máster completo mayor — descartado como solución de resolución
 
@@ -95,3 +95,163 @@ Details: resolve existing concrete beam edges, scaffolding, yellow crane lattice
 Constraints: keep the complete crane fully visible with the same original space around it. No new objects, extra houses, vegetation, vehicles, landmarks, client labels, logos, text, blue points, controls or UI. No saturation boost, blur, haze, depth of field, painterly textures or sharpening halos. Exact geometry and source registration take priority.
 Deliver the same 252:448 portrait aspect ratio at native high resolution.
 ```
+
+## V2 cobertura completa — 2 de octubre de 2026
+
+Herramienta integrada `image_gen`, sin CLI/API, sin interpolación, pintura o warp de los activos. Se inspeccionaron V13, los doce recortes y las salidas nativas. Cada PNG seleccionado se copió intacto a `docs/city-detail-v2/masters/` (local, ignorado por Git). WebP calidad 92, método 6, codificado directamente con Pillow/libwebp; sin redimensionar. Los cinco WebP anteriores permanecen intactos.
+
+Los recortes nuevos concentran más píxeles reales en el edificio completo y mantienen contexto para bordes suaves. Sus máscaras dejan el edificio calibrado dentro de la zona opaca; porcentajes y coordenadas en provenance. No se solicitaron doce imágenes al iniciar ni en escritorio.
+
+### V2 cobertura completa — canal
+
+Entrada 1 (edit target): `docs/city-detail-v2/source/canal-source-crop-v13.png`, rectángulo exacto V13 `[155, 257, 140, 240]`. Salida nativa seleccionada 958 × 1642; original `/Users/daviddavila/.codex/generated_images/01a0fb25-8161-75d0-83ea-fd700d4f7f0f/exec-b5a7adf3-4f8b-4107-8bc4-8b16f950e138.png`.
+
+```text
+Use case: precise-object-edit
+Asset type: native high-detail local texture for the canal stop in the accepted mobile miniature-city tour.
+Input 1 is the sole EDIT TARGET: an EXACT 140 × 240 source-pixel technical crop [155,257,140,240] of approved V13. Reconstruct THIS ENTIRE IMAGE FIELD with the same boundaries and aspect ratio 140:240.
+Primary request: re-render the crop at high native resolution, ideally 2048 × 3511 pixels or the largest supported native resolution. This must contain genuinely newly rendered fine detail, not interpolation or sharpening of the small source. Preserve normalized coordinates exactly.
+Subject lock: the brick cylindrical water tower with silver domed roof and its little top finial. Preserve the EXACT cylinder diameter, dome curve, existing arched windows, brick courses, floor rhythm, base door, rooftop finial and silhouette.
+Composition lock: keep every existing building, house, tree, road, crossing, riverbank, bridge, beach, rock, vehicle, boat, canopy and shadow at precisely its original normalized position and size. Keep all existing partially cut neighboring landmarks PARTIAL at the same boundaries. Preserve original isometric camera, sun direction, natural restrained palette and crisp miniature videogame 3D rendering. All depths in focus.
+Detail improvement only: resolve existing fine mullions, roof edges/equipment, brick courses, paving joins and railings with crisp newly rendered native detail. No change in architecture, object count or layout. Every building MUST retain its silhouette, roof plan and floor count. Subject geometry and exact registration are higher priorities than decorative realism.
+Text: preserve existing tiny marks as already present; add NO new logos, words, letters or labels.
+Avoid: camera movement, rotation, crop, outpainting, tighter zoom, new trees/houses/vehicles/objects, taller towers, extra floors, invented facade bays, dramatic lighting, saturation boosts, haze, depth-of-field blur, painterly texture, sharpening halos, UI, markers or watermarks.
+Deliver one high-native-resolution image with the exact whole-crop composition.
+```
+
+### V2 cobertura completa — cepsa
+
+Entrada 1 (edit target): `docs/city-detail-v2/source/cepsa-source-crop-v13.png`, rectángulo exacto V13 `[654, 218, 140, 240]`. Salida nativa seleccionada 958 × 1642; original `/Users/daviddavila/.codex/generated_images/01a0fb25-8161-75d0-83ea-fd700d4f7f0f/exec-fb3c3794-c5c1-49b4-99a2-1abd83417430.png`.
+
+```text
+Use case: precise-object-edit
+Asset type: native high-detail local texture for the cepsa stop in the accepted mobile miniature-city tour.
+Input 1 is the sole EDIT TARGET: an EXACT 140 × 240 source-pixel technical crop [654,218,140,240] of approved V13. Reconstruct THIS ENTIRE IMAGE FIELD with the same boundaries and aspect ratio 140:240.
+Primary request: re-render the crop at high native resolution, ideally 2048 × 3511 pixels or the largest supported native resolution. This must contain genuinely newly rendered fine detail, not interpolation or sharpening of the small source. Preserve normalized coordinates exactly.
+Subject lock: the slender silver-white rectangular PORTAL FRAME skyscraper containing its existing separate blue glass blocks and voids. Preserve the exact outer frame, top rectangular opening, three main existing blocks, visible gaps, base entrance, floor divisions and height. Do not fill its voids or redesign the frame.
+Composition lock: keep every existing building, house, tree, road, crossing, riverbank, bridge, beach, rock, vehicle, boat, canopy and shadow at precisely its original normalized position and size. Keep all existing partially cut neighboring landmarks PARTIAL at the same boundaries. Preserve original isometric camera, sun direction, natural restrained palette and crisp miniature videogame 3D rendering. All depths in focus.
+Detail improvement only: resolve existing fine mullions, roof edges/equipment, brick courses, paving joins and railings with crisp newly rendered native detail. No change in architecture, object count or layout. Every building MUST retain its silhouette, roof plan and floor count. Subject geometry and exact registration are higher priorities than decorative realism.
+Text: preserve existing tiny marks as already present; add NO new logos, words, letters or labels.
+Avoid: camera movement, rotation, crop, outpainting, tighter zoom, new trees/houses/vehicles/objects, taller towers, extra floors, invented facade bays, dramatic lighting, saturation boosts, haze, depth-of-field blur, painterly texture, sharpening halos, UI, markers or watermarks.
+Deliver one high-native-resolution image with the exact whole-crop composition.
+```
+
+### V2 cobertura completa — mapfre
+
+Entrada 1 (edit target): `docs/city-detail-v2/source/mapfre-source-crop-v13.png`, rectángulo exacto V13 `[711, 437, 220, 200]`. Salida nativa seleccionada 1315 × 1196; original `/Users/daviddavila/.codex/generated_images/01a0fb25-8161-75d0-83ea-fd700d4f7f0f/exec-90ffd4db-f2ac-4e0a-8d52-9b5709a8352b.png`.
+
+```text
+Use case: precise-object-edit
+Asset type: native high-detail local texture for the mapfre stop in the accepted mobile miniature-city tour.
+Input 1 is the sole EDIT TARGET: an EXACT 220 × 200 source-pixel technical crop [711,437,220,200] of approved V13. Reconstruct THIS ENTIRE IMAGE FIELD with the same boundaries and aspect ratio 220:200.
+Primary request: re-render the crop at high native resolution, ideally 2048 × 1862 pixels or the largest supported native resolution. This must contain genuinely newly rendered fine detail, not interpolation or sharpening of the small source. Preserve normalized coordinates exactly.
+Subject lock: the SHORT dark blue horizontal-striped rectangular tower, existing roof and its two pale pink low side wings with their small ROUND CIRCULAR black porthole window pattern. Preserve original height, width, proportions, plan, step heights, wing geometry, floor count and rooftop mast. Never increase the tower height.
+Composition lock: keep every existing building, house, tree, road, crossing, riverbank, bridge, beach, rock, vehicle, boat, canopy and shadow at precisely its original normalized position and size. Keep all existing partially cut neighboring landmarks PARTIAL at the same boundaries. Preserve original isometric camera, sun direction, natural restrained palette and crisp miniature videogame 3D rendering. All depths in focus.
+Detail improvement only: resolve existing fine mullions, roof edges/equipment, brick courses, paving joins and railings with crisp newly rendered native detail. No change in architecture, object count or layout. Every building MUST retain its silhouette, roof plan and floor count. Subject geometry and exact registration are higher priorities than decorative realism.
+Text: preserve existing tiny marks as already present; add NO new logos, words, letters or labels.
+Avoid: camera movement, rotation, crop, outpainting, tighter zoom, new trees/houses/vehicles/objects, taller towers, extra floors, invented facade bays, dramatic lighting, saturation boosts, haze, depth-of-field blur, painterly texture, sharpening halos, UI, markers or watermarks.
+Deliver one high-native-resolution image with the exact whole-crop composition.
+Critical correction from earlier trials: the pale pink wings have ROUND circular black porthole holes, never square. Reconstruct the exact circular shapes, same positions, count and size from THIS SOURCE image. Do not expand the composition horizontally: preserve all x and y normalized coordinates and crop boundaries strictly. Tower, wing outlines, roof corners, mast and neighboring objects must register exactly to the source. No lateral expansion or horizontal scale change. Source geometry takes absolute priority.
+```
+
+### V2 cobertura completa — ree
+
+Entrada 1 (edit target): `docs/city-detail-v2/source/ree-source-crop-v13.png`, rectángulo exacto V13 `[637, 700, 280, 280]`. Salida nativa seleccionada 1254 × 1254; original `/Users/daviddavila/.codex/generated_images/01a0fb25-8161-75d0-83ea-fd700d4f7f0f/exec-926cee5a-821a-4f20-856c-a3732e82a035.png`.
+
+```text
+Use case: precise-object-edit
+Asset type: native high-detail local texture for the ree stop in the accepted mobile miniature-city tour.
+Input 1 is the sole EDIT TARGET: an EXACT 280 × 280 source-pixel technical crop [637,700,280,280] of approved V13. Reconstruct THIS ENTIRE IMAGE FIELD with the same boundaries and aspect ratio 280:280.
+Primary request: re-render the crop at high native resolution, ideally 2048 × 2048 pixels or the largest supported native resolution. This must contain genuinely newly rendered fine detail, not interpolation or sharpening of the small source. Preserve normalized coordinates exactly.
+Subject lock: the broad gently curved blue-glass office beside the river, with its white ribs, flat landscaped rooftop and existing pale rooftop equipment. Preserve the precise curve, footprint, complete ends, white ground-floor columns, floor count and glass grid.
+Composition lock: keep every existing building, house, tree, road, crossing, riverbank, bridge, beach, rock, vehicle, boat, canopy and shadow at precisely its original normalized position and size. Keep all existing partially cut neighboring landmarks PARTIAL at the same boundaries. Preserve original isometric camera, sun direction, natural restrained palette and crisp miniature videogame 3D rendering. All depths in focus.
+Detail improvement only: resolve existing fine mullions, roof edges/equipment, brick courses, paving joins and railings with crisp newly rendered native detail. No change in architecture, object count or layout. Every building MUST retain its silhouette, roof plan and floor count. Subject geometry and exact registration are higher priorities than decorative realism.
+Text: preserve existing tiny marks as already present; add NO new logos, words, letters or labels.
+Avoid: camera movement, rotation, crop, outpainting, tighter zoom, new trees/houses/vehicles/objects, taller towers, extra floors, invented facade bays, dramatic lighting, saturation boosts, haze, depth-of-field blur, painterly texture, sharpening halos, UI, markers or watermarks.
+Deliver one high-native-resolution image with the exact whole-crop composition.
+```
+
+### V2 cobertura completa — siemens
+
+Entrada 1 (edit target): `docs/city-detail-v2/source/siemens-source-crop-v13.png`, rectángulo exacto V13 `[568, 937, 360, 320]`. Salida nativa seleccionada 1330 × 1182; original `/Users/daviddavila/.codex/generated_images/01a0fb25-8161-75d0-83ea-fd700d4f7f0f/exec-5f1a760e-0e9a-4529-816e-c47b48ff2869.png`.
+
+```text
+Use case: precise-object-edit
+Asset type: native high-detail local texture for the siemens stop in the accepted mobile miniature-city tour.
+Input 1 is the sole EDIT TARGET: an EXACT 360 × 320 source-pixel technical crop [568,937,360,320] of approved V13. Reconstruct THIS ENTIRE IMAGE FIELD with the same boundaries and aspect ratio 360:320.
+Primary request: re-render the crop at high native resolution, ideally 2048 × 1820 pixels or the largest supported native resolution. This must contain genuinely newly rendered fine detail, not interpolation or sharpening of the small source. Preserve normalized coordinates exactly.
+Subject lock: the broad dark bronze/blue angular U-shaped office campus enclosing a planted courtyard, existing pale roof equipment and small red facade mark. Preserve the entire EXACT U-shaped plan, left/right wings, courtyard, height, rooftop layout, window bands and silhouette. Do not add signage or complete another shape.
+Composition lock: keep every existing building, house, tree, road, crossing, riverbank, bridge, beach, rock, vehicle, boat, canopy and shadow at precisely its original normalized position and size. Keep all existing partially cut neighboring landmarks PARTIAL at the same boundaries. Preserve original isometric camera, sun direction, natural restrained palette and crisp miniature videogame 3D rendering. All depths in focus.
+Detail improvement only: resolve existing fine mullions, roof edges/equipment, brick courses, paving joins and railings with crisp newly rendered native detail. No change in architecture, object count or layout. Every building MUST retain its silhouette, roof plan and floor count. Subject geometry and exact registration are higher priorities than decorative realism.
+Text: preserve existing tiny marks as already present; add NO new logos, words, letters or labels.
+Avoid: camera movement, rotation, crop, outpainting, tighter zoom, new trees/houses/vehicles/objects, taller towers, extra floors, invented facade bays, dramatic lighting, saturation boosts, haze, depth-of-field blur, painterly texture, sharpening halos, UI, markers or watermarks.
+Deliver one high-native-resolution image with the exact whole-crop composition.
+```
+
+### V2 cobertura completa — mediaset
+
+Entrada 1 (edit target): `docs/city-detail-v2/source/mediaset-source-crop-v13.png`, rectángulo exacto V13 `[73, 652, 280, 380]`. Salida nativa seleccionada 1076 × 1461; original `/Users/daviddavila/.codex/generated_images/01a0fb25-8161-75d0-83ea-fd700d4f7f0f/exec-b13173ba-60b4-4cd5-b79b-3168a1c20cfc.png`.
+
+```text
+Use case: precise-object-edit
+Asset type: native high-detail local texture for the mediaset stop in the accepted mobile miniature-city tour.
+Input 1 is the sole EDIT TARGET: an EXACT 280 × 380 source-pixel technical crop [73,652,280,380] of approved V13. Reconstruct THIS ENTIRE IMAGE FIELD with the same boundaries and aspect ratio 280:380.
+Primary request: re-render the crop at high native resolution, ideally 2048 × 2779 pixels or the largest supported native resolution. This must contain genuinely newly rendered fine detail, not interpolation or sharpening of the small source. Preserve normalized coordinates exactly.
+Subject lock: the rectangular blue-glass office with yellow horizontal bands and white end wall with round windows, and its COMPLETE red/white lattice communications antenna, little top stem, cables, base and white satellite dish. Preserve original antenna height, lattice, orientation, office footprint, roof, floor count, circular windows and façade layout. Do not omit or redesign antenna or dish.
+Composition lock: keep every existing building, house, tree, road, crossing, riverbank, bridge, beach, rock, vehicle, boat, canopy and shadow at precisely its original normalized position and size. Keep all existing partially cut neighboring landmarks PARTIAL at the same boundaries. Preserve original isometric camera, sun direction, natural restrained palette and crisp miniature videogame 3D rendering. All depths in focus.
+Detail improvement only: resolve existing fine mullions, roof edges/equipment, brick courses, paving joins and railings with crisp newly rendered native detail. No change in architecture, object count or layout. Every building MUST retain its silhouette, roof plan and floor count. Subject geometry and exact registration are higher priorities than decorative realism.
+Text: preserve existing tiny marks as already present; add NO new logos, words, letters or labels.
+Avoid: camera movement, rotation, crop, outpainting, tighter zoom, new trees/houses/vehicles/objects, taller towers, extra floors, invented facade bays, dramatic lighting, saturation boosts, haze, depth-of-field blur, painterly texture, sharpening halos, UI, markers or watermarks.
+Deliver one high-native-resolution image with the exact whole-crop composition.
+```
+
+### V2 cobertura completa — accenture
+
+Entrada 1 (edit target): `docs/city-detail-v2/source/accenture-source-crop-v13.png`, rectángulo exacto V13 `[45, 410, 290, 280]`. Salida nativa seleccionada 1277 × 1232; original `/Users/daviddavila/.codex/generated_images/01a0fb25-8161-75d0-83ea-fd700d4f7f0f/exec-9d01ee45-f7c4-4a23-a9cb-26386face0d7.png`.
+
+```text
+Use case: precise-object-edit
+Asset type: native high-detail local texture for the accenture stop in the accepted mobile miniature-city tour.
+Input 1 is the sole EDIT TARGET: an EXACT 290 × 280 source-pixel technical crop [45,410,290,280] of approved V13. Reconstruct THIS ENTIRE IMAGE FIELD with the same boundaries and aspect ratio 290:280.
+Primary request: re-render the crop at high native resolution, ideally 2048 × 1977 pixels or the largest supported native resolution. This must contain genuinely newly rendered fine detail, not interpolation or sharpening of the small source. Preserve normalized coordinates exactly.
+Subject lock: the stepped blue-glass and white office campus with yellow horizontal strips, existing green rooftop terraces and its tall central pale vertical block. Preserve precise footprint, stepped wings, planted roof, facade bay and floor rhythm, height and silhouette.
+Composition lock: keep every existing building, house, tree, road, crossing, riverbank, bridge, beach, rock, vehicle, boat, canopy and shadow at precisely its original normalized position and size. Keep all existing partially cut neighboring landmarks PARTIAL at the same boundaries. Preserve original isometric camera, sun direction, natural restrained palette and crisp miniature videogame 3D rendering. All depths in focus.
+Detail improvement only: resolve existing fine mullions, roof edges/equipment, brick courses, paving joins and railings with crisp newly rendered native detail. No change in architecture, object count or layout. Every building MUST retain its silhouette, roof plan and floor count. Subject geometry and exact registration are higher priorities than decorative realism.
+Text: preserve existing tiny marks as already present; add NO new logos, words, letters or labels.
+Avoid: camera movement, rotation, crop, outpainting, tighter zoom, new trees/houses/vehicles/objects, taller towers, extra floors, invented facade bays, dramatic lighting, saturation boosts, haze, depth-of-field blur, painterly texture, sharpening halos, UI, markers or watermarks.
+Deliver one high-native-resolution image with the exact whole-crop composition.
+```
+
+### MAPFRE — historial de la corrección visual
+
+La primera reconstrucción usó equivocadamente «square» en el prompt y transformó en cuadrados los huecos circulares originales. Se descartó. Una edición localizada devolvió círculos, pero conservó el peor registro horizontal. Se seleccionó la tercera salida, regenerada desde el recorte original con el prompt final anterior. Las tres salidas/hashes/dimensiones se conservan en provenance y los descartes locales, fuera de runtime.
+
+Prompt inicial descartado:
+
+```text
+Use case: precise-object-edit
+Asset type: native high-detail local texture for the mapfre stop in the accepted mobile miniature-city tour.
+Input 1 is the sole EDIT TARGET: an EXACT 220 × 200 source-pixel technical crop [711,437,220,200] of approved V13. Reconstruct THIS ENTIRE IMAGE FIELD with the same boundaries and aspect ratio 220:200.
+Primary request: re-render the crop at high native resolution, ideally 2048 × 1862 pixels or the largest supported native resolution. This must contain genuinely newly rendered fine detail, not interpolation or sharpening of the small source. Preserve normalized coordinates exactly.
+Subject lock: the SHORT dark blue horizontal-striped rectangular tower, existing roof and its two pale pink low side wings with their small square window pattern. Preserve original height, width, proportions, plan, step heights, wing geometry, floor count and rooftop mast. Never increase the tower height.
+Composition lock: keep every existing building, house, tree, road, crossing, riverbank, bridge, beach, rock, vehicle, boat, canopy and shadow at precisely its original normalized position and size. Keep all existing partially cut neighboring landmarks PARTIAL at the same boundaries. Preserve original isometric camera, sun direction, natural restrained palette and crisp miniature videogame 3D rendering. All depths in focus.
+Detail improvement only: resolve existing fine mullions, roof edges/equipment, brick courses, paving joins and railings with crisp newly rendered native detail. No change in architecture, object count or layout. Every building MUST retain its silhouette, roof plan and floor count. Subject geometry and exact registration are higher priorities than decorative realism.
+Text: preserve existing tiny marks as already present; add NO new logos, words, letters or labels.
+Avoid: camera movement, rotation, crop, outpainting, tighter zoom, new trees/houses/vehicles/objects, taller towers, extra floors, invented facade bays, dramatic lighting, saturation boosts, haze, depth-of-field blur, painterly texture, sharpening halos, UI, markers or watermarks.
+Deliver one high-native-resolution image with the exact whole-crop composition.
+```
+
+Prompt de edición localizada descartada (input 1: primera salida generada; input 2: recorte exacto V13, referencia para los huecos):
+
+```text
+Use case: precise-object-edit
+Asset type: exact localized architectural fidelity correction of an existing generated city-detail texture.
+Input 1 is the EDIT TARGET: the already generated MAPFRE crop, native 1315 × 1196. Input 2 is the original V13 source crop, solely the reference for window hole SHAPE.
+Change ONLY the dark window holes on BOTH pale pink side wings of the central blue tower. They are incorrectly square in input 1. In input 2 the holes are clearly CIRCULAR small black portholes. Restore the original round circular window-hole shapes, including the foreshortened round holes on the visible side walls. Keep EVERY hole's existing position, count, size, row/column arrangement and dark interior; change the silhouette of each hole from square to ROUND exactly like the source. Do not add outlines, mullions or decorations to these holes.
+Preserve EVERYTHING ELSE in input 1 pixel-for-pixel in composition: blue central SHORT tower, its floor divisions, height, outline, glass, rooftop mast, all rooftop equipment, pink wing silhouettes, floors, roofs, footprint, paving, vegetation, shadows, roads, cars, original crop field and lighting. No new architecture or objects. No text, logos, labels or UI.
+Maintain the SAME 1315:1196 aspect ratio and same native resolution or higher. No camera move, recrop, outpainting, zoom, resize of buildings, color change or blur. A single localized circular-window correction only.
+```
+
+### Siemens — comprobación de la marca existente
+
+La pequeña placa roja de fachada existe en V13. Recorte exacto `[699,1117,32,28]`, evidencia en `docs/city-detail-v2/comparisons/siemens-red-mark-proof.png`. El revisor independiente confirmó la evidencia y descartó ese hallazgo; no se retocó Siemens.
