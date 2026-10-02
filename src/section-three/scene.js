@@ -9,6 +9,7 @@ import {createSceneInput} from './input.js';
 import {createCursorSurfaceLight} from '../cursor-surface-light.js';
 import {createRenderBudget} from '../render-budget.js';
 import {clamp, mix, smooth, randomSource, flightTrack} from './motion.js';
+import {paperTiming} from './timing.js';
 import './style.css';
 
 export async function createPaperSection(journey) {
@@ -62,13 +63,13 @@ export async function createPaperSection(journey) {
   const note = addPaper('chat', 0, 3.65, 2.25, 97, true, {message: 'Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.', status: 'Pendiente'});
   const letter = addPaper('letter', 0, 3.85, 4.44, 192, true);
   for (let i = 0; i < 5; i++) heroes.push(addPaper(CHANNELS[i], i % 2, 3.65, 2.25, 297 + i * 117, true));
-  for (let i = 0; i < 64; i++) {
-    const kind = i < 13 ? 'note' : i % 9 === 0 ? 'letter' : CHANNELS[i % 5];
+  for (let i = 0; i < 36; i++) {
+    const kind = i < 8 ? 'note' : i % 9 === 0 ? 'letter' : CHANNELS[i % 5];
     const w = kind === 'note' ? 1.85 + rand() * .6 : kind === 'letter' ? 2.1 : 2.35 + rand() * .7;
     const h = kind === 'note' ? w * 1.06 : kind === 'letter' ? w * 1.15 : w * .62;
     const p = addPaper(kind, i % 3, w, h, 701 + i * 53);
     const a = i * 2.39996, layer = i % 4;
-    p.start = i < 13 ? .16 + i * .007 : .27 + (i - 13) / 51 * .49 + rand() * .018; p.duration = .13 + rand() * .08;
+    p.waveOffset = i < 8 ? i / 8 : (i - 8) / 27;
     p.scatter = [Math.cos(a) * (.5 + rand() * .44), Math.sin(a) * (.45 + rand() * .5), -4 - rand() * 9];
     p.column = [.27 + Math.cos(a) * (.1 + rand() * .27), -.91 + (i % 13) / 12 * 1.82 + (rand() - .5) * .1, layer === 0 ? -1.9 + rand() : -4.2 - rand() * 7];
     p.rot = [(rand() - .5) * 1.5, (rand() - .5) * 2.15, (rand() - .5) * 1.4];
@@ -76,7 +77,7 @@ export async function createPaperSection(journey) {
   }
   for (let i = 0; i < 4; i++) {
     const p = addPaper(CHANNELS[i], i, 4.1, 2.55, 4101 + i * 47, true);
-    p.anchor = [[-.87, -.68, 7.3], [.89, .71, 6.8], [-.84, .62, 6.7], [.92, -.65, 7.5]][i]; p.start = .31 + i * .075; foreground.push(p);
+    p.anchor = [[-.87, -.68, 7.3], [.89, .71, 6.8], [-.84, .62, 6.7], [.92, -.65, 7.5]][i]; foreground.push(p);
   }
   let portrait = false, target = 0, progress = 0, height = 0, active = false, force = true, disposed = false, lost = false, lastState = null;
   const point = new THREE.Vector3();
@@ -128,7 +129,7 @@ export async function createPaperSection(journey) {
     const clearance = Math.max(piece.width, piece.height) * scale + 1.8;
     let entryY = top + clearance;
     if (piece === note && f.y > 0) {
-      // Start the first message at 90 local scroll pixels, including its curved corners.
+      // Start the first message at 80 local scroll pixels, including its curved corners.
       const box = piece.mesh.geometry.boundingBox, offset = new THREE.Vector3();
       entryY = -Infinity;
       for (let i = 0; i < 8; i++) {
@@ -145,22 +146,25 @@ export async function createPaperSection(journey) {
     breezeClock = capture || reducedQuery.matches ? 0 : seconds * .72;
     const idle = capture || reducedQuery.matches ? 0 : Math.sin(seconds * .45) * .035;
     const heroScale = portrait ? .51 : 1;
-    const scatter = smooth(.45, .73, p), dense = smooth(.57, .98, p);
-    const noteExit = smooth(.18, .36, p), noteCloud = smooth(.58, .8, p);
+    const timing = paperTiming(height);
+    const scatter = smooth(timing.many, timing.group, p), dense = smooth(timing.group, timing.grouped, p);
+    const noteExit = smooth(timing.several, timing.many + timing.manySpread, p), noteCloud = dense;
     const noteAnchor = [mix(portrait ? 0 : .1, -.55, noteExit) + .45 * noteCloud, mix(-.02, .34, noteExit) - .76 * noteCloud, mix(3.4, -5.6, noteExit)];
     const messageScale = portrait ? 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (18 - 3.4) * camera.aspect * .9 / note.width : 1.3;
-    falling(note, p, 90 / height, .145, noteAnchor, [mix(-.08, .4, noteExit), mix(-.32, .9, noteExit), mix(-.13, -.46, noteExit)], messageScale * mix(1, .75, noteExit), .22 + noteExit * .16, idle, 1.25);
-    const letterExit = smooth(.37, .55, p);
+    falling(note, p, timing.first, timing.firstDuration, noteAnchor, [mix(-.08, .4, noteExit), mix(-.32, .9, noteExit), mix(-.13, -.46, noteExit)], messageScale * mix(1, .75, noteExit), .22 + noteExit * .16, idle, 1.25);
+    const letterExit = smooth(timing.many, timing.group, p);
     const letterAnchor = [mix(portrait ? .03 : .2, portrait ? -.2 : .08, letterExit), mix(.08, -.45, letterExit), mix(3.2, -3.2, letterExit)];
-    falling(letter, p, .20, .135, letterAnchor, [mix(-.16, -.36, letterExit), mix(-.42, .62, letterExit), mix(.19, -.30, letterExit)], (portrait ? .74 : 1.16) * mix(1, .70, letterExit), 1.02 - letterExit * .45, idle, .95);
+    falling(letter, p, timing.several, timing.severalDuration, letterAnchor, [mix(-.16, -.36, letterExit), mix(-.42, .62, letterExit), mix(.19, -.30, letterExit)], (portrait ? .74 : 1.16) * mix(1, .70, letterExit), 1.02 - letterExit * .45, idle, .95);
     const anchors = portrait ? [[-.24,.61,3.0],[.30,.29,3.6],[.05,-.35,3.9],[-.24,-.05,3.1],[.30,-.65,3.3]] : [[-.28,.51,3.0],[.47,.29,3.6],[.10,-.59,3.9],[-.32,-.17,3.1],[.49,-.24,3.3]];
     const endings = portrait ? [[-.28,.60,3.0],[.32,.25,3.6],[-.08,-.60,3.9],[-.26,-.10,3.1],[.31,-.25,3.3]] : [[.12,.59,3.0],[.50,.25,3.6],[.14,-.68,3.9],[-.05,-.10,3.1],[.50,-.27,3.3]];
     heroes.forEach((piece, i) => {
       const a = anchors[i], b = endings[i], rot = [[-.13,-.15,.11],[.06,.25,-.18],[-.08,-.29,.15],[.12,.19,-.15],[-.20,-.16,-.10]][i];
       const anchor = a.map((v, n) => mix(v, b[n], scatter)); anchor[1] += idle * Math.sin(piece.phase);
-      falling(piece, p, .34 + i * .024, .125, anchor, rot, heroScale * mix(1, .88, dense), .14 + dense * .12, idle, .7);
+      falling(piece, p, timing.several + timing.severalSpread * (i + 1) / 5, timing.severalDuration, anchor, rot, heroScale * mix(1, .88, dense), .14 + dense * .12, idle, .7);
     });
     field.forEach((piece, i) => {
+      piece.start = (i < 8 ? timing.several : timing.many) + piece.waveOffset * (i < 8 ? timing.severalSpread : timing.manySpread);
+      piece.duration = i < 8 ? timing.severalDuration : timing.manyDuration;
       const t = clamp((p - piece.start) / piece.duration); piece.spawnProgress = t; piece.mesh.visible = p > piece.start;
       if (!piece.mesh.visible) return;
       const f = piece.flight(t), a = piece.scatter, b = piece.column;
@@ -176,14 +180,15 @@ export async function createPaperSection(journey) {
     });
     foreground.forEach((piece, i) => {
       const [x,y,z] = piece.anchor;
-      falling(piece, p, piece.start, .19, [x, y - smooth(.56, .95, p) * (1.5 + i * .1), z], [.25,-.35 + i*.22,(i%2 ? -1 : 1)*.38], portrait ? .42 : .85, .3, idle, 1.1);
+      const anchor = [mix(x, portrait ? .14 : .27, dense), mix(y, -.8 + i / 3 * 1.6, dense), mix(z, -2.5 - i * .8, dense)];
+      falling(piece, p, timing.many + timing.manySpread * i / 3, timing.manyDuration, anchor, [.25,-.35 + i*.22,(i%2 ? -1 : 1)*.38], (portrait ? .42 : .85) * mix(1, .8, dense), .3, idle, 1.1);
       piece.mesh.castShadow = false;
     });
     camera.updateMatrixWorld();
     const lightState = cursorSurface.update(camera, inputState.pointer, pieces.map(piece => piece.mesh), !inputState.hovering, frameDelta);
     cursorLight.intensity *= .028;
     renderer.info.autoReset = false; renderer.info.reset(); renderer.shadowMap.needsUpdate = true; composer.render();
-    lastState = {progress: p, visibleItems: pieces.filter(i => i.mesh.visible).length, glass: 0, drawCalls: renderer.info.render.calls, geometries: renderer.info.memory.geometries, reducedMotion: reducedQuery.matches,
+    lastState = {progress: p, visibleItems: pieces.filter(i => i.mesh.visible).length, groupProgress: dense, secondEntryPixels: timing.several * height, lastEntryPixels: (timing.many + timing.manySpread) * height, lastFallEndPixels: (timing.many + timing.manySpread + timing.manyDuration) * height, groupingPixels: timing.group * height, scrollRange: height, glass: 0, drawCalls: renderer.info.render.calls, geometries: renderer.info.memory.geometries, reducedMotion: reducedQuery.matches,
       hero: {position: note.mesh.position.toArray(), rotation: note.mesh.rotation.toArray().slice(0,3), bend: note.mesh.geometry.attributes.position.array[2]}, letterCorners: [0,30,992,1022].map(i => letter.mesh.geometry.attributes.position.array[i*3+2]), version: 4, depthOfField: false, parallax: {x: inputState.x, y: inputState.y, gyro: inputState.orientation}, cursorLight: {...lightState, intensity: cursorLight.intensity}, contentCount: new Set(pieces.map(i => i.subject)).size, totalItems: pieces.length};
   }
   const review = {

@@ -1,6 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {flightTrack} from '../src/section-three/motion.js';
+import {paperTiming} from '../src/section-three/timing.js';
+
+test('paper entrances retain their pixel anchors and finish before grouping on every viewport', () => {
+  for (const range of [1794, 2944, 3882.4, 4600]) {
+    const t = paperTiming(range);
+    assert.ok(Math.abs(t.first * range - 80) < .001);
+    assert.ok(Math.abs(t.several * range - 650) < .001);
+    assert.ok(t.first + t.firstDuration < t.several);
+    assert.ok(t.several + t.severalSpread + t.severalDuration < t.many + t.manySpread);
+    assert.ok(t.many + t.manySpread + t.manyDuration < t.group);
+    assert.ok(t.group < t.grouped && t.grouped < 1);
+  }
+});
 
 test('a fall accelerates downwards and ends at its composition anchor', () => {
   for (const seed of [97, 192, 297, 701, 1201]) {
