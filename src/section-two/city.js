@@ -14,6 +14,7 @@ import {mobileTourGeometry, mobileTourState} from './mobile-tour.js';
 import {createMobileTourDeck} from './mobile-tour-deck.js';
 import {createMobileTourNavigation} from './mobile-tour-navigation.js';
 import {createMobileTourInput} from './mobile-tour-input.js';
+import {createDocumentScrollLock, createDesktopEndGuard, cityEntryPoint, cityMapPoint} from './scroll-guard.js';
 import {createCityDetail} from './city-detail.js';
 
 // Architecture is interpreted from photos; the city layout is imaginary.
@@ -54,13 +55,17 @@ export function createCity(section, options = {}) {
   const perspective = createCityPerspective();
   let loading = false, ready = false, geometry, lastWidth = 0, lastHeight = 0, water = null, waterSources = '', tourViewport = innerHeight;
 
+  const documentLock = createDocumentScrollLock(document.documentElement);
+  const navigate = top => {if (options.onNavigate) options.onNavigate(top);else window.scrollTo({top, behavior: 'instant'})};
   const invitation = {id: 'collaborate', name: '¿Quieres colaborar?', invitation: true};
   const deck = createMobileTourDeck(section, mobileTourRoute, [...cityClients, invitation]);
   const navigation = createMobileTourNavigation({onNavigate: top => {
-    if (options.onNavigate) options.onNavigate(top);
-    else window.scrollTo({top, behavior: 'instant'});
+    if (innerWidth < 700 && navigation.getState().active) input.lock();
+    navigate(top);
   }});
-  const input = createMobileTourInput(frame, navigation);
+  const input = createMobileTourInput(frame, navigation, {lock: documentLock, readTarget: options.readScrollTarget});
+  const endGuard = createDesktopEndGuard({lock: documentLock, navigate, readTarget: options.readScrollTarget,
+    blocked: () => dialog.isOpen || Boolean(document.querySelector('dialog[open]'))});
   const detail = createCityDetail(core);
   for (const client of [...cityClients, invitation]) {
     const site = sites[client.id];
@@ -130,13 +135,19 @@ export function createCity(section, options = {}) {
       // Keep the itinerary stable when Safari retracts its address bar.
       if (lastWidth !== innerWidth || Math.abs(viewport - tourViewport) > tourViewport * .2) tourViewport = viewport;
       geometry = mobileTourGeometry({top: section.offsetTop, viewport: tourViewport});
+      // Keep the entrance anchor stable when browser chrome changes height,
+      // but reserve a whole *current* viewport below it for the native exit.
+      geometry = {...geometry, viewport, height: geometry.revealed + viewport - section.offsetTop};
       section.style.height = `${geometry.height}px`;
       navigation.anchorScroll(window.scrollY, geometry);
     } else {
       section.style.removeProperty('height');
       geometry = cityGeometry({top: section.offsetTop, height: section.offsetHeight, viewport,
         footer: document.querySelector('footer').offsetHeight});
+      geometry.end = document.querySelector('#posibilidades').offsetTop - viewport;
     }
+    input.update(portrait, geometry);
+    endGuard.update(!portrait, geometry);
     const aspect = image.naturalWidth && (image.naturalHeight > image.naturalWidth) === portrait ?
       image.naturalWidth / image.naturalHeight : portrait ? 941 / 1672 : 1672 / 941;
     const available = document.documentElement.clientWidth;
@@ -199,8 +210,9 @@ export function createCity(section, options = {}) {
     if (!geometry || lastWidth !== innerWidth || lastHeight !== innerHeight) resize();
     if (scroll > geometry.start - innerHeight * 2) load();
     const portrait = innerWidth < 700;
-    input.update(portrait && ready, geometry);
-    if (portrait) scroll = navigation.anchorScroll(window.scrollY, geometry);
+    input.update(portrait, geometry);
+    if (portrait) scroll = input.reconcile(window.scrollY);
+    else scroll = Math.min(scroll, endGuard.reconcile(window.scrollY));
     const state = portrait ? mobileTourState({scroll, geometry}) : cityState(scroll, geometry, reduced);
     frame.style.opacity = ready ? state.opacity : 0;
     frame.style.visibility = state.active ? 'visible' : 'hidden';
@@ -268,8 +280,11 @@ export function createCity(section, options = {}) {
 
   resize();
   return {update, resize, load, dialog,
-    anchorScroll: scroll => innerWidth < 700 ? navigation.anchorScroll(scroll, geometry) : scroll,
-    prepareNavigation: enter => navigation.reset({suspend: !enter}),
+    anchorScroll: scroll => innerWidth < 700 ? input.reconcile(scroll) : endGuard.reconcile(scroll),
+    prepareNavigation: enter => {input.prepareNavigation(); endGuard.prepareNavigation(); navigation.reset({suspend: !enter || cityEntryPoint(geometry, innerWidth < 700) !== null})},
+    getEndGuardState: endGuard.getState,
+    finishNavigation: endGuard.finishNavigation,
+    entryScrollAt: () => cityEntryPoint(geometry, innerWidth < 700),
     getTourState: navigation.getState,
-    dispose() {input.dispose(); water?.dispose(); pan.dispose(); perspective.dispose()}, scrollAt: progress => geometry.revealed + Math.max(0, Math.min(1, progress)) * (geometry.end - geometry.revealed)};
+    dispose() {input.dispose(); endGuard.dispose(); documentLock.set(false); water?.dispose(); pan.dispose(); perspective.dispose()}, scrollAt: progress => cityMapPoint(geometry, progress, innerWidth < 700)};
 }

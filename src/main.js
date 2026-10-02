@@ -10,7 +10,7 @@ import {createScrollMeter} from './scroll-meter.js';
 import {createPerspectiveInput} from './perspective-input.js';
 populateClients();
 const trustSection=document.querySelector('#confianza'),nextSection=document.querySelector('#posibilidades');
-const city=createCity(trustSection,{onOpen:()=>lenis.stop(),onClose:()=>lenis.start(),onNavigate:top=>{lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top)}});
+const city=createCity(trustSection,{readScrollTarget:()=>lenis.targetScroll,onOpen:()=>lenis.stop(),onClose:()=>lenis.start(),onNavigate:top=>{lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top)}});
 const motionPreference={matches:false};
 let handoffStart=0,turnDistance=0,sectionProgress=0;
 function readProgress(y){return y<=handoffStart?5*y/handoffStart:5+(y-handoffStart)/turnDistance}
@@ -23,13 +23,13 @@ const lenis=new Lenis({autoRaf:false,lerp:.075,smoothWheel:true,syncTouch:false,
 let experience=null,perspectiveInput=null,offsets=[],scrollLimit=0,pointer={x:0,y:0},smoothPointer={x:0,y:0},renderProgress=0,lastFrame=0,lastScroll=performance.now(),disposed=false,activeIndex=-1;
 function updateOffsets(){city.resize();scrollLimit=Math.max(0,document.documentElement.scrollHeight-innerHeight);handoffStart=trustSection.offsetTop-innerHeight+90;turnDistance=innerHeight*1.35;offsets=chapters.map(c=>c.offsetTop);offsets.push(Math.max(chapters.at(-1).offsetTop+1,scrollLimit));lenis?.resize()}
 updateOffsets();window.addEventListener('resize',updateOffsets);
-function navigateTo(target,immediate=false){city.prepareNavigation(target===trustSection);const index=target?.dataset?.scene;const top=index==='4'?handoffStart:target===trustSection?(innerWidth<700?city.scrollAt(0):handoffStart+turnDistance):target?.offsetTop??0;if(lenis)lenis.scrollTo(top,{immediate,duration:1.2,lerp:0,easing:t=>1-(1-t)**3});else window.scrollTo({top,behavior:'instant'})}
+function navigateTo(target,immediate=false){city.prepareNavigation(target===trustSection);const index=target?.dataset?.scene;const top=index==='4'?handoffStart:target===trustSection?(city.entryScrollAt()??(innerWidth<700?city.scrollAt(0):handoffStart+turnDistance)):target?.offsetTop??0;if(lenis)lenis.scrollTo(top,{immediate,duration:1.2,lerp:0,easing:t=>1-(1-t)**3,onComplete:()=>city.finishNavigation()});else {city.finishNavigation();window.scrollTo({top,behavior:'instant'})}}
 // Initial fragment scrolling can run after fonts.ready. Resolve it after the
 // document load and layout, so the browser cannot overwrite the city anchor.
 const initialLayout=Promise.all([document.fonts.ready,new Promise(resolve=>{if(document.readyState==='complete')resolve();else window.addEventListener('load',resolve,{once:true})})]);
 initialLayout.then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{updateOffsets();const params=new URLSearchParams(location.search),cityMarker=params.get('city');if(!location.hash&&cityMarker!==null&&Number.isFinite(Number(cityMarker))){const top=city.scrollAt(Number(cityMarker));lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top);city.load()}else if(location.hash)navigateTo(document.querySelector(location.hash),true);else{const marker=params.get('scroll');if(marker!==null&&Number.isFinite(Number(marker))){const top=handoffStart*Math.max(0,Math.min(1000,Number(marker)))/1000;if(lenis)lenis.scrollTo(top,{immediate:true});else scrollTo({top,behavior:'instant'});renderProgress=readProgress(top)}}})));
 perspectiveInput=createPerspectiveInput(window,{onChange(value){pointer=value;document.documentElement.style.setProperty('--mx',`${(value.x+1)*innerWidth/2}px`);document.documentElement.style.setProperty('--my',`${(1-value.y)*innerHeight/2}px`)}});
-window.addEventListener('scroll',()=>{lastScroll=performance.now();document.querySelector('.scroll-cue').classList.remove('visible')},{passive:true});
+window.addEventListener('scroll',()=>{city.anchorScroll(scrollY);lastScroll=performance.now();document.querySelector('.scroll-cue').classList.remove('visible')},{passive:true});
 window.addEventListener('keydown',e=>{if(e.defaultPrevented||e.metaKey||e.ctrlKey||e.altKey||modal.open||city.dialog.isOpen||e.target.closest('input,textarea,select,[contenteditable="true"]'))return;if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(e.key)&&lenis?.isScrolling==='smooth')lenis.scrollTo(lenis.actualScroll,{immediate:true})},{passive:true});
 document.querySelectorAll('a[href^="#"]').forEach(link=>link.addEventListener('click',e=>{const target=document.querySelector(link.getAttribute('href'));if(!target)return;e.preventDefault();history.pushState(null,'',link.getAttribute('href'));if(modal.open)modal.close();navigateTo(target);target.setAttribute('tabindex','-1');target.focus({preventScroll:true})}));
 window.addEventListener('hashchange',()=>navigateTo(location.hash?document.querySelector(location.hash):null,true));
@@ -53,7 +53,8 @@ function activate(progress){
  chapters.at(-1).querySelector('.chapter-inner').inert=progress>5.22||index!==4;
  chapters.at(-1).querySelector('.chapter-inner').setAttribute('aria-hidden',String(progress>5.22||index!==4));
  document.querySelector('.replay').inert=progress<4.5||progress>5;
- const nextActive=visualScroll>=nextSection.offsetTop-innerHeight*.5;
+ const cityHeld=innerWidth<700?city.getTourState().active:city.getEndGuardState().held;
+ const nextActive=!cityHeld&&visualScroll>=nextSection.offsetTop-innerHeight*.5;
  document.body.classList.toggle('next-active',nextActive);
  if(nextActive){document.querySelector('#chapter-label').textContent='LO QUE HACEMOS POSIBLE';document.querySelector('#chapter-count').textContent='03 / 03'}else if(progress>5){document.querySelector('#chapter-label').textContent='UN PUNTO EN COMÚN';document.querySelector('#chapter-count').textContent='02 / 03'}else{document.querySelector('#chapter-label').textContent=labels[index];document.querySelector('#chapter-count').textContent=`${String(index+1).padStart(2,'0')} / 05`}
 }
@@ -62,7 +63,7 @@ import('./scene.js').then(({createExperience})=>createExperience(document.queryS
 function frame(now){
  if(disposed)return;
  city.anchorScroll(scrollY);
- if(lenis&&!lenis.isStopped&&lenis.isScrolling!=='smooth'&&Math.abs(lenis.actualScroll-lenis.scroll)>1)lenis.scrollTo(lenis.actualScroll,{immediate:true});lenis?.raf(now);
+ if(lenis&&!lenis.isStopped&&lenis.isScrolling!=='smooth'&&Math.abs(lenis.actualScroll-lenis.scroll)>1)lenis.scrollTo(lenis.actualScroll,{immediate:true});lenis?.raf(now);city.anchorScroll(scrollY);
  if(!document.hidden){const y=lenis?.scroll??scrollY;updateScrollMeter(y<=handoffStart?y:y-handoffStart,y<=handoffStart?handoffStart:scrollLimit-handoffStart)}
  if(!document.hidden){
   const dt=Math.min((now-lastFrame)/1000,.1),response=perspectiveInput.getResponseRate();lastFrame=now;smoothPointer.x=mix(smoothPointer.x,pointer.x,1-Math.exp(-dt*response));smoothPointer.y=mix(smoothPointer.y,pointer.y,1-Math.exp(-dt*response));
@@ -76,4 +77,4 @@ function frame(now){
  requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;perspectiveInput?.dispose();lenis?.destroy();experience?.dispose();city.dispose()});
-window.__puntoes={measureWrenchFraming:()=>experience?.measureWrenchFraming(),measureClearances:()=>experience?.measureClearances(),getState:()=>({render:document.body.dataset.render,progress:readProgress(scrollY),sectionProgress,handoffStart,turnDistance,visualProgress:renderProgress,editorial:lastEditorial,city:lastCity,tour:city.getTourState(),scroll:{engine:lenis?'lenis':'native',current:lenis?.scroll??scrollY,target:lenis?.targetScroll??scrollY,moving:lenis?.isScrolling??false},reduced:motionPreference.matches,perspectiveInput:perspectiveInput?.getState(),pointer:{...smoothPointer},scene:experience?.getState()})};
+window.__puntoes={measureWrenchFraming:()=>experience?.measureWrenchFraming(),measureClearances:()=>experience?.measureClearances(),getState:()=>({render:document.body.dataset.render,progress:readProgress(scrollY),sectionProgress,handoffStart,turnDistance,visualProgress:renderProgress,editorial:lastEditorial,city:lastCity,tour:city.getTourState(),endGuard:city.getEndGuardState(),scroll:{engine:lenis?'lenis':'native',current:lenis?.scroll??scrollY,target:lenis?.targetScroll??scrollY,moving:lenis?.isScrolling??false},reduced:motionPreference.matches,perspectiveInput:perspectiveInput?.getState(),pointer:{...smoothPointer},scene:experience?.getState()})};

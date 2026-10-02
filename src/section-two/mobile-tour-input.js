@@ -25,6 +25,11 @@ export function createWheelBurst({quiet = 240, threshold = 60, tailQuiet = 900} 
   };
 }
 
+// Use input creation time, not delayed JS delivery, when grouping wheel events.
+export function wheelEventTime(event, now = performance.now()) {
+  return Number.isFinite(event.timeStamp) && event.timeStamp >= 0 && event.timeStamp <= now + 1000 ? event.timeStamp : now;
+}
+
 // Cumulative displacement matters: a deliberate slow swipe may arrive in 3px
 // samples. A gesture that starts while travelling is consumed until lift.
 export function createSwipeIntent(x, y, consumed = false) {
@@ -41,10 +46,11 @@ export function createSwipeIntent(x, y, consumed = false) {
   };
 }
 
-export function createMobileTourInput(frame, navigation) {
+export function createMobileTourInput(frame, navigation, {lock = {set() {}}, readTarget = () => scrollY} = {}) {
   const wheel = createWheelBurst();
-  let touch = null, geometry, available = false;
-  const excluded = target => target.closest('a,input,textarea,select,[contenteditable],dialog[open],[data-lenis-prevent]');
+  let touch = null, geometry, available = false, lastScroll = null, skipEntry = false;
+  const excluded = target => target.closest('input,textarea,select,[contenteditable],dialog[open],[data-lenis-prevent]') ||
+    target.closest('a') && !target.closest('.city-tour-card');
   const eligible = () => available && navigation.getState().active;
   const block = event => {if (event.cancelable) event.preventDefault(); event.stopImmediatePropagation()};
   const crossing = (from, delta) => available && geometry && (
@@ -52,22 +58,23 @@ export function createMobileTourInput(frame, navigation) {
     delta < 0 && from > geometry.revealed && from + delta <= geometry.revealed);
   function onWheel(event) {
     if (!available || event.ctrlKey || event.metaKey || Math.abs(event.deltaX) >= Math.abs(event.deltaY) || excluded(event.target)) return;
-    const now = performance.now(), active = eligible();
+    const now = wheelEventTime(event), active = eligible();
     const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1);
     const pending = wheel.isPending(now, delta);
     if (active && !pending && navigation.canRelease(Math.sign(delta))) {
-      navigation.release(Math.sign(delta)); return;
+      navigation.release(Math.sign(delta)); lock.set(false); return;
     }
-    if (!active && crossing(window.scrollY, delta)) {
-      wheel.push(delta, now, true); block(event); navigation.enter(geometry, delta < 0); return;
+    if (!active && crossing(delta > 0 ? Math.max(window.scrollY, readTarget()) : Math.min(window.scrollY, readTarget()), delta)) {
+      wheel.push(delta, now, true); block(event); lock.set(true); navigation.enter(geometry, delta < 0); return;
     }
     const direction = wheel.push(delta, now, !active || navigation.getState().moving);
-    if (active) {block(event); if (direction) navigation.step(direction, {now})}
+    if (active) {block(event); if (direction) navigation.step(direction, {now: performance.now()})}
   }
   function onStart(event) {
     touch = null;
     if (event.touches.length !== 1 || !available || excluded(event.target)) return;
     const p = event.touches[0];
+    if (eligible() && (navigation.canRelease(1) || navigation.canRelease(-1))) lock.set(false);
     touch = {intent: createSwipeIntent(p.clientX, p.clientY, navigation.getState().moving),
       startScroll: window.scrollY, entered: eligible(), native: false,
       forward: navigation.canRelease(1), backward: navigation.canRelease(-1),
@@ -82,28 +89,32 @@ export function createMobileTourInput(frame, navigation) {
     if (result.axis !== 'y') return;
     if (!touch.entered) {
       if (!crossing(touch.startScroll, result.dy) && !eligible()) return;
-      if (!eligible()) navigation.enter(geometry, result.dy < 0);
+      if (!eligible()) {lock.set(true); navigation.enter(geometry, result.dy < 0)}
       touch.entered = true; touch.intent.consume(); block(event); return;
     }
     // Check the boundary before preventing any vertical move. Otherwise Chrome
     // cannot return this gesture to native scrolling after preventDefault.
     if ((result.dy > 0 ? touch.forward : touch.backward) && navigation.canRelease(Math.sign(result.dy))) {
-      navigation.release(Math.sign(result.dy)); touch.native = true; return;
+      navigation.release(Math.sign(result.dy)); lock.set(false); touch.native = true; return;
     }
-    block(event);
+    lock.set(true); block(event);
     if (result.direction) navigation.step(result.direction, {now: performance.now()});
   }
-  function onEnd() {touch = null}
+  function onEnd() {touch = null; if (eligible()) lock.set(true)}
   function onKey(event) {
-    if (!available || event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || excluded(event.target)) return;
-    if (['Home', 'End'].includes(event.key)) {
-      block(event); navigation.jump(event.key === 'Home' ? 0 : Math.max(0, document.documentElement.scrollHeight - innerHeight)); return;
+    if (!available || event.defaultPrevented || event.target.closest('input,textarea,select,[contenteditable],dialog[open],[data-lenis-prevent]')) return;
+    const topKey = event.key === 'Home' || event.metaKey && event.key === 'ArrowUp';
+    const endKey = event.key === 'End' || event.metaKey && event.key === 'ArrowDown';
+    if (topKey || endKey) {
+      skipEntry = true; lastScroll = null; lock.set(false); block(event);
+      navigation.jump(topKey ? 0 : Math.max(0, document.documentElement.scrollHeight - innerHeight)); return;
     }
+    if (event.metaKey || event.ctrlKey || event.altKey || excluded(event.target)) return;
     if (!eligible() || event.target.closest('a,button')) return;
     const direction = ['ArrowDown', 'PageDown', ' '].includes(event.key) ? 1 : ['ArrowUp', 'PageUp'].includes(event.key) ? -1 : 0;
     if (!direction) return;
     const step = event.shiftKey && event.key === ' ' ? -1 : direction;
-    if (!event.repeat && navigation.canRelease(step)) {navigation.release(step); return}
+    if (!event.repeat && navigation.canRelease(step)) {navigation.release(step); lock.set(false); return}
     block(event); if (!event.repeat) navigation.step(step);
   }
   const events = [['wheel', onWheel], ['touchstart', onStart], ['touchmove', onMove], ['touchend', onEnd], ['touchcancel', onEnd], ['keydown', onKey]];
@@ -111,9 +122,30 @@ export function createMobileTourInput(frame, navigation) {
   return {
     update(value, bounds) {
       geometry = bounds;
+      if (!value && available) {lock.set(false); touch = null; lastScroll = null}
       if (value && !available) {wheel.consume(); if (touch) touch.intent.consume()}
       available = value;
     },
+    reconcile(scroll) {
+      if (!available || !geometry) return scroll;
+      if (skipEntry && (scroll < geometry.start || scroll >= geometry.revealed + geometry.viewport)) skipEntry = false;
+      if (!skipEntry && !navigation.getState().active && lastScroll !== null && crossing(lastScroll, scroll - lastScroll)) {
+        lock.set(true);navigation.enter(geometry, scroll < lastScroll);
+        if (touch) {touch.entered = true; touch.intent.consume(); touch.forward = false; touch.backward = false}
+        wheel.consume();
+      }
+      lastScroll = scroll;
+      if (navigation.getState().active) {
+        skipEntry = false;
+        // Boundary gestures need a scrollable root at touchStart. No move has
+        // been canceled yet; onMove decides whether to release or lock again.
+        if (!touch || touch.entered && !touch.forward && !touch.backward) lock.set(true);
+        return navigation.anchorScroll(scroll, geometry);
+      }
+      lock.set(false);return scroll;
+    },
+    prepareNavigation() {skipEntry = true;lastScroll = null;touch = null;lock.set(false)},
+    lock() {lock.set(true)},
     dispose() {for (const [type, handler] of events) window.removeEventListener(type, handler, true)},
   };
 }
