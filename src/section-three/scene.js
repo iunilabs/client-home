@@ -110,7 +110,19 @@ export async function createPaperSection(journey) {
     piece.mesh.position.x += f.x * 1.6 * scale + Math.sin(t * Math.PI) * Math.sin(piece.phase) * .7 * scale;
     const top = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z - piece.mesh.position.z);
     const clearance = Math.max(piece.width, piece.height) * scale + 1.8;
-    piece.mesh.position.y += f.y * (top + clearance - piece.mesh.position.y);
+    let entryY = top + clearance;
+    if (piece === note && f.y > 0) {
+      // Start the note at the upper edge at 0090, including its curved corners.
+      const box = piece.mesh.geometry.boundingBox, offset = new THREE.Vector3();
+      entryY = -Infinity;
+      for (let i = 0; i < 8; i++) {
+        offset.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z)
+          .applyQuaternion(piece.mesh.quaternion).multiplyScalar(scale);
+        const edge = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z - piece.mesh.position.z - f.z * 1.7 - offset.z);
+        entryY = Math.max(entryY, edge - offset.y + .01);
+      }
+    }
+    piece.mesh.position.y += f.y * (entryY - piece.mesh.position.y);
     piece.mesh.position.z += f.z * 1.7;
   }
   function draw(p, seconds) {
@@ -118,9 +130,9 @@ export async function createPaperSection(journey) {
     const idle = capture || reducedQuery.matches ? 0 : Math.sin(seconds * .45) * .035;
     const heroScale = portrait ? .51 : 1;
     const scatter = smooth(.45, .73, p), dense = smooth(.57, .98, p);
-    const noteExit = smooth(.19, .36, p), noteCloud = smooth(.58, .8, p);
-    const noteAnchor = [mix(.1, -.55, noteExit) + .45 * noteCloud, mix(-.02, .34, noteExit) - .76 * noteCloud, mix(3.4, -5.6, noteExit) + noteCloud * 3];
-    falling(note, p, .012, .145, noteAnchor, [mix(-.08, .4, noteExit), mix(-.32, .9, noteExit), mix(-.13, -.46, noteExit)], (portrait ? .76 : 1) * mix(1, .75, noteExit), .64 + noteExit * .25, idle, 1.25);
+    const noteExit = smooth(.18, .36, p), noteCloud = smooth(.58, .8, p);
+    const noteAnchor = [mix(.1, -.55, noteExit) + .45 * noteCloud, mix(-.02, .34, noteExit) - .76 * noteCloud, mix(3.4, -5.6, noteExit)];
+    falling(note, p, .09, .065, noteAnchor, [mix(-.08, .4, noteExit), mix(-.32, .9, noteExit), mix(-.13, -.46, noteExit)], (portrait ? .76 : 1) * mix(1, .75, noteExit), .64 + noteExit * .25, idle, 1.25);
     const letterExit = smooth(.37, .55, p);
     const letterAnchor = [mix(portrait ? .03 : .2, portrait ? -.2 : .08, letterExit), mix(.08, -.45, letterExit), mix(3.2, -3.2, letterExit)];
     falling(letter, p, .20, .135, letterAnchor, [mix(-.16, -.36, letterExit), mix(-.42, .62, letterExit), mix(.19, -.30, letterExit)], (portrait ? .74 : 1.16) * mix(1, .70, letterExit), 1.02 - letterExit * .45, idle, .95);
