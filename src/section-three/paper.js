@@ -45,6 +45,13 @@ export function createPaper({kind, variant, width, height, grain, detailed = fal
   };
   material.customProgramCacheKey = () => 'paper-shell-v2';
   const mesh = new THREE.Mesh(geo, material); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
+  const pendingMap = material.map;
+  let completedMap = null;
+  function setCompleted(completed) {
+    // Build the green version only when this paper actually reaches the done pile.
+    if (completed && !completedMap) completedMap = surfaceTexture(kind, variant, textureResolution, content, true);
+    material.map = completed ? completedMap : pendingMap;
+  }
   let last = '';
   function deform(curl, twist, flutter, phase, corners = [0, 0, 0, 0]) {
     const key = [curl, twist, flutter, phase, ...corners].map(v => v.toFixed(4)).join(','); if (key === last) return; last = key;
@@ -64,5 +71,5 @@ export function createPaper({kind, variant, width, height, grain, detailed = fal
     }
     geo.attributes.position.needsUpdate = true; geo.computeVertexNormals(); geo.computeBoundingBox();
   }
-  return {mesh, deform, width, height, kind, subject: material.map.userData.subject};
+  return {mesh, deform, setCompleted, textures: () => [pendingMap, completedMap].filter(Boolean), width, height, kind, subject: pendingMap.userData.subject};
 }

@@ -25,7 +25,7 @@ try {
   await page.waitForFunction(() => window.__puntoes?.getState().render === 'webgl', null, {timeout: 60000});
   assert.equal((await state()).paper, null, 'paper scene stays unloaded at section one');
   assert.equal(await page.locator('.header').count(), 1);
-  assert.equal(await page.locator('#confianza + #posibilidades.paper-section').count(), 1);
+  assert.equal(await page.locator('#confianza + .paper-journey #posibilidades.paper-section').count(), 1);
   await page.screenshot({path: output + '01-hands.png'});
   console.log('Section one unchanged; paper scene loaded only near its section');
 
@@ -154,4 +154,4 @@ try {
   assert.deepEqual(errors, []); report.errors = errors; report.passed = true;
   await writeFile(output + 'report.json', JSON.stringify(report, null, 2) + '\n');
   console.log('Integration passed; reduced motion respected and no JS errors');
-} finally {await browser.close();}
+} catch(error) {console.error(error);process.exitCode=1;} finally {await Promise.race([browser.close(),new Promise(resolve=>setTimeout(resolve,3000))]);process.exit(process.exitCode||0);}

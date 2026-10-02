@@ -56,7 +56,7 @@ export function createCity(section, options = {}) {
 
   const documentLock = createDocumentScrollLock(document.documentElement);
   let boundaryInitialized = false;
-  const boundary = createMobileScrollBoundary(document.querySelector('main'), document.querySelector('#posibilidades'), document.querySelector('footer'), document.documentElement,
+  const boundary = createMobileScrollBoundary(document.querySelector('main'), document.querySelector('[data-paper-journey]'), document.querySelector('footer'), document.documentElement,
     () => {if (boundaryInitialized) options.onExtentChange?.()});
   const navigate = top => {if (options.onNavigate) options.onNavigate(top);else window.scrollTo({top, behavior: 'instant'})};
   const invitation = {id: 'collaborate', name: '¿Quieres colaborar?', invitation: true};

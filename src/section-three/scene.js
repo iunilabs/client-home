@@ -10,13 +10,22 @@ import {createCursorSurfaceLight} from '../cursor-surface-light.js';
 import {createRenderBudget} from '../render-budget.js';
 import {clamp, mix, smooth, randomSource, flightTrack} from './motion.js';
 import {paperTiming} from './timing.js';
-import {assignPaperLanes} from './separation.js';
+import {assignPaperLanes, paperDepthHalf} from './separation.js';
+import {workflowState, cardWorkflow} from '../section-four/workflow.js';
 import './style.css';
 
 export async function createPaperSection(journey) {
+  const painSection = journey.querySelector('#posibilidades');
+  const resolutionSection = journey.querySelector('#resolucion');
   const canvas = journey.querySelector('[data-paper-canvas]');
   const errorElement = journey.querySelector('[data-paper-fallback]');
   const copyElement = journey.querySelector('[data-paper-copy]');
+  const workflowElement = journey.querySelector('[data-paper-workflow]');
+  const pendingCount = journey.querySelector('[data-pending-count]');
+  const doneCount = journey.querySelector('[data-done-count]');
+  const workflowStatus = journey.querySelector('[data-workflow-status]');
+  const workflowTotal = journey.querySelector('[data-workflow-total]');
+  const workflowFill = journey.querySelector('[data-workflow-fill]');
   const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
   const capture = new URLSearchParams(location.search).has('capture');
   let renderer;
@@ -81,7 +90,8 @@ export async function createPaperSection(journey) {
     const p = addPaper(foregroundKinds[i], i, 4.1, 2.55, 4101 + i * 47, true);
     p.anchor = [[-.87, -.68, 7.3], [.89, .71, 6.8], [-.84, .62, 6.7], [.92, -.65, 7.5]][i]; foreground.push(p);
   }
-  let portrait = false, target = 0, progress = 0, height = 0, active = false, force = true, disposed = false, lost = false, lastState = null;
+  [note, letter, ...heroes, ...foreground, ...field].forEach((piece, i) => {piece.workflowIndex = i;});
+  let portrait = false, target = 0, progress = 0, workflowTarget = 0, workflowProgress = 0, height = 0, active = false, force = true, disposed = false, lost = false, lastState = null;
   const point = new THREE.Vector3();
   const input = createSceneInput({capture, reducedQuery, button: journey.querySelector('[data-paper-motion]'), onChange: () => {force = true;}});
   let inputState = input.update(1 / 60, performance.now()), breezeClock = 0, frameDelta = 1 / 60;
@@ -89,7 +99,11 @@ export async function createPaperSection(journey) {
     const h = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z - z);
     return out.set(x * h * camera.aspect, y * h, z);
   }
-  function updateTarget(y = scrollY) { height = Math.max(1, journey.offsetHeight - innerHeight); target = clamp((y - journey.offsetTop) / height); }
+  function updateTarget(y = scrollY) {
+    height = Math.max(1, painSection.offsetHeight - innerHeight);
+    target = clamp((y - journey.offsetTop) / height);
+    workflowTarget = clamp((y - journey.offsetTop - painSection.offsetHeight) / Math.max(1, resolutionSection.offsetHeight - innerHeight));
+  }
   function resize() {
     portrait = innerWidth / innerHeight < .85;
     camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
@@ -102,7 +116,7 @@ export async function createPaperSection(journey) {
     // Resolve Retina text without oversizing the multisampled render targets.
     pixelBudget.resize(); renderer.setSize(innerWidth, innerHeight);
     composer.setSize(innerWidth, innerHeight);
-    height = Math.max(1, journey.offsetHeight - innerHeight); updateTarget(); force = true;
+    updateTarget(); force = true;
   }
   function contextLost(event) {
     event.preventDefault(); lost = true; active = false;
@@ -123,8 +137,30 @@ export async function createPaperSection(journey) {
     mesh.rotation.set(clamp(rx, -piece.tilt, piece.tilt), clamp(ry, -piece.tilt, piece.tilt), clamp(rz, -.35, .35), 'YXZ');
     mesh.scale.setScalar(Math.min(scale, piece.maxScale));
     const corners = [0, 2.1, 4.3, 1.4].map((a, i) => .018 * Math.sin(piece.phase + a) + .016 * Math.sin(breezeClock * (i % 2 ? .83 : 1.07) + piece.phase + a));
-    piece.deform(clamp(curl + .025 * Math.sin(breezeClock * .62 + piece.phase), -piece.maxCurl, piece.maxCurl),
-      clamp(twist + .03 * Math.sin(breezeClock * .74 + piece.phase), -.08, .08), Math.min(flutter, .26), phase, corners);
+    piece.pose = {curl: clamp(curl + .025 * Math.sin(breezeClock * .62 + piece.phase), -piece.maxCurl, piece.maxCurl),
+      twist: clamp(twist + .03 * Math.sin(breezeClock * .74 + piece.phase), -.08, .08), flutter: Math.min(flutter, .26), phase, corners};
+    const pose = piece.pose;
+    piece.deform(pose.curl, pose.twist, pose.flutter, pose.phase, pose.corners);
+  }
+  function orderedPose(piece, workflow, card) {
+    const {mesh} = piece, initial = piece.pose ?? {curl:0, twist:0, flutter:0, phase:0, corners:[0,0,0,0]}, order = workflow.ordered, air = 1 - order;
+    const rx = mesh.rotation.x * air, ry = mesh.rotation.y * air;
+    const curl = initial.curl * air + Math.sin(card.move * Math.PI) * .015;
+    const twist = initial.twist * air, flutter = initial.flutter * air;
+    const corners = initial.corners.map(c => c * air);
+    const frustumWidth = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (18 - piece.depth) * camera.aspect;
+    const wantedScale = frustumWidth * card.pixelWidth / innerWidth / piece.width;
+    // A larger, flatter card must still fit its permanent physical depth lane.
+    const unitHalf = paperDepthHalf({width: piece.width, height: piece.height, maxScale: 1,
+      tilt: Math.max(Math.abs(rx), Math.abs(ry)), maxCurl: Math.abs(curl), maxTwist: Math.abs(twist),
+      maxCorner: Math.max(...corners.map(Math.abs)), maxFlutter: flutter});
+    mesh.scale.setScalar(Math.min(mix(mesh.scale.x, wantedScale, order), piece.depthHalf / unitHalf));
+    atScreen(card.x, card.y, piece.depth);
+    mesh.position.x = mix(mesh.position.x, point.x, order);
+    mesh.position.y = mix(mesh.position.y, point.y, order);
+    mesh.position.z = piece.depth;
+    mesh.rotation.set(rx, ry, mix(mesh.rotation.z, card.rotation, order), 'YXZ');
+    piece.deform(curl, twist, flutter, initial.phase, corners);
   }
   function falling(piece, p, start, duration, anchor, rotation, scale, curl, idle, strength = 1) {
     piece.start = start; const t = clamp((p - start) / duration); piece.spawnProgress = t; piece.mesh.visible = p > start;
@@ -144,11 +180,19 @@ export async function createPaperSection(journey) {
     }
     piece.mesh.position.y += f.y * (entryY - piece.mesh.position.y);
   }
-  function draw(p, seconds) {
+  function draw(p, seconds, resolutionProgress) {
     breezeClock = capture || reducedQuery.matches ? 0 : seconds * .72;
     const idle = capture || reducedQuery.matches ? 0 : Math.sin(seconds * .45) * .035;
     const timing = paperTiming(height), dense = smooth(timing.group, timing.grouped, p);
-    copyElement.style.setProperty('--paper-copy-reveal', smooth(.85, .98, dense).toFixed(4));
+    const workflow = workflowState(resolutionProgress, pieces.length);
+    key.shadow.normalBias = mix(.015, .08, workflow.ordered);
+    copyElement.style.setProperty('--paper-copy-reveal', (smooth(.85, .98, dense) * (1 - smooth(0, .12, resolutionProgress))).toFixed(4));
+    workflowElement.style.setProperty('--workflow-reveal', workflow.reveal.toFixed(4));
+    pendingCount.textContent = workflow.pending;
+    doneCount.textContent = workflow.completed;
+    workflowTotal.textContent = `${workflow.completed} / ${pieces.length}`;
+    workflowStatus.textContent = workflow.ordered < 1 ? 'Ordenando el trabajo' : workflow.pending ? 'Resolviendo uno a uno' : 'Todo completado';
+    workflowFill.style.width = `${workflow.fraction * 100}%`;
     const noteExit = smooth(timing.several, timing.many + timing.manySpread, p);
     const letterExit = smooth(timing.many, timing.group, p);
     const anchors = portrait ? [[-.24,.61],[.30,.29],[.05,-.35],[-.24,-.05],[.30,-.65]] : [[-.28,.51],[.47,.29],[.10,-.59],[-.32,-.17],[.49,-.24]];
@@ -166,13 +210,19 @@ export async function createPaperSection(journey) {
       const y = isMessage ? -.08 : isLetter ? .18 : Math.sin(piece.phase * 3.7) * .40;
       const finalScale = piece.maxScale * (isMessage ? (portrait ? .32 : .45) : isLetter ? (portrait ? .52 : .66) : field.includes(piece) ? .85 : (portrait ? .78 : .90));
       const position = [mix(anchor[0], x, dense), mix(anchor[1], y, dense) + idle * (1 - dense) * Math.sin(piece.phase)];
-      falling(piece, p, start, duration, position, rotation.map((r, i) => mix(r, i === 2 ? Math.sin(piece.phase) * .25 : r * .55, dense)), mix(scale, finalScale, dense), curl, idle, strength);
+      if (workflow.ordered < 1) falling(piece, p, start, duration, position, rotation.map((r, i) => mix(r, i === 2 ? Math.sin(piece.phase) * .25 : r * .55, dense)), mix(scale, finalScale, dense), curl, idle, strength);
+      else {piece.mesh.visible = true; piece.start = start; piece.spawnProgress = 1;}
+      const card = cardWorkflow(workflow, piece.workflowIndex, pieces.length, innerWidth, innerHeight, portrait, piece.width / piece.height);
+      if (workflow.ordered > 0) orderedPose(piece, workflow, card);
+      piece.setCompleted(card.done);
+      piece.completed = card.done;
+      piece.travel = card.travel;
     }
     camera.updateMatrixWorld();
     const lightState = cursorSurface.update(camera, inputState.pointer, pieces.map(piece => piece.mesh), !inputState.hovering, frameDelta);
     cursorLight.intensity *= .028;
     renderer.info.autoReset = false; renderer.info.reset(); renderer.shadowMap.needsUpdate = true; composer.render();
-    lastState = {progress: p, visibleItems: pieces.filter(i => i.mesh.visible).length, groupProgress: dense, secondEntryPixels: timing.several * height, lastEntryPixels: (timing.many + timing.manySpread) * height, lastFallEndPixels: (timing.many + timing.manySpread + timing.manyDuration) * height, groupingPixels: timing.group * height, scrollRange: height, glass: 0, drawCalls: renderer.info.render.calls, geometries: renderer.info.memory.geometries, reducedMotion: reducedQuery.matches,
+    lastState = {progress: p, resolution: workflow, visibleItems: pieces.filter(i => i.mesh.visible).length, groupProgress: dense, secondEntryPixels: timing.several * height, lastEntryPixels: (timing.many + timing.manySpread) * height, lastFallEndPixels: (timing.many + timing.manySpread + timing.manyDuration) * height, groupingPixels: timing.group * height, scrollRange: height, glass: 0, drawCalls: renderer.info.render.calls, geometries: renderer.info.memory.geometries, reducedMotion: reducedQuery.matches,
       hero: {position: note.mesh.position.toArray(), rotation: note.mesh.rotation.toArray().slice(0,3), bend: note.mesh.geometry.attributes.position.array[2]}, letterCorners: [0,30,992,1022].map(i => letter.mesh.geometry.attributes.position.array[i*3+2]), version: 4, depthOfField: false, parallax: {x: inputState.x, y: inputState.y, gyro: inputState.orientation}, cursorLight: {...lightState, intensity: cursorLight.intensity}, contentCount: new Set(pieces.map(i => i.subject)).size, totalItems: pieces.length};
   }
   const review = {
@@ -187,7 +237,7 @@ export async function createPaperSection(journey) {
           const v = new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).project(camera);
           screen.left = Math.min(screen.left, v.x); screen.right = Math.max(screen.right, v.x); screen.bottom = Math.min(screen.bottom, v.y); screen.top = Math.max(screen.top, v.y);
         }
-        return {subject: piece.subject, visible: piece.mesh.visible, depth: piece.depth, half: piece.depthHalf, min: box.min.toArray(), max: box.max.toArray(), screen};
+        return {subject: piece.subject, visible: piece.mesh.visible, completed: piece.completed, travel: piece.travel, index: piece.workflowIndex, depth: piece.depth, half: piece.depthHalf, min: box.min.toArray(), max: box.max.toArray(), screen};
       });
     },
     incoming() {
@@ -226,16 +276,19 @@ export async function createPaperSection(journey) {
       camera.position.set(inputState.x * .50, inputState.y * .35, 18);
       camera.lookAt(inputState.x * .09, inputState.y * .055, 0);
       const next = reducedQuery.matches ? target : mix(progress, target, 1 - Math.exp(-dt * 9));
-      const moving = Math.abs(next - progress) > .000015;
+      const nextWorkflow = reducedQuery.matches ? workflowTarget : mix(workflowProgress, workflowTarget, 1 - Math.exp(-dt * 9));
+      const moving = Math.abs(next - progress) > .000015 || Math.abs(nextWorkflow - workflowProgress) > .000015;
       progress = Math.abs(next - target) < .00001 ? target : next;
-      if (force || moving || (!reducedQuery.matches && !capture && progress > .015)) {
-        const before = performance.now(); draw(progress, elapsed); force = false;
+      workflowProgress = Math.abs(nextWorkflow - workflowTarget) < .00001 ? workflowTarget : nextWorkflow;
+      const cameraMoving = lastState && (Math.abs(lastState.parallax.x - inputState.x) > .0005 || Math.abs(lastState.parallax.y - inputState.y) > .0005);
+      if (force || moving || cameraMoving || (!reducedQuery.matches && !capture && progress > .015 && workflowProgress < .30)) {
+        const before = performance.now(); draw(progress, elapsed, workflowProgress); force = false;
         frames++; totalFrameTime += performance.now() - before;
         lastState.averageCpuMs = totalFrameTime / frames;
       }
     },
     resize,
-    getState: () => ({...lastState, active, firstSubject: note.subject, firstKind: note.kind, firstEntryPixels: note.start * height}),
+    getState: () => ({...lastState, active, targetProgress: target, resolutionTarget: workflowTarget, firstSubject: note.subject, firstKind: note.kind, firstEntryPixels: note.start * height}),
     getReview: () => review,
     dispose() {
       if (disposed) return; disposed = true; input.dispose();
@@ -243,7 +296,7 @@ export async function createPaperSection(journey) {
       canvas.removeEventListener('webglcontextlost', contextLost);
       canvas.removeEventListener('webglcontextrestored', contextRestored);
       const textures = new Set();
-      for (const piece of pieces) {piece.mesh.geometry.dispose(); textures.add(piece.mesh.material.map); piece.mesh.material.dispose();}
+      for (const piece of pieces) {piece.mesh.geometry.dispose(); piece.textures().forEach(texture => textures.add(texture)); piece.mesh.material.dispose();}
       for (const texture of textures) texture.dispose();
       grain.dispose(); scene.background.dispose(); environment.dispose(); composer.dispose(); renderer.dispose();
     },

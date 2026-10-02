@@ -125,7 +125,12 @@ function tile(ctx, kind, x = 64, y = 56, size = 112) {
   box(ctx, x, y, size, size, size * .22, tint[kind]);
   icon(ctx, kind, x + size * .20, y + size * .20, size * .60);
 }
-function dots(ctx, y = 83) {
+function dots(ctx, y = 83, resolved = false) {
+  if (resolved) {
+    box(ctx, 907, y - 30, 60, 60, 30, '#cce9d9');
+    icon(ctx, 'checks', 919, y - 18, 36, '#237856');
+    return;
+  }
   ctx.fillStyle = '#456d8a';
   for (const x of [919, 937, 955]) {ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill();}
 }
@@ -134,7 +139,7 @@ function avatar(ctx, initials, x, y, size = 78) {
   textBlock(ctx, initials, {x, y: y + 5, width: size, height: size - 10, maxSize: size * .38, minSize: 24, weight: 600, color: '#527998', align: 'center', maxLines: 1});
 }
 function badge(ctx, text, x, y, width = 210, tone = 'red') {
-  const colors = tone === 'blue' ? ['#e0efff','#317bbb'] : tone === 'purple' ? ['#eee7ff','#7756bf'] : ['#fbe3e8','#b63349'];
+  const colors = tone === 'green' ? ['#dcefe4','#237856'] : tone === 'blue' ? ['#e0efff','#317bbb'] : tone === 'purple' ? ['#eee7ff','#7756bf'] : ['#fbe3e8','#b63349'];
   box(ctx, x, y, width, 64, 16, colors[0]);
   textBlock(ctx, text, {x: x + 16, y: y + 7, width: width - 32, height: 48, maxSize: 36, minSize: 26, weight: 500, color: colors[1], maxLines: 1});
 }
@@ -152,111 +157,114 @@ function attachment(ctx, filename, x, y, width, height, size = 36) {
   textBlock(ctx, filename, {x: x + 92, y: y + 12, width: width - 112, height: height * .43, maxSize: size, minSize: 28, color: MUTED, maxLines: 1});
   textBlock(ctx, '2,4 MB', {x: x + 92, y: y + height * .54, width: width - 112, height: height * .30, maxSize: size * .84, minSize: 24, color: MUTED, maxLines: 1});
 }
-function emailCard(ctx, variant, subject, long = false) {
+function emailCard(ctx, variant, subject, long = false, resolved = false) {
   tile(ctx, 'email', 64, 56, long ? 144 : 112);
   const left = long ? 244 : 208;
   textBlock(ctx, ['Laura Martínez','Equipo de operaciones','Dirección financiera','Coordinación del proyecto'][variant % 4], {x: left, y: 58, width: 520, height: 68, maxSize: long ? 48 : 44, minSize: 30, weight: 600, maxLines: 1});
   textBlock(ctx, 'para Operaciones', {x: left, y: 133, width: 570, height: 48, maxSize: 36, minSize: 28, color: MUTED, maxLines: 1});
   ctx.strokeStyle = MUTED; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(left + 320, 150); ctx.lineTo(left + 330, 160); ctx.lineTo(left + 340, 150); ctx.stroke();
   textBlock(ctx, '09:24', {x: 790, y: 64, width: 148, height: 46, maxSize: 30, minSize: 26, color: MUTED, align: 'right', maxLines: 1});
-  dots(ctx, 164);
+  dots(ctx, 164, resolved);
   if (long) {
     textBlock(ctx, subject, {x: 64, y: 259, width: 894, height: 166, maxSize: 84, minSize: 44, weight: 600, maxLines: 2});
-    badge(ctx, 'Pendiente', 64, 450, 218);
+    badge(ctx, resolved ? 'Hecho ✓' : 'Pendiente', 64, 450, 218, resolved ? 'green' : 'red');
     textBlock(ctx, 'Hola,', {x: 64, y: 555, width: 894, height: 65, maxSize: 48, minSize: 38, maxLines: 1});
-    textBlock(ctx, ['Adjunto la propuesta para su revisión.\nQuedamos a la espera de los comentarios.','Comparto los cambios para validarlos.\n¿Podemos revisarlo durante esta semana?','Remito el documento actualizado.\nLa última versión incluye las observaciones.','Necesitamos confirmar los siguientes pasos.\nQuedo pendiente de vuestra respuesta.'][variant % 4], {x: 64, y: 642, width: 894, height: 205, maxSize: 50, minSize: 36, maxLines: 4});
+    textBlock(ctx, resolved ? 'La revisión está completada.\nLa versión final ya está disponible.' : ['Adjunto la propuesta para su revisión.\nQuedamos a la espera de los comentarios.','Comparto los cambios para validarlos.\n¿Podemos revisarlo durante esta semana?','Remito el documento actualizado.\nLa última versión incluye las observaciones.','Necesitamos confirmar los siguientes pasos.\nQuedo pendiente de vuestra respuesta.'][variant % 4], {x: 64, y: 642, width: 894, height: 205, maxSize: 50, minSize: 36, maxLines: 4});
     textBlock(ctx, 'Un saludo.', {x: 64, y: 871, width: 894, height: 60, maxSize: 46, minSize: 36, maxLines: 1});
     attachment(ctx, ['Propuesta.pdf','Detalle_operación.pdf','Borrador_v02.pdf','Resumen_solicitud.pdf'][variant % 4], 64, 985, 894, 135, 46);
   } else {
     textBlock(ctx, subject, {x: 64, y: 216, width: 672, height: 94, maxSize: 58, minSize: 34, weight: 600, maxLines: 2});
-    badge(ctx, 'Pendiente', 762, 232, 196);
-    textBlock(ctx, ['¿Puedes enviarlo en cuanto lo tengas?\nLo necesitamos para la reunión de esta tarde.','Necesitamos revisar los cambios.\nQuedo pendiente de vuestra respuesta.','Adjunto la información actualizada.\nFalta confirmar la última versión.'][variant % 3], {x: 64, y: 330, width: 894, height: 120, maxSize: 42, minSize: 30, maxLines: 3});
+    badge(ctx, resolved ? 'Hecho ✓' : 'Pendiente', 762, 232, 196, resolved ? 'green' : 'red');
+    textBlock(ctx, resolved ? 'Documento revisado y enviado.\nTodo listo para continuar.' : ['¿Puedes enviarlo en cuanto lo tengas?\nLo necesitamos para la reunión de esta tarde.','Necesitamos revisar los cambios.\nQuedo pendiente de vuestra respuesta.','Adjunto la información actualizada.\nFalta confirmar la última versión.'][variant % 3], {x: 64, y: 330, width: 894, height: 120, maxSize: 42, minSize: 30, maxLines: 3});
     attachment(ctx, 'Informe_final_v3.pdf', 64, 485, 636, 104);
   }
 }
-function messageCard(ctx, variant, subject, content) {
+function messageCard(ctx, variant, subject, content, resolved = false) {
   avatar(ctx, variant % 2 ? 'LM' : 'CR', 64, 60, 100);
   textBlock(ctx, variant % 2 ? 'Laura Martínez' : 'Carlos', {x: 200, y: 60, width: 430, height: 62, maxSize: 48, minSize: 32, weight: 600, maxLines: 1});
   textBlock(ctx, 'Equipo proyecto', {x: 200, y: 132, width: 600, height: 50, maxSize: 36, minSize: 28, color: MUTED, maxLines: 1});
-  textBlock(ctx, '11:17', {x: 664, y: 72, width: 172, height: 44, maxSize: 29, minSize: 25, color: MUTED, maxLines: 1}); dots(ctx);
+  textBlock(ctx, '11:17', {x: 664, y: 72, width: 172, height: 44, maxSize: 29, minSize: 25, color: MUTED, maxLines: 1}); dots(ctx, 83, resolved);
   box(ctx, 64, 220, 792, 190, 34, '#ffffff');
   textBlock(ctx, !content && variant === 0 ? subject + '\n¿Alguien la tiene?' : subject, {x: 96, y: 236, width: 728, height: 157, maxSize: 48, minSize: 32, maxLines: 3});
   box(ctx, 885, 280, 70, 70, 35, '#f3f8fe');
   ctx.fillStyle = MUTED; for (const x of [906, 920, 934]) {ctx.beginPath(); ctx.arc(x, 315, 3, 0, Math.PI * 2); ctx.fill();}
-  box(ctx, 286, 445, 672, 120, 34, '#d9edff');
-  textBlock(ctx, 'La estoy revisando, te aviso.', {x: 318, y: 454, width: 603, height: 59, maxSize: 36, minSize: 29, maxLines: 1});
+  box(ctx, 286, 445, 672, 120, 34, resolved ? '#dcefe4' : '#d9edff');
+  textBlock(ctx, resolved ? 'Resuelto. Ya puedes continuar.' : 'La estoy revisando, te aviso.', {x: 318, y: 454, width: 603, height: 59, maxSize: 36, minSize: 29, maxLines: 1});
   textBlock(ctx, '11:20', {x: 730, y: 518, width: 142, height: 30, maxSize: 25, minSize: 22, color: '#73a2c1', align: 'right', maxLines: 1});
-  icon(ctx, 'checks', 897, 523, 29, '#579bc4');
+  icon(ctx, 'checks', 897, 523, 29, resolved ? '#237856' : '#579bc4');
 }
-function documentCard(ctx, variant, subject) {
-  tile(ctx, 'document', 64, 67, 156); dots(ctx);
+function documentCard(ctx, variant, subject, resolved = false) {
+  tile(ctx, 'document', 64, 67, 156); dots(ctx, 83, resolved);
   textBlock(ctx, 'Documento', {x: 258, y: 77, width: 608, height: 75, maxSize: 60, minSize: 42, weight: 600, maxLines: 1});
   textBlock(ctx, subject, {x: 258, y: 169, width: 688, height: 65, maxSize: 46, minSize: 28, color: MUTED, maxLines: 1});
   textBlock(ctx, `${(3.1 + variant * .3).toFixed(1).replace('.', ',')} MB`, {x: 258, y: 248, width: 688, height: 55, maxSize: 40, minSize: 32, color: MUTED, maxLines: 1});
-  footer(ctx, 'Última versión · Legal');
+  footer(ctx, resolved ? 'Versión final · Archivado' : 'Última versión · Legal', 'clock', resolved ? 'Hecho ✓' : '');
 }
-function summaryCard(ctx, variant, subject) {
-  tile(ctx, 'summary', 64, 46, 80); dots(ctx, 74);
+function summaryCard(ctx, variant, subject, resolved = false) {
+  tile(ctx, 'summary', 64, 46, 80); dots(ctx, 74, resolved);
   textBlock(ctx, subject, {x: 170, y: 54, width: 706, height: 64, maxSize: 48, minSize: 32, weight: 600, maxLines: 1});
   const rows = [['document','Documentación',3],['ticket','Incidencias',5],['approval','Aprobaciones',2]];
   rows.forEach(([kind, label, count], i) => {
     const y = 151 + i * 139;
     box(ctx, 64, y, 894, 118, 25, '#f6faff', '#e1ebf4'); tile(ctx, kind, 84, y + 26, 66);
     textBlock(ctx, label, {x: 179, y: y + 27, width: 562, height: 62, maxSize: 42, minSize: 32, maxLines: 1});
-    box(ctx, 780, y + 21, 76, 76, 38, tint[kind]);
-    textBlock(ctx, String(count + variant), {x: 780, y: y + 25, width: 76, height: 65, maxSize: 37, minSize: 30, color: palette[kind], align: 'center', maxLines: 1});
+    box(ctx, 780, y + 21, 76, 76, 38, resolved ? '#dcefe4' : tint[kind]);
+    textBlock(ctx, resolved ? '✓' : String(count + variant), {x: 780, y: y + 25, width: 76, height: 65, maxSize: 37, minSize: 30, color: resolved ? '#237856' : palette[kind], align: 'center', maxLines: 1});
     ctx.strokeStyle = MUTED; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(903, y + 47); ctx.lineTo(916,y + 59); ctx.lineTo(903,y + 71); ctx.stroke();
   });
 }
-function workCard(ctx, kind, variant, subject) {
-  tile(ctx, kind); dots(ctx);
+function workCard(ctx, kind, variant, subject, resolved = false) {
+  tile(ctx, kind); dots(ctx, 83, resolved);
   const request = kind === 'task';
   textBlock(ctx, subject, {x: 208, y: 57, width: 664, height: request ? 68 : 93, maxSize: 52, minSize: 32, weight: 600, maxLines: request ? 1 : 2});
   if (request) {
     textBlock(ctx, 'Área usuaria', {x: 208, y: 136, width: 470, height: 51, maxSize: 38, minSize: 30, color: MUTED, maxLines: 1});
-    badge(ctx, 'Pendiente', 750, 184, 208);
+    badge(ctx, resolved ? 'Hecho ✓' : 'Pendiente', 750, 184, 208, resolved ? 'green' : 'red');
   } else {
-    badge(ctx, kind === 'test' ? 'Failed' : kind === 'ticket' ? 'Reopened' : ['qa','deploy'].includes(kind) ? 'Blocked' : 'Pendiente', 208, 168, kind === 'test' ? 160 : 218);
+    badge(ctx, resolved ? 'Hecho ✓' : kind === 'test' ? 'Failed' : kind === 'ticket' ? 'Reopened' : ['qa','deploy'].includes(kind) ? 'Blocked' : 'Pendiente', 208, 168, kind === 'test' ? 160 : 218, resolved ? 'green' : 'red');
     if (kind === 'ticket' || kind === 'test') badge(ctx, kind === 'ticket' ? 'Bug' : 'Test', kind === 'ticket' ? 449 : 392, 168, 140, 'blue');
     if (kind === 'ticket') textBlock(ctx, `DEV-${4821 + variant}`, {x: 749, y: 173, width: 208, height: 51, maxSize: 30, minSize: 25, color: MUTED, align: 'right', maxLines: 1});
   }
   const body = {
     ticket: 'El comportamiento no coincide\ncon el esperado en producción.', qa: 'La build aún no está disponible\npara pruebas.', test: 'La pipeline vuelve a fallar\nsin causa clara.', deploy: 'Falta validación final y revisión\nde riesgos.', task: 'Falta validación para continuar.', call: 'Confirmar la fecha de entrega.\nPendiente de respuesta del proveedor.', approval: 'Falta la firma para continuar.\nRequiere aprobación de Dirección.',
   };
-  textBlock(ctx, body[kind], {x: 64, y: 280, width: 894, height: 145, maxSize: 47, minSize: 34, maxLines: 3});
+  const completedBody = {ticket: 'Incidencia resuelta.\nFuncionamiento verificado en producción.', qa: 'Validación completada.\nLa build está lista para continuar.', test: 'Pruebas superadas.\nLa pipeline termina correctamente.', deploy: 'Validación final completada.\nDespliegue realizado correctamente.', task: 'Solicitud validada.\nYa se puede continuar.', call: 'Fecha de entrega confirmada.\nRespuesta del proveedor registrada.', approval: 'Firma recibida.\nAprobación de Dirección registrada.'};
+  textBlock(ctx, resolved ? completedBody[kind] : body[kind], {x: 64, y: 280, width: 894, height: 145, maxSize: 47, minSize: 34, maxLines: 3});
   if (kind === 'ticket' || kind === 'qa' || kind === 'approval') {
     divider(ctx); avatar(ctx, 'MR', 64, 496, 74);
     textBlock(ctx, kind === 'qa' ? 'QA · Marta' : kind === 'approval' ? 'Dirección · Marta Ruiz' : 'Asignado a: Marta Ruiz', {x: 164, y: 504, width: 556, height: 54, maxSize: 36, minSize: 29, color: MUTED, maxLines: 1});
     if (kind === 'ticket') {icon(ctx, 'calendar', 768, 507, 45, MUTED); textBlock(ctx, 'Hoy', {x: 833, y: 503, width: 121, height: 55, maxSize: 34, minSize: 28, color: MUTED, maxLines: 1});}
   } else footer(ctx, kind === 'test' ? `CI-${208 + variant}` : kind === 'deploy' ? 'Release · Hoy' : kind === 'call' ? 'Hoy · 11:30' : 'Solicitado por Laura Martínez', kind === 'test' ? 'branch' : kind === 'deploy' ? 'settings' : kind === 'task' ? 'people' : 'clock', kind === 'task' ? 'Hoy, 09:24' : '');
 }
-export function surfaceTexture(kind, variant = 0, resolution = 1024, content = null) {
-  const key = `${kind}-${variant}-${resolution}-${content?.message ?? ''}`;
+export function surfaceTexture(kind, variant = 0, resolution = 1024, content = null, resolved = false) {
+  const key = `${kind}-${variant}-${resolution}-${content?.message ?? ''}-${resolved}`;
   if (cache.has(key)) return cache.get(key);
   const w = 1024, h = kind === 'letter' ? 1180 : kind === 'note' ? 1080 : 630;
   const c = document.createElement('canvas'); c.width = resolution; c.height = Math.round(h * resolution / w);
   const ctx = c.getContext('2d'); ctx.scale(resolution / w, resolution / w);
   const bg = ctx.createLinearGradient(0, 0, w, h);
   if (kind === 'note') {bg.addColorStop(0, '#faf8f0'); bg.addColorStop(.7, '#f9f6ed'); bg.addColorStop(1, '#efeade');}
-  else {bg.addColorStop(0, '#fcfdff'); bg.addColorStop(1, '#f0f7ff');}
+  else {bg.addColorStop(0, '#fcfdff'); bg.addColorStop(1, resolved ? '#e8f5ee' : '#f0f7ff');}
   ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-  if (kind !== 'note') {rounded(ctx, 5, 5, w - 10, h - 10, Math.min(w, h) * .07); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4; ctx.stroke();}
+  if (kind !== 'note') {rounded(ctx, 5, 5, w - 10, h - 10, Math.min(w, h) * .07); ctx.strokeStyle = resolved ? '#b2d9c3' : '#ffffff'; ctx.lineWidth = 4; ctx.stroke();}
   grain(ctx, c.width, c.height, kind === 'note' ? 3 : 1.5, 408 + variant);
   let subject;
   if (kind === 'note') {
     const phrases = noteContent[variant] ?? ['Revisar', `el punto ${variant + 1}.`]; subject = phrases.join(' ');
     textBlock(ctx, subject, {x: 100, y: 157, width: 824, height: 500, maxSize: 119, minSize: 72, family: 'Paper Hand', weight: 500, leading: 1.05, maxLines: 4});
     ctx.strokeStyle = '#2c4963'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(112,733); ctx.quadraticCurveTo(241,709,368,707); ctx.stroke();
-    textBlock(ctx, variant === 1 ? 'Como cada mes.' : ['Sigue pendiente.','Por confirmar.','Lo necesitamos hoy.'][variant % 3], {x: 108, y: 800, width: 813, height: 120, maxSize: 76, minSize: 52, family: 'Paper Hand', color: '#5c768d', maxLines: 1});
+    textBlock(ctx, resolved ? 'Hecho ✓' : variant === 1 ? 'Como cada mes.' : ['Sigue pendiente.','Por confirmar.','Lo necesitamos hoy.'][variant % 3], {x: 108, y: 800, width: 813, height: 120, maxSize: 76, minSize: 52, family: 'Paper Hand', color: resolved ? '#237856' : '#5c768d', maxLines: 1});
   } else if (kind === 'letter') {
-    subject = letterContent[variant] ?? `Revisión del expediente ${variant + 1}`; emailCard(ctx, variant, subject, true);
+    subject = letterContent[variant] ?? `Revisión del expediente ${variant + 1}`; emailCard(ctx, variant, subject, true, resolved);
   } else {
     subject = content?.message ?? channelContent[kind]?.[variant] ?? `${kind} ${variant + 1}`;
-    if (kind === 'email') emailCard(ctx, variant, subject);
-    else if (kind === 'chat') messageCard(ctx, variant, subject, content);
-    else if (kind === 'document') documentCard(ctx, variant, subject);
-    else if (kind === 'summary') summaryCard(ctx, variant, subject);
-    else workCard(ctx, kind, variant, subject);
+    const doneTitles = {qa: 'Validación completada', test: 'Pruebas superadas', deploy: 'Despliegue completado', summary: 'Revisión completada'};
+    const title = resolved ? doneTitles[kind] ?? (variant === 0 && kind === 'ticket' ? 'Bug resuelto tras validación' : variant === 0 && kind === 'task' ? 'Solicitud de alta aprobada' : variant === 0 && kind === 'email' ? 'Adjunto final enviado' : subject) : subject;
+    if (kind === 'email') emailCard(ctx, variant, title, false, resolved);
+    else if (kind === 'chat') messageCard(ctx, variant, subject, content, resolved);
+    else if (kind === 'document') documentCard(ctx, variant, subject, resolved);
+    else if (kind === 'summary') summaryCard(ctx, variant, title, resolved);
+    else workCard(ctx, kind, variant, title, resolved);
   }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.userData.subject = subject; t.userData.kind = kind; cache.set(key, t); return t;
 }
