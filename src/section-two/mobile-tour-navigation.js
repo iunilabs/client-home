@@ -1,21 +1,22 @@
 import {mix} from '../timeline.js';
 import {mobileTourRoute, mobileTourBuildings, mobileTourHub, mobileTourTiming} from './mobile-tour-config.js';
-import {tourEase, mobileTourCamera, mobileBuildingView, mobileCameraAt} from './mobile-tour.js';
+import {tourEase, mobileTourCamera, mobileBuildingView, mobileCameraAt, mobileTravelProfile} from './mobile-tour.js';
 
 export function promoteMobileCard(order, id) {
   return [...order.filter(item => item !== id), id];
 }
 
-function blendCamera(from, to, t, layout) {
+function blendCamera(from, to, t, layout, cruiseZoom) {
+  const zoom = mix(from.zoom, to.zoom, t);
   return mobileCameraAt({focusX: mix(from.focusX, to.focusX, t), focusY: mix(from.focusY, to.focusY, t),
-    zoom: mix(from.zoom, to.zoom, t) * (1 - .10 * Math.sin(Math.PI * t) ** 2),
+    zoom: mix(zoom, cruiseZoom, Math.sin(Math.PI * t) ** 2),
     targetY: mix(from.targetY, to.targetY, t)}, layout);
 }
 
 export function createMobileTourNavigation({route = mobileTourRoute, onNavigate = () => {}} = {}) {
   let manualId = null;
   let active = false, cursor = -1, current = mobileTourHub, transition = null;
-  let camera = null, visited = [], geometry, suspended = false, released = 0, lastScroll = null, reduced = false;
+  let camera = null, visited = [], geometry, cameraLayout, suspended = false, released = 0, lastScroll = null, reduced = false;
   const stopFor = id => id === 'puntoes' ? mobileTourHub : {id, ...mobileTourBuildings[id]};
   const itinerary = () => manualId ? [stopFor(manualId), stopFor('collaborate')] : route;
   const snapshot = () => ({active, currentId: current.id, guidedCursor: cursor, manualId,
@@ -39,7 +40,11 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
     current = stopFor(id);
     const repeated = visited.includes(id);
     if (id !== 'puntoes') visited = promoteMobileCard(visited, id);
-    transition = {from: camera, started: now, previous, mode: repeated ? 'fade' : 'slide', duration: reduced ? 100 : mobileTourTiming.logoTravel};
+    const destination = cameraLayout && mobileBuildingView(current, cameraLayout, current.id === 'puntoes');
+    const profile = camera && destination ? mobileTravelProfile(camera, destination, cameraLayout) :
+      {duration: mobileTourTiming.logoTravel, cruiseZoom: 1.5};
+    transition = {from: camera, started: now, previous, mode: repeated ? 'fade' : 'slide',
+      ...profile, duration: reduced ? 100 : profile.duration};
   }
   function canRelease(direction) {
     return active && !transition && (direction > 0 ? cursor === itinerary().length - 1 : cursor < 0);
@@ -75,7 +80,7 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
       travel(cursor < 0 ? 'puntoes' : itinerary()[cursor].id, now); return true;
     },
     update(state, {scroll, now, layout, geometry: bounds, reduced: preference = false}) {
-      geometry = bounds; reduced = preference;
+      geometry = bounds; cameraLayout = layout; reduced = preference;
       if (suspended && (scroll < bounds.start || scroll >= bounds.revealed + bounds.viewport)) suspended = false;
       // Arrival from outside can already have compositor inertia. Capture it
       // before that same gesture gets permission to visit a building.
@@ -94,11 +99,11 @@ export function createMobileTourNavigation({route = mobileTourRoute, onNavigate 
         if (transition && transition.from) {
           const elapsed = Math.max(0, now - transition.started);
           const t = tourEase(elapsed / transition.duration);
-          camera = blendCamera(transition.from, view, t, layout);
+          camera = blendCamera(transition.from, view, t, layout, transition.cruiseZoom);
           progress = reduced ? tourEase(elapsed / 100) : tourEase((elapsed - mobileTourTiming.logoCardFrom) /
             (mobileTourTiming.logoCardUntil - mobileTourTiming.logoCardFrom));
           outgoingId = transition.previous;
-          if (elapsed >= transition.duration) transition = null;
+          if (elapsed >= transition.duration) {camera = mobileCameraAt(view, layout); transition = null}
         } else {camera = mobileCameraAt(view, layout); transition = null}
       }
       const retreat = current.id === 'puntoes' ? 1 - progress : 1;

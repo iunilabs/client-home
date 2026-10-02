@@ -1,11 +1,25 @@
 import {clamp, mix, smooth} from '../timeline.js';
-import {mobileTourHub} from './mobile-tour-config.js';
+import {mobileTourHub, mobileTourTiming} from './mobile-tour-config.js';
 
 // Zero velocity and acceleration at both ends: depart gently, accelerate,
 // then brake into the building. Its card starts entering during the journey.
 export function tourEase(value) {
   const t = clamp(value);
   return t * t * t * (t * (6 * t - 15) + 10);
+}
+
+// Longer trips need time to read the intervening streets. Pull back during
+// the journey, then return to the exact existing building framing on arrival.
+export function mobileTravelProfile(from, to, {width, height, viewportWidth, viewportHeight}) {
+  const screens = Math.hypot((to.focusX - from.focusX) * width, (to.focusY - from.focusY) * height) *
+    Math.sqrt(from.zoom * to.zoom) / Math.hypot(viewportWidth, viewportHeight);
+  const pullback = Math.min(mobileTourTiming.maxPullback,
+    mobileTourTiming.cruisePullback + screens * mobileTourTiming.pullbackPerScreen);
+  return {
+    duration: Math.min(mobileTourTiming.maxTravel,
+      mobileTourTiming.logoTravel + screens * mobileTourTiming.travelPerScreen),
+    cruiseZoom: Math.max(1.5, Math.min(from.zoom, to.zoom) * (1 - pullback)),
+  };
 }
 
 // The itinerary owns a single document anchor. Only entrance and native exit

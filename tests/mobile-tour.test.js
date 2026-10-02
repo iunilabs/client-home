@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mobileTourRoute, mobileTourHub, mobileTourBuildings} from '../src/section-two/mobile-tour-config.js';
-import {mobileTourGeometry, mobileTourState, mobileTourCamera, mobileCardStack, tourEase} from '../src/section-two/mobile-tour.js';
+import {mobileTourRoute, mobileTourHub, mobileTourBuildings, mobileTourTiming} from '../src/section-two/mobile-tour-config.js';
+import {mobileTourGeometry, mobileTourState, mobileTourCamera, mobileCardStack, tourEase, mobileTravelProfile, mobileBuildingView, mobileCameraAt} from '../src/section-two/mobile-tour.js';
 import {createMobileTourNavigation, promoteMobileCard} from '../src/section-two/mobile-tour-navigation.js';
 
 import {createSwipeIntent, createWheelBurst} from '../src/section-two/mobile-tour-input.js';
 
 const geometry = mobileTourGeometry({top:5200,viewport:844});
 const width=844*941/1672*1.04, layout={width,height:width*1672/941,viewportWidth:390,viewportHeight:844};
+const leg = mobileTourTiming.maxTravel + 100;
 const state = scroll => mobileTourState({scroll,geometry});
 function setup(route = mobileTourRoute) {
   const writes = [];
@@ -46,7 +47,7 @@ test('camera is smooth while document stays at one anchor; transitions reject mo
   const {nav,frame,writes}=setup();
   const hub=frame(0); assert.equal(hub.current.id,'puntoes');
   assert.ok(nav.step(1,{now:10})); assert.equal(nav.step(1,{now:20}),false);
-  const first=frame(10),middle=frame(350),last=frame(1400);
+  const first=frame(10),middle=frame(1100),last=frame(10+leg);
   assert.equal(first.camera.focusX,hub.camera.focusX);
   assert.ok(middle.camera.focusX!==hub.camera.focusX);
   assert.equal(last.current.id,'bbva'); assert.equal(last.entry.progress,1);
@@ -58,7 +59,7 @@ test('camera is smooth while document stays at one anchor; transitions reject mo
 
 test('final release does not write scroll; the next inverse crossing captures the last stop', () => {
   const {nav,frame,writes}=setup(); let time=0;
-  for(let i=0;i<mobileTourRoute.length;i++) {assert.ok(nav.step(1,{now:time}));time+=1400;frame(time)}
+  for(let i=0;i<mobileTourRoute.length;i++) {assert.ok(nav.step(1,{now:time}));time+=leg;frame(time)}
   const before=writes.length;
   assert.ok(nav.canRelease(1));assert.ok(nav.release(1));assert.equal(writes.length,before);
   assert.equal(nav.anchorScroll(geometry.revealed+100),geometry.revealed+100);
@@ -67,16 +68,16 @@ test('final release does not write scroll; the next inverse crossing captures th
 });
 
 test('manual Cepsa retains its camera and leaves only collaboration; recovery never duplicates a card', () => {
-  const {nav,frame}=setup(); nav.step(1,{now:0});frame(1400);
-  assert.ok(nav.select('cepsa',{now:1500})); const selected=frame(2900),held=frame(3900);
+  const {nav,frame}=setup(); nav.step(1,{now:0});frame(leg);
+  assert.ok(nav.select('cepsa',{now:leg+100})); const selected=frame(2*leg+100),held=frame(3*leg);
   assert.equal(selected.current.id,'cepsa');assert.deepEqual(held.camera,selected.camera);
   assert.equal(nav.getState().nextId,'collaborate');
-  nav.step(1,{now:4000}); const departure=frame(4000);
+  nav.step(1,{now:4*leg}); const departure=frame(4*leg);
   assert.equal(departure.camera.focusX,selected.camera.focusX);
-  assert.equal(frame(5400).current.id,'collaborate');
-  nav.select('bbva',{now:5500});const repeated=frame(5500);
+  assert.equal(frame(5*leg).current.id,'collaborate');
+  nav.select('bbva',{now:6*leg});const repeated=frame(6*leg);
   assert.equal(repeated.entry.mode,'fade');
-  const order=frame(6900).order;assert.deepEqual(order,['cepsa','collaborate','bbva']);
+  const order=frame(7*leg).order;assert.deepEqual(order,['cepsa','collaborate','bbva']);
   assert.equal(new Set(order).size,order.length);
   assert.deepEqual(promoteMobileCard(order,'cepsa'),['collaborate','bbva','cepsa']);
 });
@@ -85,49 +86,49 @@ test('each logo cancels all pending companies at the hub, any default stop and r
   for (const id of Object.keys(mobileTourBuildings).filter(id=>id!=='collaborate')) {
     for (const stage of [-1,0,1,2,3]) {
       const {nav,frame,writes}=setup();let now=0;
-      for (let i=0;i<=stage;i++) {nav.step(1,{now});now+=1400;frame(now)}
-      assert.ok(nav.select(id,{now}));now+=1400;frame(now);
+      for (let i=0;i<=stage;i++) {nav.step(1,{now});now+=leg;frame(now)}
+      assert.ok(nav.select(id,{now}));now+=leg;frame(now);
       assert.equal(nav.getState().currentId,id);assert.equal(nav.getState().nextId,'collaborate');
-      nav.step(1,{now});now+=1400;frame(now);
+      nav.step(1,{now});now+=leg;frame(now);
       assert.equal(nav.getState().currentId,'collaborate');assert.equal(nav.getState().previousId,id);
       // Reverse cannot revive any of the canceled default companies.
-      nav.step(-1,{now});now+=1400;frame(now);assert.equal(nav.getState().currentId,id);
-      nav.step(-1,{now});now+=1400;frame(now);assert.equal(nav.getState().currentId,'puntoes');
-      nav.step(1,{now});now+=1400;frame(now);assert.equal(nav.getState().currentId,id);
-      nav.step(1,{now});now+=1400;frame(now);assert.equal(nav.getState().currentId,'collaborate');
+      nav.step(-1,{now});now+=leg;frame(now);assert.equal(nav.getState().currentId,id);
+      nav.step(-1,{now});now+=leg;frame(now);assert.equal(nav.getState().currentId,'puntoes');
+      nav.step(1,{now});now+=leg;frame(now);assert.equal(nav.getState().currentId,id);
+      nav.step(1,{now});now+=leg;frame(now);assert.equal(nav.getState().currentId,'collaborate');
       const writesBefore=writes.length;
       assert.ok(nav.release(1));assert.equal(writes.length,writesBefore);
       frame(now+10,geometry.revealed+100);frame(now+20,geometry.revealed-10);
       assert.equal(nav.getState().manualId,id);assert.equal(nav.getState().previousId,id);
       // A logo chosen after returning still leaves only collaboration pending.
-      assert.ok(nav.select(id,{now:now+30}));now+=1500;frame(now);
+      assert.ok(nav.select(id,{now:now+30}));now+=leg;frame(now);
       assert.equal(nav.getState().currentId,id);assert.equal(nav.getState().nextId,'collaborate');
     }
   }
 });
 
 test('tapping BBVA already focused cancels default route, and changing logo replaces the choice', () => {
-  const {nav,frame}=setup();nav.step(1,{now:0});const before=frame(1400);
-  assert.ok(nav.select('bbva',{now:1500}));const same=frame(1500);
+  const {nav,frame}=setup();nav.step(1,{now:0});const before=frame(leg);
+  assert.ok(nav.select('bbva',{now:leg+100}));const same=frame(leg+100);
   assert.deepEqual(same.camera,before.camera);assert.equal(same.moving,false);
   assert.equal(nav.getState().nextId,'collaborate');
-  nav.select('cepsa',{now:1600});frame(3000);
-  nav.select('naturgy',{now:3100});frame(4500);
+  nav.select('cepsa',{now:2*leg});frame(3*leg);
+  nav.select('naturgy',{now:3*leg+100});frame(4*leg+100);
   assert.equal(nav.getState().manualId,'naturgy');assert.equal(nav.getState().nextId,'collaborate');
-  nav.step(1,{now:4600});frame(6000);assert.equal(nav.getState().currentId,'collaborate');
-  nav.step(-1,{now:6100});frame(7500);assert.equal(nav.getState().currentId,'naturgy');
-  nav.reset();frame(7600);assert.equal(nav.getState().manualId,null);assert.equal(nav.getState().nextId,'bbva');
-  nav.step(1,{now:7700});frame(9100);assert.equal(nav.getState().nextId,'naturgy');
+  nav.step(1,{now:5*leg});frame(6*leg);assert.equal(nav.getState().currentId,'collaborate');
+  nav.step(-1,{now:7*leg});frame(8*leg);assert.equal(nav.getState().currentId,'naturgy');
+  nav.reset();frame(9*leg);assert.equal(nav.getState().manualId,null);assert.equal(nav.getState().nextId,'bbva');
+  nav.step(1,{now:10*leg});frame(11*leg);assert.equal(nav.getState().nextId,'naturgy');
 });
 
 test('same-logo choice during travel still cancels companies, and a new forward entry resets the override', () => {
   const {nav,frame}=setup();nav.step(1,{now:0});frame(300);
   assert.ok(nav.select('bbva',{now:350}));assert.equal(nav.getState().manualId,'bbva');
   assert.equal(nav.getState().nextId,'collaborate');assert.equal(nav.step(1,{now:400}),false);
-  frame(1400);nav.step(1,{now:1500});frame(2900);assert.equal(nav.getState().currentId,'collaborate');
-  nav.step(-1,{now:3000});frame(4400);nav.step(-1,{now:4500});frame(5900);
-  assert.ok(nav.release(-1));frame(6000,geometry.revealed-100);
-  frame(6100,geometry.revealed+10);
+  frame(leg);nav.step(1,{now:leg+100});frame(2*leg+100);assert.equal(nav.getState().currentId,'collaborate');
+  nav.step(-1,{now:3*leg});frame(4*leg);nav.step(-1,{now:5*leg});frame(6*leg);
+  assert.ok(nav.release(-1));frame(7*leg,geometry.revealed-100);
+  frame(8*leg,geometry.revealed+10);
   assert.equal(nav.getState().manualId,null);assert.equal(nav.getState().nextId,'bbva');
 });
 
@@ -155,6 +156,39 @@ test('departures and arrivals accelerate and brake without an endpoint velocity 
   assert.ok((1-tourEase(1-step)) / step < 1e-7);
   assert.ok(tourEase(.5)-tourEase(.49) > tourEase(.1)-tourEase(.09));
   assert.ok(tourEase(.5)-tourEase(.49) > tourEase(.9)-tourEase(.89));
+});
+
+test('longer trips take more time and open up the city, with bounded travel and zoom', () => {
+  const hub = mobileBuildingView(mobileTourHub, layout, true);
+  const close = mobileTravelProfile(hub, {...hub, focusX: hub.focusX + .01}, layout);
+  const far = mobileTravelProfile(hub, {...hub, focusY: hub.focusY + .6}, layout);
+  assert.ok(close.duration >= mobileTourTiming.logoTravel);
+  assert.ok(far.duration > close.duration);
+  assert.ok(far.duration <= mobileTourTiming.maxTravel);
+  assert.ok(far.cruiseZoom < close.cruiseZoom);
+  assert.ok(far.cruiseZoom >= 1.5);
+});
+
+test('every destination retains its accepted framing after the longer trip', () => {
+  for (const [viewportWidth, viewportHeight] of [[320,568],[390,844],[430,932]]) {
+    const width = Math.max(viewportWidth, viewportHeight * 941 / 1672) * 1.04;
+    const size = {width, height: width * 1672 / 941, viewportWidth, viewportHeight};
+    const bounds = mobileTourGeometry({top:5200, viewport:viewportHeight});
+    const nav = createMobileTourNavigation();
+    const frame = now => nav.update(mobileTourState({scroll:bounds.revealed, geometry:bounds}),
+      {scroll:bounds.revealed, now, layout:size, geometry:bounds});
+    frame(0);
+    let now = 0;
+    for (const id of [...Object.keys(mobileTourBuildings), 'puntoes']) {
+      if (id === 'puntoes') {nav.reset();frame(now);}
+      else nav.select(id, {now});
+      now += leg;
+      const arrived = frame(now);
+      const stop = id === 'puntoes' ? mobileTourHub : mobileTourBuildings[id];
+      assert.equal(arrived.moving, false);
+      assert.deepEqual(arrived.camera, mobileCameraAt(mobileBuildingView(stop,size,id==='puntoes'),size));
+    }
+  }
 });
 
 test('a travelling camera never removes the previous card and the next accumulates above it', () => {

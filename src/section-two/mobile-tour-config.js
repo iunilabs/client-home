@@ -24,4 +24,8 @@ export const mobileTourRoute = mobileTourOrder.map(id => ({id, ...mobileTourBuil
 export const mobileTourHub = {id: 'puntoes', center: [52.657, 40.879], size: [19.235, 6.758]};
 
 // Camera and card timing in milliseconds, independent of document scrolling.
-export const mobileTourTiming = {logoTravel: 1250, logoCardFrom: 80, logoCardUntil: 650};
+export const mobileTourTiming = {
+  logoTravel: 1850, travelPerScreen: 450, maxTravel: 2800,
+  cruisePullback: .16, pullbackPerScreen: .06, maxPullback: .28,
+  logoCardFrom: 80, logoCardUntil: 650,
+};
