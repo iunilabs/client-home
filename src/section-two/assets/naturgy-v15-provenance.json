@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-02",
+  "tool": "built-in image_gen",
+  "architecture_reference": "Three user photographs of Naturgy Diagonal 525 facade",
+  "integration": "Only the generated building rectangle was composited over each original. Lossless masters verified unchanged outside rectangle; final WebP recompressed under each original byte budget. No camera or pin coordinates changed.",
+  "assets": [
+    {
+      "original": "src/section-two/assets/puntoes-city-v10.webp",
+      "path": "src/section-two/assets/puntoes-city-v15-naturgy.webp",
+      "generated": "/Users/daviddavila/.codex/generated_images/01a0f6a1-d6fd-77c2-9391-5e63d6d3c73d/exec-13ae07a7-1373-4c58-89d4-9bd791814c68.png",
+      "rect": [
+        784,
+        530,
+        160,
+        186
+      ],
+      "nativeSize": [
+        1672,
+        941
+      ],
+      "originalBytes": 956046,
+      "bytes": 828940,
+      "quality": 96,
+      "sha256": "25bccc56c879a4dd34538629c1603adbfdc9dfc243cd65d3b7df2f86a3ce99d2",
+      "outsideEditChangedChannels": 0
+    },
+    {
+      "original": "src/section-two/assets/puntoes-city-v11-expanded.webp",
+      "path": "src/section-two/assets/puntoes-city-v15-expanded-naturgy.webp",
+      "generated": "/Users/daviddavila/.codex/generated_images/01a0f6a1-d6fd-77c2-9391-5e63d6d3c73d/exec-a3d504d6-9df2-4902-8bf6-b6bf3162c20a.png",
+      "rect": [
+        799,
+        499,
+        108,
+        145
+      ],
+      "nativeSize": [
+        1672,
+        941
+      ],
+      "originalBytes": 950966,
+      "bytes": 836948,
+      "quality": 96,
+      "sha256": "d8ea52497564eb836a7540abf2661505b90fd2dfde8877a8c13fadedef69e7ed",
+      "outsideEditChangedChannels": 0
+    },
+    {
+      "original": "src/section-two/assets/puntoes-city-mobile-v13-tour.webp",
+      "path": "src/section-two/assets/puntoes-city-mobile-v15-naturgy.webp",
+      "generated": "/Users/daviddavila/.codex/generated_images/01a0f6a1-d6fd-77c2-9391-5e63d6d3c73d/exec-b1570206-d61e-4b54-b899-a8647a6b0464.png",
+      "rect": [
+        356,
+        937,
+        165,
+        197
+      ],
+      "nativeSize": [
+        941,
+        1672
+      ],
+      "originalBytes": 1023844,
+      "bytes": 926112,
+      "quality": 96,
+      "sha256": "b322a87ab24907bc8eeef583e22a21ada834082c5f2fb653afeffafebc77be48",
+      "outsideEditChangedChannels": 0
+    },
+    {
+      "original": "src/section-two/assets/puntoes-city-mobile-naturgy-detail-v14.webp",
+      "path": "src/section-two/assets/puntoes-city-mobile-naturgy-detail-v15.webp",
+      "generated": "/Users/daviddavila/.codex/generated_images/01a0f6a1-d6fd-77c2-9391-5e63d6d3c73d/exec-8647fef4-d888-40ad-b4c7-52f578527930.png",
+      "rect": [
+        238,
+        548,
+        469,
+        622
+      ],
+      "nativeSize": [
+        942,
+        1669
+      ],
+      "originalBytes": 649394,
+      "bytes": 637194,
+      "quality": 93,
+      "sha256": "27d68c318f01f65214875033f59236b929e656f58c5fc2a8477f2e5493d4bb46",
+      "outsideEditChangedChannels": 0
+    }
+  ],
+  "prompt_file": "src/section-two/assets/NATURGY-V15-PROMPTS.md",
+  "validation": {
+    "build": "passed",
+    "detail_contract_tests": 2,
+    "browser_viewports": [
+      {
+        "width": 390,
+        "height": 844
+      },
+      {
+        "width": 1440,
+        "height": 900
+      }
+    ],
+    "browser_errors": 0,
+    "horizontal_overflow": false,
+    "desktop_detail_requests": 0,
+    "report": "docs/naturgy-2026-10-02/browser.json",
+    "deployment": "Publishing together on latest origin/main; release manifest records actual integrated maps."
+  },
+  "total_original_bytes": 3580250,
+  "total_bytes": 3229194,
+  "release_manifest": "src/section-two/assets/architecture-release-provenance.json"
+}

@@ -5,11 +5,11 @@
     "source_width": 941,
     "source_height": 1672,
     "source_sha256": "fa4cd4f0979e35cae8e58361dd723fccd38062e3b509578be612bb4739651c35",
-    "status": "Twelve mobile detail layers; Puntoes office revised with the base map as a small technology consultancy on 2026-10-02. The other eleven detail assets stay byte-for-byte intact.",
+    "status": "Puntoes office revision preserved; Naturgy and Mediaset architecture corrected from user photographs. Other nine clients unchanged.",
     "rect_contract": "Normalized world_rect maps full tile including all context; do not map only building bounds. No extra crop, resize, camera rotation or coordinate shift.",
     "transfer_budget": "Visited/current + next only; no initial page or desktop tile requests. Native PNG masters and QA are local docs only, never bundled.",
     "prompt_document": "src/section-two/assets/PROMPTS-NITIDEZ-V14.md",
-    "total_webp_bytes": 6395534,
+    "total_webp_bytes": 6382992,
     "qa_report": "docs/city-detail-v2/REPORT.md",
     "render_contract": "All layers inherit the city-world transform. Current tile z-index 2, neighbours 1. Full opacity at zoom 2.3; load fade 500ms; V13 retained on error.",
     "limits": "Generated plausible detail, not an architectural survey or 4K. Actual native dimensions and per-device sampling in QA report.",
@@ -45,8 +45,8 @@
     "test_count": 62,
     "runtime_png_masters": 0,
     "final_independent_review": "Asset/source checks acknowledged by coordinating reviewer. Final integrated twelve-frame independent review remains with the single integrator.",
-    "runtime_source_asset": "src/section-two/assets/puntoes-city-mobile-v13-tour.webp",
-    "runtime_source_asset_sha256": "87433b96889f1428739d3d460543ae129a051991c966543eff09e865b1d77a49",
+    "runtime_source_asset": "src/section-two/assets/puntoes-city-mobile-v16-architecture.webp",
+    "runtime_source_asset_sha256": "652c855aee5f89200dea95f6d1bf07323ba39741c91688bca76c05c114dbb2c5",
     "office_revision_browser_qa": {
       "status": "passed",
       "date": "2026-10-02",
@@ -142,7 +142,7 @@
         }
       },
       "generation": "Integrated image_gen precise-object-edit of the existing Puntoes tile. Native PNG copied unmodified, WebP Q92 encoding only.",
-      "prompt_section": "Detalle móvil",
+      "prompt_section": "Detalle m\u00f3vil",
       "prompt_document": "src/section-two/assets/PROMPTS-OFICINA-CONSULTORA.md"
     },
     {
@@ -204,7 +204,7 @@
     },
     {
       "id": "naturgy",
-      "source_generated_png": "/Users/daviddavila/.codex/generated_images/01a0f467-7316-7563-bab6-d4fd09ed9786/exec-816d8e39-0580-47cf-82cb-ae9c5dede915.png",
+      "source_generated_png": "/Users/daviddavila/.codex/generated_images/01a0f6a1-d6fd-77c2-9391-5e63d6d3c73d/exec-8647fef4-d888-40ad-b4c7-52f578527930.png",
       "source_crop": {
         "left": 297,
         "top": 777,
@@ -223,41 +223,23 @@
         "x": 3.3642857142857143,
         "y": 3.3649193548387095
       },
-      "quality": 92,
-      "master": "review-section-two/city-source/v14-resolution-study/naturgy-detail-native-v14-trial.png",
-      "asset": "src/section-two/assets/puntoes-city-mobile-naturgy-detail-v14.webp",
-      "status": "Integrated: preserved source rectangle, soft context edges, current stop priority and gradual zoom/loading opacity.",
-      "master_bytes": 3267242,
-      "master_sha256": "8d6fb5711e36fb2b5f5815d1a1124bb09a924f8de513c23982c232d05c5fa843",
-      "asset_bytes": 649394,
-      "asset_sha256": "cc4babe7f7e85b17e3c0023c86c1907c4d1747569799fd991849ad1e9360f87a",
-      "registration_summary": {
-        "inliers": 111,
-        "median_displacement_xy_source_px": [
-          0.291107177734375,
-          0.052032470703125
-        ],
-        "median_displacement_source_px": 0.43188726902008057,
-        "p95_displacement_source_px": 1.0264827013015747
-      },
-      "source_subject_box_local_px": [
-        73.99865999999997,
-        162.99840000000006,
-        206.00214,
-        332.00415999999996
-      ],
-      "local_original_master": "docs/city-detail-v2/masters/naturgy-detail-native-v14-trial.png",
+      "quality": 93,
+      "asset": "src/section-two/assets/puntoes-city-mobile-naturgy-detail-v15.webp",
+      "status": "V15 architecture corrected from user photographs; existing world rectangle retained.",
+      "asset_bytes": 637194,
+      "asset_sha256": "27d68c318f01f65214875033f59236b929e656f58c5fc2a8477f2e5493d4bb46",
       "feather_percent": [
         14,
         12
       ],
-      "generated_vs_interpolated_analysis": {
-        "mean_absolute_rgb_difference": 21.39727078480785,
-        "rmse_rgb": 29.961125051228375,
-        "fraction_pixels_any_channel_difference_over_8": 0.8673862961280958,
-        "meaning": "Non-identical generated pixels at native size compared to Lanczos control; this metric does not establish quality, fidelity or newly correct details. Visual comparison required."
-      },
-      "visual_review": "Inspected source reference, generator native output and 390x844 maximum-framing CSS comparison. Silhouette, roof/plan/floor rhythm and distinctive elements reviewed independently of feature matching; browser frames at 320x568 DPR2, 390x844 DPR3 and 430x932 DPR3 are retained for final independent review."
+      "visual_review": "Native generated detail inspected: rectangular blue glass, white side fins, open roof frame and curved lower white ribbon match supplied Naturgy facade references.",
+      "integration_rect_native_px": [
+        238,
+        548,
+        469,
+        622
+      ],
+      "outside_edit_changed_channels": 0
     },
     {
       "id": "sabadell",
@@ -445,7 +427,7 @@
         "meaning": "Non-identical generated pixels at native size compared to Lanczos control; this metric does not establish quality, fidelity or newly correct details. Visual comparison required."
       },
       "visual_review": "Inspected source reference, generator native output and 390x844 maximum-framing CSS comparison. Silhouette, roof/plan/floor rhythm and distinctive elements reviewed independently of feature matching; browser frames at 320x568 DPR2, 390x844 DPR3 and 430x932 DPR3 are retained for final independent review.",
-      "prompt_section": "V2 cobertura completa — canal",
+      "prompt_section": "V2 cobertura completa \u2014 canal",
       "edit_target_local": "docs/city-detail-v2/source/canal-source-crop-v13.png",
       "rejected_wide_trial": {
         "source_rect": [
@@ -534,7 +516,7 @@
         "meaning": "Non-identical generated pixels at native size compared to Lanczos control; this metric does not establish quality, fidelity or newly correct details. Visual comparison required."
       },
       "visual_review": "Inspected source reference, generator native output and 390x844 maximum-framing CSS comparison. Silhouette, roof/plan/floor rhythm and distinctive elements reviewed independently of feature matching; browser frames at 320x568 DPR2, 390x844 DPR3 and 430x932 DPR3 are retained for final independent review.",
-      "prompt_section": "V2 cobertura completa — cepsa",
+      "prompt_section": "V2 cobertura completa \u2014 cepsa",
       "edit_target_local": "docs/city-detail-v2/source/cepsa-source-crop-v13.png"
     },
     {
@@ -609,7 +591,7 @@
         "meaning": "Non-identical generated pixels at native size compared to Lanczos control; this metric does not establish quality, fidelity or newly correct details. Visual comparison required."
       },
       "visual_review": "Inspected source reference, generator native output and 390x844 maximum-framing CSS comparison. Silhouette, roof/plan/floor rhythm and distinctive elements reviewed independently of feature matching; browser frames at 320x568 DPR2, 390x844 DPR3 and 430x932 DPR3 are retained for final independent review.",
-      "prompt_section": "V2 cobertura completa — mapfre",
+      "prompt_section": "V2 cobertura completa \u2014 mapfre",
       "edit_target_local": "docs/city-detail-v2/source/mapfre-source-crop-v13.png",
       "attempts": [
         {
@@ -710,7 +692,7 @@
         "meaning": "Non-identical generated pixels at native size compared to Lanczos control; this metric does not establish quality, fidelity or newly correct details. Visual comparison required."
       },
       "visual_review": "Inspected source reference, generator native output and 390x844 maximum-framing CSS comparison. Silhouette, roof/plan/floor rhythm and distinctive elements reviewed independently of feature matching; browser frames at 320x568 DPR2, 390x844 DPR3 and 430x932 DPR3 are retained for final independent review.",
-      "prompt_section": "V2 cobertura completa — ree",
+      "prompt_section": "V2 cobertura completa \u2014 ree",
       "edit_target_local": "docs/city-detail-v2/source/ree-source-crop-v13.png"
     },
     {
@@ -785,7 +767,7 @@
         "meaning": "Non-identical generated pixels at native size compared to Lanczos control; this metric does not establish quality, fidelity or newly correct details. Visual comparison required."
       },
       "visual_review": "Inspected source reference, generator native output and 390x844 maximum-framing CSS comparison. Silhouette, roof/plan/floor rhythm and distinctive elements reviewed independently of feature matching; browser frames at 320x568 DPR2, 390x844 DPR3 and 430x932 DPR3 are retained for final independent review.",
-      "prompt_section": "V2 cobertura completa — siemens",
+      "prompt_section": "V2 cobertura completa \u2014 siemens",
       "edit_target_local": "docs/city-detail-v2/source/siemens-source-crop-v13.png",
       "existing_mark_review": {
         "source_rect": [
@@ -801,7 +783,7 @@
     },
     {
       "id": "mediaset",
-      "source_generated_png": "/Users/daviddavila/.codex/generated_images/01a0fb25-8161-75d0-83ea-fd700d4f7f0f/exec-b13173ba-60b4-4cd5-b79b-3168a1c20cfc.png",
+      "source_generated_png": "/Users/daviddavila/.codex/generated_images/01a0f6a1-d6fd-77c2-9391-5e63d6d3c73d/exec-3fa3bae8-d6e5-465f-93dc-65d2b05ff3e5.png",
       "source_generated_sha256": "4509fdae70013521f24c6aa2ee150ad04cb2933b83f25b840984e74f934169f2",
       "source_crop": {
         "left": 73,
@@ -822,57 +804,26 @@
         "x": 3.842857142857143,
         "y": 3.844736842105263
       },
-      "quality": 92,
-      "master": "docs/city-detail-v2/masters/mediaset-detail-native-v14.png",
-      "master_bytes": 2966795,
-      "master_sha256": "4509fdae70013521f24c6aa2ee150ad04cb2933b83f25b840984e74f934169f2",
-      "asset": "src/section-two/assets/puntoes-city-mobile-mediaset-detail-v14.webp",
-      "asset_bytes": 485444,
-      "asset_sha256": "474eaadaf415c9f9b26a72b99d42708392aceec11397713322e5451714b08107",
-      "registration_summary": {
-        "matches": 1181,
-        "inliers": 1159,
-        "median_displacement_xy_source_px": [
-          -0.17352294921875,
-          -0.07863616943359375
-        ],
-        "median_displacement_source_px": 0.32959240674972534,
-        "p95_displacement_source_px": 0.936689019203186,
-        "homography_source_to_generated_downsampled": [
-          [
-            0.9996511999191796,
-            -0.00010834172836750539,
-            -0.07973810956813253
-          ],
-          [
-            0.00027007028964684695,
-            1.0004571722725715,
-            -0.1579318704202757
-          ],
-          [
-            7.801847215892594e-07,
-            3.5255250736221247e-07,
-            1.0
-          ]
-        ],
-        "method": "SIFT/RANSAC after area-downsampling generated output to exact source size, analysis only; no runtime warp or rescale applied. Visual silhouette/roof/antenna review required independently."
-      },
+      "quality": 91,
+      "asset": "src/section-two/assets/puntoes-city-mobile-mediaset-detail-v16.webp",
+      "asset_bytes": 485102,
+      "asset_sha256": "766f537a1c90d5cd505749dfc8ac48c30d8a07339dd1999f86f2c8383bb9e313",
       "generation": "Integrated image_gen precise-object-edit. PNG is unmodified native generator output; WebP encoding only, no resize, interpolation, painting or geometric warp.",
-      "local_original_master": "docs/city-detail-v2/masters/mediaset-detail-native-v14.png",
       "feather_percent": [
         14,
         12
       ],
-      "status": "Integrated: preserved source rectangle, soft context edges, current stop priority and gradual zoom/loading opacity.",
-      "generated_vs_interpolated_analysis": {
-        "mean_absolute_rgb_difference": 17.928642643467878,
-        "rmse_rgb": 25.095419229759752,
-        "fraction_pixels_any_channel_difference_over_8": 0.8194583330152745,
-        "meaning": "Non-identical generated pixels at native size compared to Lanczos control; this metric does not establish quality, fidelity or newly correct details. Visual comparison required."
-      },
-      "visual_review": "Inspected source reference, generator native output and 390x844 maximum-framing CSS comparison. Silhouette, roof/plan/floor rhythm and distinctive elements reviewed independently of feature matching; browser frames at 320x568 DPR2, 390x844 DPR3 and 430x932 DPR3 are retained for final independent review.",
-      "prompt_section": "V2 cobertura completa — mediaset",
-      "edit_target_local": "docs/city-detail-v2/source/mediaset-source-crop-v13.png"
+      "status": "V16 architecture corrected from user photographs.",
+      "visual_review": "Three portholes, separate numeral5 white panel, exposed grey metal structure, black entrance, left staircase and grey roof antenna. Mobile base derives from the same local master.",
+      "prompt_section": "V2 cobertura completa \u2014 mediaset",
+      "edit_target_local": "docs/city-detail-v2/source/mediaset-source-crop-v13.png",
+      "integration_rect_native_px": [
+        173,
+        212,
+        724,
+        990
+      ],
+      "outside_edit_changed_channels": 0
     },
     {
       "id": "accenture",
@@ -946,7 +897,7 @@
         "meaning": "Non-identical generated pixels at native size compared to Lanczos control; this metric does not establish quality, fidelity or newly correct details. Visual comparison required."
       },
       "visual_review": "Inspected source reference, generator native output and 390x844 maximum-framing CSS comparison. Silhouette, roof/plan/floor rhythm and distinctive elements reviewed independently of feature matching; browser frames at 320x568 DPR2, 390x844 DPR3 and 430x932 DPR3 are retained for final independent review.",
-      "prompt_section": "V2 cobertura completa — accenture",
+      "prompt_section": "V2 cobertura completa \u2014 accenture",
       "edit_target_local": "docs/city-detail-v2/source/accenture-source-crop-v13.png"
     }
   ]

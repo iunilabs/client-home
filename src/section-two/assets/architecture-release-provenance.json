@@ -1,0 +1,84 @@
+{
+  "base_commit": "4613fb177751e9099d0d6ef6d72dcb15d8087653",
+  "preservation": "Latest published maps retained outside local Naturgy and Mediaset edit rectangles; newer Puntoes office and navigation unchanged. Existing architecture provenance describes local draft generations; this report identifies actual published maps.",
+  "assets": [
+    {
+      "path": "src/section-two/assets/puntoes-city-v16-architecture.webp",
+      "bytes": 793850,
+      "previousBytes": 914162,
+      "quality": 96,
+      "sha256": "092ff9a1c1d90e95874c8b687f41cbbd6311f171c42cecdbec7cfd2546d9c980",
+      "outsideChangedChannels": 0,
+      "rects": [
+        [
+          784,
+          530,
+          160,
+          186
+        ],
+        [
+          250,
+          443,
+          184,
+          182
+        ]
+      ]
+    },
+    {
+      "path": "src/section-two/assets/puntoes-city-v16-expanded-architecture.webp",
+      "bytes": 765078,
+      "previousBytes": 904780,
+      "quality": 96,
+      "sha256": "aa824bd516069e069f8597e32c0f8d56e26bcbbc6bb8bb9536fb89b98aa1621a",
+      "outsideChangedChannels": 0,
+      "rects": [
+        [
+          799,
+          499,
+          108,
+          145
+        ],
+        [
+          442,
+          440,
+          132,
+          151
+        ]
+      ]
+    },
+    {
+      "path": "src/section-two/assets/puntoes-city-mobile-v16-architecture.webp",
+      "bytes": 883722,
+      "previousBytes": 981914,
+      "quality": 96,
+      "sha256": "652c855aee5f89200dea95f6d1bf07323ba39741c91688bca76c05c114dbb2c5",
+      "outsideChangedChannels": 0,
+      "rects": [
+        [
+          356,
+          937,
+          165,
+          197
+        ],
+        [
+          105,
+          707,
+          215,
+          275
+        ]
+      ]
+    }
+  ],
+  "validation": {
+    "unit_tests": 110,
+    "unit_tests_passed": true,
+    "production_build_passed": true,
+    "browser_viewports": [
+      390,
+      1440
+    ],
+    "browser_errors": 0,
+    "browser_report": "docs/architecture-release/browser.json",
+    "publication_requested": true
+  }
+}

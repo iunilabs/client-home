@@ -1,0 +1,140 @@
+{
+  "date": "2026-10-02",
+  "tool": "built-in image_gen",
+  "architecture_reference": "Two user photographs of Mediaset Espana studios",
+  "integration": "Only local building rectangles composited over originals. Desktop extension derives from the corrected desktop crop; mobile base derives from the corrected native detail. Lossless masters retain every pixel outside edit rectangles. Existing Naturgy correction preserved. Final WebP within each previous asset byte budget.",
+  "assets": [
+    {
+      "original": "src/section-two/assets/puntoes-city-v15-naturgy.webp",
+      "path": "src/section-two/assets/puntoes-city-v16-architecture.webp",
+      "generated": "/Users/daviddavila/.codex/generated_images/01a0f6a1-d6fd-77c2-9391-5e63d6d3c73d/exec-6accef6b-bbf1-4275-bd75-594cac6e8c32.png",
+      "rect": [
+        250,
+        443,
+        184,
+        182
+      ],
+      "sourceRect": [
+        230,
+        400,
+        230,
+        240
+      ],
+      "nativeSize": [
+        1672,
+        941
+      ],
+      "originalBytes": 828940,
+      "bytes": 826038,
+      "quality": 96,
+      "sha256": "e26626280ed8ec6d44e1b69a191833fa7d3438c69b96562db05905917561e5c0",
+      "outsideEditChangedChannels": 0
+    },
+    {
+      "original": "src/section-two/assets/puntoes-city-v15-expanded-naturgy.webp",
+      "path": "src/section-two/assets/puntoes-city-v16-expanded-architecture.webp",
+      "generated": "/Users/daviddavila/.codex/generated_images/01a0f6a1-d6fd-77c2-9391-5e63d6d3c73d/exec-6accef6b-bbf1-4275-bd75-594cac6e8c32.png",
+      "rect": [
+        442,
+        440,
+        132,
+        151
+      ],
+      "sourceRect": [
+        432,
+        423,
+        153,
+        160
+      ],
+      "nativeSize": [
+        1672,
+        941
+      ],
+      "originalBytes": 836948,
+      "bytes": 832034,
+      "quality": 96,
+      "sha256": "b3c88b09bcff62f9c295a47016119b8340b67db444096d9827dd19fe2cf219c7",
+      "outsideEditChangedChannels": 0
+    },
+    {
+      "original": "src/section-two/assets/puntoes-city-mobile-v15-naturgy.webp",
+      "path": "src/section-two/assets/puntoes-city-mobile-v16-architecture.webp",
+      "generated": "/Users/daviddavila/.codex/generated_images/01a0f6a1-d6fd-77c2-9391-5e63d6d3c73d/exec-3fa3bae8-d6e5-465f-93dc-65d2b05ff3e5.png",
+      "rect": [
+        105,
+        707,
+        215,
+        275
+      ],
+      "sourceRect": [
+        73,
+        652,
+        280,
+        380
+      ],
+      "nativeSize": [
+        941,
+        1672
+      ],
+      "originalBytes": 926112,
+      "bytes": 887328,
+      "quality": 95,
+      "sha256": "5d6762d5c37c08957f3c004cfccd0388b56fb290b6f634502f548c73e898b67c",
+      "outsideEditChangedChannels": 0
+    },
+    {
+      "original": "src/section-two/assets/puntoes-city-mobile-mediaset-detail-v14.webp",
+      "path": "src/section-two/assets/puntoes-city-mobile-mediaset-detail-v16.webp",
+      "generated": "/Users/daviddavila/.codex/generated_images/01a0f6a1-d6fd-77c2-9391-5e63d6d3c73d/exec-3fa3bae8-d6e5-465f-93dc-65d2b05ff3e5.png",
+      "rect": [
+        173,
+        212,
+        724,
+        990
+      ],
+      "nativeSize": [
+        1076,
+        1461
+      ],
+      "originalBytes": 485444,
+      "bytes": 485102,
+      "quality": 91,
+      "sha256": "766f537a1c90d5cd505749dfc8ac48c30d8a07339dd1999f86f2c8383bb9e313",
+      "outsideEditChangedChannels": 0
+    }
+  ],
+  "prompt_file": "src/section-two/assets/MEDIASET-V16-PROMPTS.md",
+  "discarded": [
+    "Three whole-map generations edited the wrong building; never integrated."
+  ],
+  "validation": {
+    "build": "passed",
+    "unit_tests": 4,
+    "browser_viewports": [
+      {
+        "width": 390,
+        "height": 844
+      },
+      {
+        "width": 1440,
+        "height": 900
+      }
+    ],
+    "browser_errors": 0,
+    "horizontal_overflow": false,
+    "desktop_detail_requests": 0,
+    "report": "docs/mediaset-2026-10-02/browser.json",
+    "deployment": "Publishing together on latest origin/main; release manifest records actual integrated maps."
+  },
+  "pinDesktop": [
+    20.5,
+    54.3
+  ],
+  "pinMobile": [
+    21.54,
+    49.55
+  ],
+  "total_original_bytes": 3077444,
+  "total_bytes": 3030502,
+  "release_manifest": "src/section-two/assets/architecture-release-provenance.json"
+}

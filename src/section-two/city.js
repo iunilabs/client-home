@@ -1,6 +1,6 @@
-import desktopUrl from './assets/puntoes-city-v10.webp';
-import portraitUrl from './assets/puntoes-city-mobile-v13-tour.webp';
-import extendedDesktopUrl from './assets/puntoes-city-v11-expanded.webp';
+import desktopUrl from './assets/puntoes-city-v16-architecture.webp';
+import portraitUrl from './assets/puntoes-city-mobile-v16-architecture.webp';
+import extendedDesktopUrl from './assets/puntoes-city-v16-expanded-architecture.webp';
 import {cityClients} from './city-clients.js';
 import {cityGeometry, cityState} from './city-state.js';
 import {createClientDialog} from './client-dialog.js';
@@ -26,7 +26,7 @@ const sites = {
   canal: {pinDesktop: [39.4, 16]},
   cepsa: {pinDesktop: [64, 12.8]},
   mapfre: {pinDesktop: [75.7, 27.1]},
-  mediaset: {pinDesktop: [21.2, 47.5]},
+  mediaset: {pinDesktop: [20.5, 54.3]},
   ree: {pinDesktop: [74, 43.2]},
   siemens: {pinDesktop: [69, 60.5]},
   naturgy: {pinDesktop: [51.4, 59.8]},

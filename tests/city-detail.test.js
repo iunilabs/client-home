@@ -14,7 +14,7 @@ const {cityDetails, createCityDetail} = await import(`data:text/javascript;base6
 const approvedHashes = {
   puntoes: '946c07371ea8c665882d79d25644b2ade7aea44926fa3eb0a60d78bf1d574f58',
   bbva: 'e81e438fc65d667bcde4c2ffbcf8dde16aae2a8dbdd8931b7a3ed3f0305ace1b',
-  naturgy: 'cc4babe7f7e85b17e3c0023c86c1907c4d1747569799fd991849ad1e9360f87a',
+  naturgy: '27d68c318f01f65214875033f59236b929e656f58c5fc2a8477f2e5493d4bb46',
   sabadell: 'ec7b7d7b4a755ee041c862d66bb4ea12975cfcfe880f9b3fd8b2fa83359013f5',
   collaborate: 'efbe283915dbc13900e48eb915a2a3e6d87a54f860d85fcbe9b4f08bc8e802ce',
 };

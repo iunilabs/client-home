@@ -10,7 +10,7 @@ await fs.mkdir(`${out}/screenshots`, {recursive: true});
 const provenance = JSON.parse(await fs.readFile('src/section-two/assets/city-detail-provenance.json', 'utf8'));
 const browser = await chromium.launch({headless: true, executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']});
 const report = {url, passed: false, phones: [], desktopRequests: null, fallback: null};
-const tileRequest = request => /puntoes-city-mobile-.*-detail-v14.*\.webp/.test(request.url());
+const tileRequest = request => /puntoes-city-mobile-.*-detail-v(?:14|15|16).*\.webp/.test(request.url());
 try {
   const desktop = await browser.newContext({viewport: {width: 1440, height: 900}}), desktopPage = await desktop.newPage(), desktopDownloads = [];
   desktopPage.on('request', r => {if (tileRequest(r)) desktopDownloads.push(r.url());});
