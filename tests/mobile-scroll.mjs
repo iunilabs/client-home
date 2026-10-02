@@ -150,7 +150,7 @@ try {
     const footer=await page.locator('.city-carousel').boundingBox();
     assert.ok(metrics.rect.y>100 && metrics.rect.bottom < footer.y,'whole card fits above logos');
     assert.ok(metrics.scroll<=metrics.client+1,'card has no hidden overflowing contents');
-    assert.equal(metrics.intro,'3'); assert.equal(metrics.overflow,'hidden');
+    assert.equal(metrics.intro,'none'); assert.equal(metrics.overflow,'hidden');
     assert.ok((await bbva.locator('a').getAttribute('href')).endsWith('/clientes/bbva/'));
     await page.screenshot({path:`${out}/${width}-bbva.png`});
     // A swipe that outlasts the entire trip still owns only one stop.

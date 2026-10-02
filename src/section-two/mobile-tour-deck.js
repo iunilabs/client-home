@@ -14,14 +14,15 @@ export function createMobileTourDeck(section, route, clients) {
     const story = invitation ? collaborationStory : getCaseStudy(client.id);
     const card = document.createElement('article');
     card.className = 'city-tour-card';
+    card.classList.toggle('is-invitation', invitation);
     card.dataset.client = client.id;
     card.id = `tour-card-${client.id}`;
     card.setAttribute('aria-labelledby', `tour-client-${client.id}`);
     card.innerHTML = '<div class="tour-card-brand"><img alt="" /><span class="tour-card-count"></span></div><h3 class="tour-card-client"></h3><h4 class="tour-card-heading"></h4><p class="tour-card-intro"></p>';
     card.querySelector('.tour-card-client').id = `tour-client-${client.id}`;
     card.querySelector('.tour-card-client').textContent = client.name;
-    card.querySelector('.tour-card-heading').textContent = story.title;
-    card.querySelector('.tour-card-intro').textContent = story.intro;
+    card.querySelector('.tour-card-heading').textContent = story.cardTitle ?? story.title;
+    card.querySelector('.tour-card-intro').textContent = story.cardIntro ?? story.intro;
     card.querySelector('.tour-card-count').textContent = index < 0 ? 'Cliente' : `${String(index + 1).padStart(2, '0')} / ${String(route.length).padStart(2, '0')}`;
     const logo = card.querySelector('img');
     if (invitation) logo.hidden = true;
@@ -37,7 +38,7 @@ export function createMobileTourDeck(section, route, clients) {
       const link = document.createElement('a');
       link.className = 'tour-card-more';
       link.href = `${import.meta.env.BASE_URL}clientes/${client.id}/`;
-      link.textContent = 'Ver más ↗';
+      link.textContent = 'Ver el caso ↗';
       card.append(link);
       const draft = document.createElement('p');
       draft.className = 'tour-card-draft'; draft.textContent = 'Caso ilustrativo · texto de muestra';
