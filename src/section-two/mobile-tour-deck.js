@@ -45,9 +45,6 @@ export function createMobileTourDeck(section, route, clients, {onClose = () => {
       link.href = `${import.meta.env.BASE_URL}clientes/${client.id}/`;
       link.textContent = 'Ver el caso ↗';
       card.append(link);
-      const draft = document.createElement('p');
-      draft.className = 'tour-card-draft'; draft.textContent = 'Caso ilustrativo · texto de muestra';
-      card.append(draft);
     }
     deck.append(card);
     return card;

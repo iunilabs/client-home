@@ -1,7 +1,7 @@
 # Contexto
 
-Objetivo: quitar la agrupación de tarjetas a la derecha, recortando el tramo posterior a 1900 px. Worktree `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`; base pública `bad2c23`.
+Objetivo: textos breves y fundamentados para tarjetas del mapa de sección 2. Worktree aislado `puntoes-paper-copy-1900`; base pública `9323daa` (journey único 3/4 y ordenación desde 1900 px). Principal intacto.
 
-Una sola sección `#posibilidades`; ordenación comienza en 1900 px. Eliminada la interpolación hacia el volumen derecho. Se conserva la calibración original de caídas por viewport y entradas 80/350 px. Las caídas pendientes terminan mientras las mismas tarjetas se ordenan, sin saltos; el texto se desvanece durante esa transición. El procesamiento posterior, renderer compartido, precarga, geometría y presupuesto GPU siguen vigentes. Ancla `#resolucion` apunta al comienzo de ordenación.
+Revisadas secciones y áreas de formación de puntoes.es. BBVA: colaboración desde 2009 según artículo oficial. Sabadell: «Construimos banca digital» y «Arquitectura front-end desde diciembre de 2025», información del usuario; sin nombres de iniciativas. Otros clientes: frases generales, sin atribuir proyectos concretos. Eliminados textos ficticios largos y aviso de muestra. Caja más compacta, conserva fuente y texto completo.
 
-Archivos: `src/section-three/{scene,timing}.js`, `style.css`; pruebas de journey, física, integración y sección cuatro ajustadas. Unitarias y build correctos; swipe y reversibilidad comprobados. QA correcto: 47 trayectorias y transferencias sin intersecciones en escritorio, móvil, móvil pequeño y horizontal; integración sin errores JS. Siguiente: terminar QA, publicar y verificar https://iunilabs.github.io/client-home/.
+Archivos: `case-studies.js`, `mobile-tour-deck.js`, `style.css` de sección 2; README y MOBILE-TOUR documentan fuentes. Build y siete pruebas correctos. QA: once tarjetas a 320, 390 y 1440 px, máximo dos líneas por título/resumen, sin recorte; captura Sabadell revisada. Siguiente: commit, push y verificar Pages.

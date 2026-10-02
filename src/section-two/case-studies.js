@@ -1,103 +1,57 @@
-// Illustrative editorial copy requested for the prototype; these are not verified projects.
+// Editorial summaries based on Puntoes services and its public client list.
+// https://www.puntoes.es/ · /formacion/ · /consultoria/
+// BBVA: https://www.puntoes.es/bbva-customer-solutions/
+// Sabadell: collaboration and start date supplied by the user; no project names.
+// Other clients: general editorial wording, without attributing specific projects.
 export const caseStudies = {
   sabadell: {
-    cardTitle: 'Aprender para estar más cerca.',
-    cardIntro: 'IA aplicada al trabajo diario, con más tiempo para atender a cada cliente.',
-    title: 'Avanzar, sin perder la cercanía.',
-    intro: 'Un itinerario de aprendizaje para conectar las posibilidades de la IA con el trabajo de quienes acompañan a cada cliente.',
-    challenge: 'Acercar nuevas herramientas a los equipos, con ejemplos que tengan sentido en su día a día.',
-    approach: 'Sesiones prácticas para organizar información, preparar comunicaciones y explorar asistentes, con criterio profesional y revisión humana.',
-    goal: 'Más confianza al utilizar la tecnología. Más espacio para una relación cercana.'
+    cardTitle: 'Construimos banca digital.',
+    cardIntro: 'Arquitectura front-end desde diciembre de 2025.'
   },
   accenture: {
-    cardTitle: 'Del conocimiento a la práctica.',
-    cardIntro: 'Herramientas de IA para investigar, organizar información y preparar entregables.',
-    title: 'El conocimiento también se transforma.',
-    intro: 'Un programa para que los equipos incorporen la IA a su trabajo diario, con criterio y autonomía.',
-    challenge: 'Pasar de probar herramientas a saber cuándo, cómo y para qué utilizarlas.',
-    approach: 'Talleres prácticos con situaciones de trabajo: investigar, sintetizar información y preparar entregables. Cada equipo construye su propia forma de trabajar con IA.',
-    goal: 'Personas más autónomas. Un conocimiento que se comparte y permanece.'
+    cardTitle: 'Del saber al hacer.',
+    cardIntro: 'Talento y tecnología para seguir avanzando.'
   },
   bbva: {
-    cardTitle: 'Más tiempo para cada persona.',
-    cardIntro: 'Asistentes de IA para consultar información y preparar respuestas con criterio.',
-    title: 'La tecnología, al servicio de la confianza.',
-    intro: 'Una experiencia de aprendizaje que conecta la inteligencia artificial con la atención a las personas.',
-    challenge: 'Encontrar tiempo para escuchar mejor, en un entorno lleno de información y tareas repetitivas.',
-    approach: 'Formación sobre asistentes de IA, búsqueda de conocimiento y preparación de respuestas, con revisión humana y cuidado de los datos.',
-    goal: 'Menos fricción en el trabajo. Más atención a cada conversación.'
+    cardTitle: 'Desde 2009, juntos.',
+    cardIntro: 'Tecnología y personas al servicio del cliente.'
   },
   canal: {
-    cardTitle: 'Ideas para cuidar lo esencial.',
-    cardIntro: 'IA para consultar documentación y compartir conocimiento entre equipos.',
-    title: 'Lo esencial también necesita nuevas ideas.',
-    intro: 'Acercar la IA a los equipos que cuidan un recurso que todos compartimos.',
-    challenge: 'Convertir información técnica dispersa en conocimiento útil para el día a día.',
-    approach: 'Un itinerario práctico para consultar documentación, estructurar incidencias y compartir aprendizajes entre áreas.',
-    goal: 'Conocimiento más accesible para las personas que sostienen un servicio esencial.'
+    cardTitle: 'Cuidar lo esencial.',
+    cardIntro: 'Conocimiento para un servicio que nos une.'
   },
   cepsa: {
-    cardTitle: 'Aprender juntos. Aplicarlo cada día.',
-    cardIntro: 'Formación práctica para analizar documentos y preparar informes con IA.',
-    title: 'La energía de aprender juntos.',
-    intro: 'Un recorrido de formación para llevar la IA de la curiosidad a las decisiones cotidianas.',
-    challenge: 'Conectar nuevas herramientas con procesos complejos, sin perder el criterio de los especialistas.',
-    approach: 'Sesiones por perfiles y laboratorios de casos: análisis de documentación, preparación de informes y detección de oportunidades de mejora.',
-    goal: 'Equipos que entienden la tecnología y saben dónde puede aportar valor.'
+    cardTitle: 'Energía para avanzar.',
+    cardIntro: 'Personas y tecnología ante nuevos retos.'
   },
   mapfre: {
-    cardTitle: 'Menos fricción. Más claridad.',
-    cardIntro: 'IA para localizar respuestas, resumir documentos y preparar comunicaciones.',
-    title: 'Cuidar mejor empieza por comprender mejor.',
-    intro: 'Explorar cómo la IA puede liberar tiempo y mejorar el acceso al conocimiento de los equipos.',
-    challenge: 'Trabajar con documentación extensa sin que la información se convierta en una barrera.',
-    approach: 'Talleres para resumir documentos, localizar respuestas y preparar comunicaciones claras, con supervisión profesional.',
-    goal: 'Más claridad para trabajar. Más tiempo para las personas.'
+    cardTitle: 'Confianza para crecer.',
+    cardIntro: 'Aprendizaje que acompaña el cambio.'
   },
   mediaset: {
-    cardTitle: 'Más espacio para crear.',
-    cardIntro: 'Explorar la IA para investigar y desarrollar ideas, sin perder la mirada propia.',
-    title: 'Nuevas herramientas. La misma mirada.',
-    intro: 'Un espacio para explorar la IA sin renunciar a la creatividad ni a la voz propia.',
-    challenge: 'Integrar nuevas posibilidades en un trabajo que depende del criterio editorial y de las ideas.',
-    approach: 'Laboratorios creativos para investigar, desarrollar propuestas y organizar materiales. La IA acompaña; las decisiones siguen en manos del equipo.',
-    goal: 'Más espacio para crear, con una mirada que sigue siendo humana.'
+    cardTitle: 'Ideas que conectan.',
+    cardIntro: 'Talento y tecnología para seguir creando.'
   },
   ree: {
-    cardTitle: 'Conectar el conocimiento.',
-    cardIntro: 'IA para consultar documentación técnica y compartir lo que sabe cada equipo.',
-    title: 'Conectar conocimiento, conectar futuro.',
-    intro: 'Poner la IA al alcance de los equipos técnicos, desde sus preguntas y su experiencia.',
-    challenge: 'Hacer más accesible el conocimiento de una organización especializada.',
-    approach: 'Formación aplicada a la consulta documental, la síntesis de información y el intercambio de aprendizajes, con atención a la trazabilidad.',
-    goal: 'La experiencia de las personas, conectada con nuevas formas de trabajar.'
+    cardTitle: 'Conectar el futuro.',
+    cardIntro: 'Conocimiento para afrontar nuevos retos.'
   },
   siemens: {
     cardTitle: 'Del potencial a la práctica.',
-    cardIntro: 'Aplicar la IA a documentos, soluciones y comunicación técnica del día a día.',
-    title: 'Del potencial a la práctica.',
-    intro: 'Convertir las posibilidades de la IA en pequeños avances concretos para los equipos.',
-    challenge: 'Encontrar usos relevantes en un entorno técnico, más allá de las demostraciones genéricas.',
-    approach: 'Talleres con documentación, preparación de soluciones y comunicación técnica. Cada participante sale con un caso que puede seguir desarrollando.',
-    goal: 'Aprendizaje que se convierte en práctica y una tecnología que se entiende.'
+    cardIntro: 'Tecnología que se convierte en aprendizaje.'
   },
   naturgy: {
-    cardTitle: 'El cambio empieza en el equipo.',
-    cardIntro: 'Una adopción de la IA cercana y práctica, con ejercicios para cada área.',
-    title: 'El cambio se mueve con las personas.',
-    intro: 'Acompañar a los equipos en una adopción de la IA cercana, gradual y útil.',
-    challenge: 'Dar confianza a personas con experiencias y niveles de conocimiento distintos.',
-    approach: 'Un itinerario con sesiones de iniciación, ejercicios por área y espacios para compartir dudas y descubrimientos.',
-    goal: 'Una transformación compartida, que empieza por comprender y continúa al hacer.'
-  }
+    cardTitle: 'El cambio empieza aquí.',
+    cardIntro: 'Talento y tecnología para avanzar juntos.'
+  },
 };
 
 export function getCaseStudy(id) {
   const story = caseStudies[id];
   if (!story) return null;
-  return {...story, status: 'illustrative'};
+  return {...story, title: story.cardTitle, intro: story.cardIntro};
 }
 
-export const collaborationStory = {title: 'El próximo punto puede ser el tuyo.',
-  cardIntro: 'Cuéntanos qué quieres transformar. Demos forma al siguiente proyecto juntos.',
-  intro: 'Hay un lugar para las ideas que merecen hacerse realidad. Cuéntanos qué quieres transformar y construyamos el siguiente proyecto juntos.'};
+export const collaborationStory = {title: 'Tu próximo proyecto.',
+  cardIntro: 'Cuéntanos qué quieres transformar.',
+  intro: 'Cuéntanos qué quieres transformar.'};
