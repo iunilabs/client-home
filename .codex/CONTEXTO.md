@@ -1,7 +1,7 @@
 # Contexto
 
-Objetivo: corregir pausas al entrar por scroll en secciones 3 y 4 y publicar en Pages. Worktree activo `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`. Incorporados cambios públicos hasta `96143fd`: texto plano de sección 3, entrada 1900 px y salida 2500–2740 px, blur 3 px.
+Objetivo: entrada más lenta del texto de sección 3. Worktree aislado `puntoes-paper-copy-1900`; base pública `d9b9a8c`, que incorpora precarga de tarjetas y renderer compartido. Checkout principal intacto.
 
-Motor y entorno 3D compartidos entre manos y tarjetas; canvas cambia de contenedor y vuelve al retroceder. Durante el mapa se preparan las 47 tarjetas y sus 47 versiones verdes, texturas y shaders, con tandas que ceden al navegador. Grano nativo, deformaciones precalculadas y render directo que conserva el fondo original. Sección 4 solo cambia poses y texturas ya preparadas.
+Entrada local de texto ampliada de 1900–2140 a 1900–2400 px (más del doble de duración). Salida conservada en 2500–2740 px; blur máximo 3 px, texto plano, contenido y tamaños intactos. Se mantiene altura mínima para horizontal y fondo nítido al salir.
 
-Archivos: `src/main.js`, `src/scene.js`, `src/render-budget.js`, `src/section-three/`. QA: unitarias, integración móvil, separación física, 47 transferencias en cuatro tamaños, orientación, fallback y precarga. CPU×4: entradas 29/57 ms. Build `/client-home/` correcto. Publicación autorizada: https://iunilabs.github.io/client-home/. Confirmar workflow y assets públicos tras push.
+Archivo editado: `src/section-three/scene.js`. Build `/client-home/` correcto. QA focal correcto en 390 y 1440 px: entrada 1900–2400, salida 2500–2740, sin errores. Siguiente: commit, push y comprobar Pages.
