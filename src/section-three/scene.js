@@ -242,7 +242,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     key.shadow.mapSize.setScalar(shadowSize);
     // Local pixels keep the editorial entrance consistent across viewports.
     const copyScroll = p * height;
-    stageElement.style.setProperty('--paper-copy-reveal', (smooth(1200, 1700, copyScroll) * (1 - smooth(2500, 2740, copyScroll)) * (1 - smooth(0, .12, resolutionProgress))).toFixed(4));
+    stageElement.style.setProperty('--paper-copy-reveal', (smooth(920, 1420, copyScroll) * (1 - smooth(2500, 2740, copyScroll)) * (1 - smooth(0, .12, resolutionProgress))).toFixed(4));
     workflowElement.style.setProperty('--workflow-reveal', workflow.reveal.toFixed(4));
     pendingCount.textContent = workflow.pending;
     doneCount.textContent = workflow.completed;

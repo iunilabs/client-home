@@ -1,7 +1,7 @@
 # Contexto
 
-Objetivo: adelantar la siguiente tanda 150 px porque visualmente aparecía hacia 640. Worktree aislado `puntoes-paper-copy-1900`; base pública `8541bd6`, con precarga, renderer compartido y optimización de sección 4. Checkout principal intacto.
+Objetivo: fade in del texto de sección 3 desde 920 px locales. Worktree aislado `puntoes-paper-copy-1900`; base pública `076203b`, con precarga, renderer compartido y optimización de sección 4. Checkout principal intacto.
 
-`paperTiming.several` pasa de 500 a 350 px locales. Primera tarjeta conserva inicio a 80 px y duración. Se mantiene escalonado. Texto: entrada 1200–1700, salida 2500–2740; blur 3 px.
+Entrada ahora 920–1420 px, conservando duración de 500 px. Fade out 2500–2740 px y blur 3 px intactos. Tarjetas: primera desde 80 px, siguiente tanda desde 350 px; a 500 ya están dentro del encuadre según QA móvil/escritorio anterior.
 
-Archivos: `src/section-three/timing.js`, expectativas en `tests/section-three-motion.test.js` y `tests/section-three-integration.mjs`. Cuatro pruebas de movimiento y build correctos antes de integrar actualización remota. QA en 390 y 1440 px: una tarjeta a 349 px, tanda activa a 351 y nueve dentro del encuadre a 500. Siguiente: comprobar build tras rebase, push y verificar Pages.
+Archivo editado: `src/section-three/scene.js`. Único cambio funcional: límites de fade in; reutilizada QA previa de curva y CSS. Siguiente: build, commit, push y verificar Pages.
