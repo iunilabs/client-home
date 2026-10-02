@@ -16,6 +16,7 @@ import './style.css';
 export async function createPaperSection(journey) {
   const canvas = journey.querySelector('[data-paper-canvas]');
   const errorElement = journey.querySelector('[data-paper-fallback]');
+  const copyElement = journey.querySelector('[data-paper-copy]');
   const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
   const capture = new URLSearchParams(location.search).has('capture');
   let renderer;
@@ -147,6 +148,7 @@ export async function createPaperSection(journey) {
     breezeClock = capture || reducedQuery.matches ? 0 : seconds * .72;
     const idle = capture || reducedQuery.matches ? 0 : Math.sin(seconds * .45) * .035;
     const timing = paperTiming(height), dense = smooth(timing.group, timing.grouped, p);
+    copyElement.style.setProperty('--paper-copy-reveal', smooth(.85, .98, dense).toFixed(4));
     const noteExit = smooth(timing.several, timing.many + timing.manySpread, p);
     const letterExit = smooth(timing.many, timing.group, p);
     const anchors = portrait ? [[-.24,.61],[.30,.29],[.05,-.35],[-.24,-.05],[.30,-.65]] : [[-.28,.51],[.47,.29],[.10,-.59],[-.32,-.17],[.49,-.24]];

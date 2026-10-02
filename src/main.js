@@ -20,7 +20,7 @@ function preparePaperSection(){return paperModule??=import('./section-three/scen
 async function loadPaperSection(){
  if(paperScene||paperLoading||!paperIsVisible(lenis?.scroll??scrollY))return;paperLoading=true;
  try{const {createPaperSection}=await preparePaperSection();if(disposed)return;if(!paperIsVisible(lenis?.scroll??scrollY)){paperLoading=false;return}const scene=await createPaperSection(nextSection);if(disposed){scene.dispose();return}paperScene=scene}
- catch(error){console.warn('Paper scene unavailable:',error.message);nextSection.querySelector('[data-paper-fallback]').hidden=false}
+ catch(error){console.warn('Paper scene unavailable:',error.message);nextSection.dataset.paperRender='fallback';nextSection.querySelector('[data-paper-fallback]').hidden=false}
 }
 // Warm the module only. Textures, meshes and WebGL start after the city releases
 // the page and the paper stage reaches the viewport. Visible loading owns errors.
