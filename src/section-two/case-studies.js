@@ -6,55 +6,55 @@
 export const caseStudies = {
   sabadell: {
     cardTitle: 'Construimos banca digital.',
-    cardIntro: 'Arquitectura front-end desde diciembre de 2025.'
+    cardIntro: 'Front-end desde diciembre de 2025.'
   },
   accenture: {
-    cardTitle: 'Del saber al hacer.',
-    cardIntro: 'Talento y tecnología para seguir avanzando.'
+    cardTitle: 'Del conocimiento a la práctica.',
+    cardIntro: 'Aprender, aplicar y compartir tecnología.'
   },
   bbva: {
     cardTitle: 'Desde 2009, juntos.',
-    cardIntro: 'Tecnología y personas al servicio del cliente.'
+    cardIntro: 'Apoyo a la gestión de clientes del banco.'
   },
   canal: {
-    cardTitle: 'Cuidar lo esencial.',
-    cardIntro: 'Conocimiento para un servicio que nos une.'
+    cardTitle: 'Conocimiento que sostiene.',
+    cardIntro: 'Personas preparadas para lo esencial.'
   },
   cepsa: {
-    cardTitle: 'Energía para avanzar.',
-    cardIntro: 'Personas y tecnología ante nuevos retos.'
+    cardTitle: 'Prepararse para el cambio.',
+    cardIntro: 'Nuevas capacidades para nuevos retos.'
   },
   mapfre: {
-    cardTitle: 'Confianza para crecer.',
-    cardIntro: 'Aprendizaje que acompaña el cambio.'
+    cardTitle: 'El valor de estar preparados.',
+    cardIntro: 'Aprendizaje para un sector que evoluciona.'
   },
   mediaset: {
-    cardTitle: 'Ideas que conectan.',
-    cardIntro: 'Talento y tecnología para seguir creando.'
+    cardTitle: 'Tecnología detrás de las ideas.',
+    cardIntro: 'Aprender al ritmo de nuevos formatos.'
   },
   ree: {
-    cardTitle: 'Conectar el futuro.',
-    cardIntro: 'Conocimiento para afrontar nuevos retos.'
+    cardTitle: 'Conocimiento en conexión.',
+    cardIntro: 'Capacidades para un entorno exigente.'
   },
   siemens: {
-    cardTitle: 'Del potencial a la práctica.',
-    cardIntro: 'Tecnología que se convierte en aprendizaje.'
+    cardTitle: 'Entender. Aplicar. Avanzar.',
+    cardIntro: 'Acercar la tecnología a las personas.'
   },
   naturgy: {
-    cardTitle: 'El cambio empieza aquí.',
-    cardIntro: 'Talento y tecnología para avanzar juntos.'
+    cardTitle: 'Energía para aprender.',
+    cardIntro: 'Preparar equipos para lo que viene.'
   },
   telefonica: {
-    cardTitle: 'Conectar para avanzar.',
-    cardIntro: 'Talento y tecnología que acercan personas.'
+    cardTitle: 'Conectar también es aprender.',
+    cardIntro: 'Conocimiento que se comparte y crece.'
   },
   indra: {
-    cardTitle: 'Ideas que se transforman.',
-    cardIntro: 'Conocimiento para afrontar nuevos retos.'
+    cardTitle: 'Talento ante la complejidad.',
+    cardIntro: 'Aprender con nuevas tecnologías.'
   },
   allianz: {
-    cardTitle: 'Confianza para avanzar.',
-    cardIntro: 'Aprendizaje que acompaña el cambio.'
+    cardTitle: 'Prepararse genera confianza.',
+    cardIntro: 'Criterio para afrontar nuevos escenarios.'
   },
 };
 
