@@ -2,7 +2,7 @@
 
 La escena aprobada de papeles aparece después de la ciudad (`#confianza`), en `#posibilidades`. Sustituye el marcador anterior «La inteligencia, puesta en práctica» y utiliza la cabecera y el indicador de capítulo de la web.
 
-El primer papel dice **«Era urgente. Sigue pendiente.»**. Su etiqueta es «BLOQUEADO» y el detalle «El cliente vuelve a preguntar». Este mensaje presenta el coste de una tarea atascada antes de que lleguen los demás correos, mensajes, incidencias y documentos.
+La primera tarjeta es un **mensaje interno**: «Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.», con el icono de conversación y el estado «Pendiente» del resto de mensajes. La frase se compone como un solo bloque, con la misma tipografía, tamaño y color en todas sus líneas. Empieza a entrar a los **90 px de scroll local**, independientemente del tamaño de pantalla. Desde el marcador **0180** se aleja y permanece al fondo.
 
 ## Revisar
 
@@ -18,7 +18,7 @@ npm run dev -- --port 5185
 
 ## Integración
 
-Rama `feature/section3-paper-flow` en el worktree `puntoes-section3-integration`. La base `c514374` conserva los siete archivos que estaban modificados localmente en la web principal. El checkout `puntoes-home` permanece intacto. El primer papel también está actualizado en la propuesta aislada `puntoes-section3-lab`.
+Rama `feature/section3-paper-flow` en el worktree `puntoes-section3-integration`. La base `c514374` conserva los siete archivos que estaban modificados localmente en la web principal. El checkout `puntoes-home` permanece intacto.
 
 La nueva escena se carga al aproximarse a la sección, comparte el bucle de animación y el scroll de la web, y suspende su renderizado y sensor al salir. Las fuentes, cabecera y estilos globales se conservan. No incluye controles del laboratorio.
 

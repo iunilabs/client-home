@@ -33,7 +33,7 @@ try {
   await page.waitForFunction(() => window.__puntoes?.getState().paper?.visibleItems === 1, null, {timeout: 60000});
   await page.waitForFunction(() => Math.abs(window.__puntoes.getState().paper.progress - .155) < .001);
   await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('[data-paper-canvas]')).opacity) > .99);
-  assert.equal((await state()).paper.firstSubject, 'Era urgente. Sigue pendiente.');
+  assert.equal((await state()).paper.firstSubject, 'Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.');
   await page.screenshot({path: output + '02-first-paper-desktop.png'});
   await paperProgress(.60);
   const density = (await state()).paper;

@@ -31,10 +31,10 @@ function shell(width, height, nx, ny, radius, thickness) {
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geo.setAttribute('paperSide', new THREE.Float32BufferAttribute(faces, 1)); geo.setIndex(indices); geo.computeVertexNormals();
   return {geo, base: new Float32Array(base)};
 }
-export function createPaper({kind, variant, width, height, grain, detailed = false}) {
+export function createPaper({kind, variant, width, height, grain, detailed = false, content = null}) {
   const {geo, base} = shell(width, height, detailed ? 30 : 14, detailed ? 32 : 14, kind === 'note' || kind === 'letter' ? .015 : .045, kind === 'note' || kind === 'letter' ? .0028 : .004);
   const material = new THREE.MeshPhysicalMaterial({
-    map: surfaceTexture(kind, variant, detailed ? 1024 : 512), color: '#ffffff', roughness: .92, metalness: 0,
+    map: surfaceTexture(kind, variant, detailed ? 1024 : 512, content), color: '#ffffff', roughness: .92, metalness: 0,
     bumpMap: grain, bumpScale: .003, sheen: 0, sheenRoughness: .96, sheenColor: new THREE.Color('#d4e5f0'), specularIntensity: .045,
     clearcoat: 0, clearcoatRoughness: .9, side: THREE.FrontSide,
   });

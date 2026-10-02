@@ -54,8 +54,8 @@ function grain(ctx, w, h, amount, seed) {
   }
   ctx.putImageData(pixels, 0, 0);
 }
-export function surfaceTexture(kind, variant = 0, resolution = 1024) {
-  const key = `${kind}-${variant}-${resolution}`;
+export function surfaceTexture(kind, variant = 0, resolution = 1024, content = null) {
+  const key = `${kind}-${variant}-${resolution}-${content?.message ?? ''}`;
   if (cache.has(key)) return cache.get(key);
   const c = document.createElement('canvas'); c.width = 1024; c.height = kind === 'letter' ? 1180 : kind === 'note' ? 1080 : 630;
   const ctx = c.getContext('2d'); const { width: w, height: h } = c;
@@ -92,13 +92,25 @@ export function surfaceTexture(kind, variant = 0, resolution = 1024) {
     const titles = { email: 'Correo', chat: 'Mensaje interno', ticket: 'Incidencia', document: 'Documento', task: 'Solicitud' };
     line(ctx, titles[kind], 160, 91, 28, '#446c88', 500);
     line(ctx, ['09:14', '10:26', '09:42'][variant % 3], 864, 90, 18, '#91a9ba');
-    subject = channelContent[kind][variant] ?? `${titles[kind]} ${variant + 1}`;
+    subject = content?.message ?? channelContent[kind][variant] ?? `${titles[kind]} ${variant + 1}`;
     const secondary = kind === 'document' ? `${(1.2 + variant * .3).toFixed(1).replace('.', ',')} MB · Versión ${String(variant + 1).padStart(2, '0')}` : ['Pendiente de revisión', 'Compartido con el equipo', 'Esperando confirmación', 'Recibido esta mañana', 'En curso'][variant % 5];
     const text = [subject, secondary];
-    line(ctx, text[0], 62, 252, text[0].length > 27 ? 34 : 40, INK, 500); line(ctx, text[1], 62, 311, 27, '#7793a7');
+    if (content) {
+      ctx.font = '500 56px "Manrope", Arial';
+      const rows = []; let row = '';
+      for (const word of subject.split(/\s+/)) {
+        const next = row ? `${row} ${word}` : word;
+        if (row && ctx.measureText(next).width > 894) {rows.push(row); row = word;}
+        else row = next;
+      }
+      if (row) rows.push(row);
+      rows.forEach((text, index) => line(ctx, text, 62, 222 + index * 68, 56, INK, 500));
+    } else {
+      line(ctx, text[0], 62, 252, text[0].length > 27 ? 34 : 40, INK, 500); line(ctx, text[1], 62, 311, 27, '#7793a7');
+    }
     ctx.strokeStyle = '#d8e5ee'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(62, 380); ctx.lineTo(956, 380); ctx.stroke();
     ctx.fillStyle = `${palette[kind]}14`; rounded(ctx, 60, 438, kind === 'document' ? 164 : 205, 61, 10); ctx.fill();
-    line(ctx, kind === 'document' ? 'PDF' : kind === 'ticket' ? 'Abierta' : 'Pendiente', 82, 477, 21, palette[kind], 500);
+    line(ctx, content?.status ?? (kind === 'document' ? 'PDF' : kind === 'ticket' ? 'Abierta' : 'Pendiente'), 82, 477, content ? 28 : 21, palette[kind], 500);
     line(ctx, 'Equipo', 845, 476, 20, '#91a9ba');
     if (kind === 'chat') { ctx.fillStyle = `${palette[kind]}18`; ctx.beginPath(); ctx.arc(737, 470, 14, 0, Math.PI * 2); ctx.fill(); }
   }

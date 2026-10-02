@@ -44,16 +44,16 @@ export async function createPaperSection(journey) {
   await Promise.all([document.fonts.load('400 40px Manrope'), document.fonts.load('400 80px "DM Serif"')]);
   const grain = paperGrain();
   const pieces = [], heroes = [], field = [], foreground = [];
-  const variantCounts = new Map();
+  const variantCounts = new Map([['note', 1]]);
   const rand = randomSource(31415);
-  function addPaper(kind, variant, width, height, seed, detailed = false) {
-    variant = variantCounts.get(kind) ?? 0; variantCounts.set(kind, variant + 1);
-    const paper = createPaper({kind, variant, width, height, grain, detailed});
+  function addPaper(kind, variant, width, height, seed, detailed = false, content = null) {
+    if (!content) {variant = variantCounts.get(kind) ?? 0; variantCounts.set(kind, variant + 1);}
+    const paper = createPaper({kind, variant, width, height, grain, detailed, content});
     scene.add(paper.mesh); paper.mesh.visible = false;
     const piece = {...paper, flight: flightTrack(seed), seed, phase: seed % 100 / 100 * Math.PI * 2};
     pieces.push(piece); return piece;
   }
-  const note = addPaper('note', 0, 3.25, 3.45, 97, true);
+  const note = addPaper('chat', 0, 3.65, 2.25, 97, true, {message: 'Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.', status: 'Pendiente'});
   const letter = addPaper('letter', 0, 3.85, 4.44, 192, true);
   for (let i = 0; i < 5; i++) heroes.push(addPaper(CHANNELS[i], i % 2, 3.65, 2.25, 297 + i * 117, true));
   for (let i = 0; i < 64; i++) {
@@ -112,7 +112,7 @@ export async function createPaperSection(journey) {
     const clearance = Math.max(piece.width, piece.height) * scale + 1.8;
     let entryY = top + clearance;
     if (piece === note && f.y > 0) {
-      // Start the note at the upper edge at 0090, including its curved corners.
+      // Start the first message at 90 local scroll pixels, including its curved corners.
       const box = piece.mesh.geometry.boundingBox, offset = new THREE.Vector3();
       entryY = -Infinity;
       for (let i = 0; i < 8; i++) {
@@ -131,8 +131,9 @@ export async function createPaperSection(journey) {
     const heroScale = portrait ? .51 : 1;
     const scatter = smooth(.45, .73, p), dense = smooth(.57, .98, p);
     const noteExit = smooth(.18, .36, p), noteCloud = smooth(.58, .8, p);
-    const noteAnchor = [mix(.1, -.55, noteExit) + .45 * noteCloud, mix(-.02, .34, noteExit) - .76 * noteCloud, mix(3.4, -5.6, noteExit)];
-    falling(note, p, .09, .065, noteAnchor, [mix(-.08, .4, noteExit), mix(-.32, .9, noteExit), mix(-.13, -.46, noteExit)], (portrait ? .76 : 1) * mix(1, .75, noteExit), .64 + noteExit * .25, idle, 1.25);
+    const noteAnchor = [mix(portrait ? 0 : .1, -.55, noteExit) + .45 * noteCloud, mix(-.02, .34, noteExit) - .76 * noteCloud, mix(3.4, -5.6, noteExit)];
+    const messageScale = portrait ? 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (18 - 3.4) * camera.aspect * .9 / note.width : 1.3;
+    falling(note, p, 90 / height, .145, noteAnchor, [mix(-.08, .4, noteExit), mix(-.32, .9, noteExit), mix(-.13, -.46, noteExit)], messageScale * mix(1, .75, noteExit), .22 + noteExit * .16, idle, 1.25);
     const letterExit = smooth(.37, .55, p);
     const letterAnchor = [mix(portrait ? .03 : .2, portrait ? -.2 : .08, letterExit), mix(.08, -.45, letterExit), mix(3.2, -3.2, letterExit)];
     falling(letter, p, .20, .135, letterAnchor, [mix(-.16, -.36, letterExit), mix(-.42, .62, letterExit), mix(.19, -.30, letterExit)], (portrait ? .74 : 1.16) * mix(1, .70, letterExit), 1.02 - letterExit * .45, idle, .95);
@@ -215,7 +216,7 @@ export async function createPaperSection(journey) {
       }
     },
     resize,
-    getState: () => ({...lastState, active, firstSubject: note.subject}),
+    getState: () => ({...lastState, active, firstSubject: note.subject, firstKind: note.kind, firstEntryPixels: note.start * height}),
     getReview: () => review,
     dispose() {
       if (disposed) return; disposed = true; input.dispose();

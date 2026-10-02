@@ -1,7 +1,7 @@
 {
   "origin": "http://127.0.0.1:5185/",
   "desktop": {
-    "firstSubject": "Era urgente. Sigue pendiente.",
+    "firstSubject": "Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.",
     "items": 75,
     "contiguousBoundary": {
       "city": {
@@ -33,5 +33,10 @@
     "noHorizontalOverflow": true
   },
   "errors": [],
-  "passed": true
+  "passed": true,
+  "firstMessage": {
+    "entryPixels": 90,
+    "uniformTypography": true,
+    "desktopAndMobile": true
+  }
 }
