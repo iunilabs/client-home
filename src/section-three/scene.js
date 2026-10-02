@@ -207,7 +207,8 @@ export async function createPaperSection(journey) {
   return {
     update(now, y, visible) {
       if (disposed || lost) return;
-      const dt = Math.min((now - previous) / 1000, .05); previous = now;
+      // A queued RAF can predate initialization or context recovery.
+      const dt = Math.max(0, Math.min((now - previous) / 1000, .05)); previous = now;
       active = visible && !document.hidden;
       input.setActive(active);
       inputState = input.update(dt, now);
