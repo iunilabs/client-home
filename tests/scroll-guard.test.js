@@ -1,7 +1,7 @@
 import {wheelEventTime,createWheelBurst,createMobileTourInput} from '../src/section-two/mobile-tour-input.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createDocumentScrollLock,createEndLatch,cityEntryPoint,cityMapPoint} from '../src/section-two/scroll-guard.js';
+import {createDocumentScrollLock,createEndLatch,createMobileScrollBoundary,cityEntryPoint,cityMapPoint} from '../src/section-two/scroll-guard.js';
 import {createMobileTourNavigation} from '../src/section-two/mobile-tour-navigation.js';
 import {mobileTourGeometry,mobileTourState,mobileTourCamera} from '../src/section-two/mobile-tour.js';
 
@@ -12,6 +12,42 @@ test('compositor lock is idempotent and restores the previous inline overflow an
   lock.set(true);lock.set(true);assert.ok(lock.locked);assert.equal(root.style.getPropertyValue('overflow'),'hidden');
   lock.set(false);assert.equal(root.style.getPropertyValue('overflow'),'auto');assert.equal(root.style.getPropertyPriority('overflow'),'important');
   root.style.removeProperty('overflow');lock.set(true);lock.set(false);assert.equal(root.style.getPropertyValue('overflow'),'');
+});
+
+test('native boundary reserves the current viewport, preserves destination layout and restores owned inline priorities',()=>{
+  const element=(initial={})=>{
+    const values=new Map(Object.entries(initial).map(([key,[value,priority='']])=>[key,{value,priority}]));
+    return {offsetTop:0,style:{getPropertyValue:k=>values.get(k)?.value??'',getPropertyPriority:k=>values.get(k)?.priority??'',setProperty:(k,value,priority='')=>values.set(k,{value,priority}),removeProperty:k=>values.delete(k)}};
+  };
+  const main=element({'height':['auto','important'],'position':['static','important'],'overflow-x':['hidden'],'overflow-y':['visible','important']}),next=element({'position':['relative','important'],'top':['auto','important']}),footer=element({'display':['flex','important']}),root=element({'overscroll-behavior-y':['contain','important']});
+  let changes=0;const boundary=createMobileScrollBoundary(main,next,footer,root,()=>changes++);
+  boundary.set(true,{revealed:5542.17,viewport:932});boundary.set(true,{revealed:5542.17,viewport:932});
+  assert.equal(main.style.getPropertyValue('height'),'auto','native extent follows the responsive normal-flow city, not a cached pixel height');assert.equal(main.style.getPropertyValue('overflow-y'),'clip');
+  assert.equal(next.style.getPropertyValue('top'),'100%');assert.equal(next.style.getPropertyValue('position'),'absolute');
+  assert.equal(footer.style.getPropertyValue('display'),'none');assert.equal(root.style.getPropertyValue('overscroll-behavior-y'),'none');assert.equal(changes,1);
+  boundary.set(true,{revealed:5542.17,viewport:1012});assert.equal(main.style.getPropertyValue('height'),'auto');assert.equal(changes,2);
+  main.style.setProperty('color','blue');boundary.set(false);assert.equal(changes,3);assert.equal(boundary.closed,false);
+  for(const [el,key,value,priority] of [[main,'height','auto','important'],[main,'position','static','important'],[main,'overflow-x','hidden',''],[main,'overflow-y','visible','important'],[next,'position','relative','important'],[next,'top','auto','important'],[footer,'display','flex','important'],[root,'overscroll-behavior-y','contain','important']]) {
+    assert.equal(el.style.getPropertyValue(key),value);assert.equal(el.style.getPropertyPriority(key),priority);
+  }
+  assert.equal(main.style.getPropertyValue('color'),'blue','unrelated runtime styles survive release');
+  boundary.set(true);assert.equal(next.style.getPropertyValue('top'),'100%','Home can rearm the current boundary without cached geometry');boundary.set(false);
+  boundary.set(true,{revealed:5542.17,viewport:932});boundary.dispose();assert.equal(boundary.closed,false);assert.equal(main.style.getPropertyValue('height'),'auto');
+});
+
+test('End opens the physical range before computing its destination; Home rearms it after jumping',()=>{
+  const saved={window:globalThis.window,document:globalThis.document,innerHeight:globalThis.innerHeight};
+  const handlers=new Map(),writes=[];let closed=true;
+  globalThis.window={addEventListener:(key,fn)=>handlers.set(key,fn),removeEventListener(){},scrollY:5542};globalThis.innerHeight=932;
+  globalThis.document={documentElement:{get scrollHeight(){return closed?6474:7406}}};
+  const nav={getState:()=>({active:false}),jump:top=>writes.push({top,closed})};
+  const input=createMobileTourInput(null,nav,{boundary:{set:value=>closed=value}});input.update(true,{start:5000,revealed:5542.17});
+  try {
+    const event=key=>({key,target:{closest:()=>null},cancelable:true,preventDefault(){},stopImmediatePropagation(){}});
+    handlers.get('keydown')(event('End'));assert.deepEqual(writes[0],{top:6474,closed:false});
+    handlers.get('keydown')(event('Home'));assert.deepEqual(writes[1],{top:0,closed:false});assert.equal(closed,true);
+    input.prepareNavigation();assert.equal(closed,false,'explicit fragments can resolve their full-document destination synchronously');
+  } finally {input.dispose();for(const [key,value] of Object.entries(saved)){if(value===undefined)delete globalThis[key];else globalThis[key]=value}}
 });
 
 test('desktop end captures once, releases for a new gesture, and rearms on inverse entry',()=>{

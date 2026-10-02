@@ -13,6 +13,45 @@ export function cityMapPoint(geometry, progress, portrait) {
   return start + Math.max(0, Math.min(1, progress)) * (geometry.end - start);
 }
 
+// Commit the pending chapter's native maximum before a gesture starts. The
+// compositor can then stop at Puntoes even while the main thread is busy.
+// The later section keeps its offsets inside the clipped main box, so explicit
+// destinations still resolve normally after restoring the full document.
+export function createMobileScrollBoundary(main, next, footer, root, onChange = () => {}) {
+  let saved = null, shape = null;
+  const properties = [[main, ['position', 'overflow-x', 'overflow-y']], [next, ['position', 'top', 'left', 'right']], [footer, ['display']], [root, ['overscroll-behavior-y']]];
+  return {
+    get closed() {return Boolean(saved)},
+    set(closed, geometry) {
+      if (!closed) {
+        if (!saved) return;
+        for (const [element, entries] of saved) for (const [property, value, priority] of entries) {
+          if (value) element.style.setProperty(property, value, priority);
+          else element.style.removeProperty(property);
+        }
+        saved = null; shape = null; onChange(); return;
+      }
+      const nextShape = geometry ? `${geometry.revealed}:${geometry.viewport}` : shape;
+      if (saved && shape === nextShape) return;
+      const first = !saved;
+      if (!saved) saved = properties.map(([element, names]) => [element, names.map(property =>
+        [property, element.style.getPropertyValue(property), element.style.getPropertyPriority(property)])]);
+      shape = nextShape;
+      if (first) {
+        // Main ends at the city through normal flow. Section 3 still starts
+        // exactly at that end, but cannot extend the root's native range.
+        main.style.setProperty('position', 'relative');
+        main.style.setProperty('overflow-x', 'clip'); main.style.setProperty('overflow-y', 'clip');
+        next.style.setProperty('position', 'absolute'); next.style.setProperty('top', '100%');
+        next.style.setProperty('left', '0'); next.style.setProperty('right', '0');
+        footer.style.setProperty('display', 'none'); root.style.setProperty('overscroll-behavior-y', 'none');
+      }
+      onChange();
+    },
+    dispose() {this.set(false)},
+  };
+}
+
 export function createDocumentScrollLock(root) {
   let saved = null;
   return {

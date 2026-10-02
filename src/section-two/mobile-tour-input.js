@@ -46,7 +46,7 @@ export function createSwipeIntent(x, y, consumed = false) {
   };
 }
 
-export function createMobileTourInput(frame, navigation, {lock = {set() {}}, readTarget = () => scrollY, onInterrupt = () => {}} = {}) {
+export function createMobileTourInput(frame, navigation, {lock = {set() {}}, boundary = {set() {}}, readTarget = () => scrollY, onInterrupt = () => {}} = {}) {
   const wheel = createWheelBurst();
   let touch = null, geometry, available = false, lastScroll = null, skipEntry = false, navigating = false;
   const excluded = target => target.closest('input,textarea,select,[contenteditable],dialog[open],[data-lenis-prevent]') ||
@@ -76,6 +76,7 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, rea
     interruptNavigation();
     const active = eligible();
     if (active && !pending && navigation.canRelease(Math.sign(delta))) {
+      if (delta > 0) boundary.set(false);
       navigation.release(Math.sign(delta)); lock.set(false); return;
     }
     if (!active && crossing(delta > 0 ? Math.max(window.scrollY, readTarget()) : Math.min(window.scrollY, readTarget()), delta)) {
@@ -89,6 +90,7 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, rea
     if (event.touches.length !== 1 || !available || excluded(event.target)) return;
     interruptNavigation();
     const p = event.touches[0];
+    if (eligible() && navigation.canRelease(1)) boundary.set(false);
     if (eligible() && (navigation.canRelease(1) || navigation.canRelease(-1))) lock.set(false);
     touch = {intent: createSwipeIntent(p.clientX, p.clientY, navigation.getState().moving),
       startScroll: window.scrollY, entered: eligible(), native: false,
@@ -126,8 +128,10 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, rea
       // the next update can mistake the jump for a fresh forward entrance.
       if (navigating) navigation.reset({suspend: true});
       interruptNavigation();
+      if (endKey) boundary.set(false);
       skipEntry = true; lastScroll = null; lock.set(false); block(event);
-      navigation.jump(topKey ? 0 : Math.max(0, document.documentElement.scrollHeight - innerHeight)); return;
+      navigation.jump(topKey ? 0 : Math.max(0, document.documentElement.scrollHeight - innerHeight));
+      if (topKey) boundary.set(true); return;
     }
     if (event.metaKey || event.ctrlKey || event.altKey || excluded(event.target)) return;
     if (event.target.closest('a,button')) return;
@@ -167,7 +171,7 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, rea
       }
       lock.set(false);return scroll;
     },
-    prepareNavigation() {navigating = true;skipEntry = true;lastScroll = null;touch = null;lock.set(false)},
+    prepareNavigation() {navigating = true;skipEntry = true;lastScroll = null;touch = null;boundary.set(false);lock.set(false)},
     finishNavigation() {
       if (!navigating) return false;
       navigating = false;skipEntry = false;lastScroll = null;return true;
@@ -175,6 +179,7 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, rea
     // Only the navigation controller's implicit-entry checks use this held
     // position. City rendering keeps the actual scroll state throughout.
     navigationScroll: scroll => navigating ? geometry.start : scroll,
+    isNavigating: () => navigating,
     lock() {lock.set(true)},
     dispose() {for (const [type, handler] of events) window.removeEventListener(type, handler, true)},
   };

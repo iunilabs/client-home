@@ -14,7 +14,7 @@ import {mobileTourGeometry, mobileTourState} from './mobile-tour.js';
 import {createMobileTourDeck} from './mobile-tour-deck.js';
 import {createMobileTourNavigation} from './mobile-tour-navigation.js';
 import {createMobileTourInput} from './mobile-tour-input.js';
-import {createDocumentScrollLock, createDesktopEndGuard, cityEntryPoint, cityMapPoint} from './scroll-guard.js';
+import {createDocumentScrollLock, createDesktopEndGuard, createMobileScrollBoundary, cityEntryPoint, cityMapPoint} from './scroll-guard.js';
 import {createCityDetail} from './city-detail.js';
 
 // Architecture is interpreted from photos; the city layout is imaginary.
@@ -56,6 +56,9 @@ export function createCity(section, options = {}) {
   let loading = false, ready = false, geometry, lastWidth = 0, lastHeight = 0, water = null, waterSources = '', tourViewport = innerHeight, mobileEntryPending = false;
 
   const documentLock = createDocumentScrollLock(document.documentElement);
+  let boundaryInitialized = false;
+  const boundary = createMobileScrollBoundary(document.querySelector('main'), document.querySelector('#posibilidades'), document.querySelector('footer'), document.documentElement,
+    () => {if (boundaryInitialized) options.onExtentChange?.()});
   const navigate = top => {if (options.onNavigate) options.onNavigate(top);else window.scrollTo({top, behavior: 'instant'})};
   const invitation = {id: 'collaborate', name: '¿Quieres colaborar?', invitation: true};
   const deck = createMobileTourDeck(section, mobileTourRoute, [...cityClients, invitation]);
@@ -63,7 +66,7 @@ export function createCity(section, options = {}) {
     if (innerWidth < 700 && navigation.getState().active) input.lock();
     navigate(top);
   }});
-  const input = createMobileTourInput(frame, navigation, {lock: documentLock, readTarget: options.readScrollTarget,
+  const input = createMobileTourInput(frame, navigation, {lock: documentLock, boundary, readTarget: options.readScrollTarget,
     onInterrupt: () => {mobileEntryPending = false; navigate(window.scrollY)}});
   const endGuard = createDesktopEndGuard({lock: documentLock, navigate, readTarget: options.readScrollTarget,
     blocked: () => dialog.isOpen || Boolean(document.querySelector('dialog[open]'))});
@@ -126,7 +129,9 @@ export function createCity(section, options = {}) {
   function resize() {
     const viewport = innerHeight;
     const portrait = innerWidth < 700;
+    const initialOutsideTarget = !geometry && location.hash === '#posibilidades';
     const wasPortrait = section.classList.contains('city-mobile-tour');
+    if (!portrait) boundary.set(false);
     if (wasPortrait !== portrait) navigation.reset();
     section.classList.toggle('city-mobile-tour', portrait);
     // Copy has its own beat before the map on both layouts.
@@ -140,6 +145,7 @@ export function createCity(section, options = {}) {
       // but reserve a whole *current* viewport below it for the native exit.
       geometry = {...geometry, viewport, height: geometry.revealed + viewport - section.offsetTop};
       section.style.height = `${geometry.height}px`;
+      boundary.set(boundary.closed || !wasPortrait && !initialOutsideTarget && window.scrollY <= geometry.revealed + .5, geometry);
       navigation.anchorScroll(window.scrollY, geometry);
     } else {
       section.style.removeProperty('height');
@@ -224,6 +230,10 @@ export function createCity(section, options = {}) {
     if (portrait) {
       tour = navigation.update(state, {scroll: input.navigationScroll(scroll), now, layout: {width: parseFloat(world.style.width), height: parseFloat(world.style.height),
         viewportWidth: document.documentElement.clientWidth, viewportHeight: innerHeight}, geometry, reduced});
+      if (!input.isNavigating()) {
+        if (tour.active) boundary.set(!navigation.canRelease(1), geometry);
+        else if (scroll < geometry.start && tour.released <= 0) boundary.set(true, geometry);
+      }
       // The introduction finishes before the mobile itinerary begins.
       if (tour.active) {state.opacity = 1; state.active = true; state.exitY = 0; state.revealed = true}
       state.stopIndex = tour.guidedCursor;
@@ -280,6 +290,7 @@ export function createCity(section, options = {}) {
   }
 
   resize();
+  boundaryInitialized = true;
   return {update, resize, load, dialog,
     anchorScroll: scroll => innerWidth < 700 ? input.reconcile(scroll) : endGuard.reconcile(scroll),
     prepareNavigation: enter => {mobileEntryPending = enter; input.prepareNavigation(); endGuard.prepareNavigation(); navigation.reset({suspend: innerWidth < 700 || !enter || cityEntryPoint(geometry, false) !== null})},
@@ -289,10 +300,11 @@ export function createCity(section, options = {}) {
       if (completed && innerWidth < 700) {
         navigation.reset({suspend: true});
         if (mobileEntryPending) navigation.enter(geometry);
+        if (mobileEntryPending || window.scrollY < geometry.start) boundary.set(true, geometry);
       }
       mobileEntryPending = false;
     },
     entryScrollAt: () => cityEntryPoint(geometry, innerWidth < 700),
     getTourState: navigation.getState,
-    dispose() {input.dispose(); endGuard.dispose(); documentLock.set(false); water?.dispose(); pan.dispose(); perspective.dispose()}, scrollAt: progress => cityMapPoint(geometry, progress, innerWidth < 700)};
+    dispose() {input.dispose(); endGuard.dispose(); documentLock.set(false); boundary.dispose(); water?.dispose(); pan.dispose(); perspective.dispose()}, scrollAt: progress => cityMapPoint(geometry, progress, innerWidth < 700)};
 }
