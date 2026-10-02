@@ -47,29 +47,38 @@ export function createPaper({kind, variant, width, height, grain, detailed = fal
   const mesh = new THREE.Mesh(geo, material); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
   const pendingMap = material.map;
   let completedMap = null;
+  function prepareCompleted() {
+    // Completed cards are smaller on screen; 1024px still exceeds their Retina footprint.
+    return completedMap ??= surfaceTexture(kind, variant, Math.min(textureResolution, 1024), content, true);
+  }
   function setCompleted(completed) {
-    // Build the green version only when this paper actually reaches the done pile.
-    if (completed && !completedMap) completedMap = surfaceTexture(kind, variant, textureResolution, content, true);
-    material.map = completed ? completedMap : pendingMap;
+    material.map = completed ? prepareCompleted() : pendingMap;
+  }
+  const coefficients = new Float64Array(base.length / 3 * 10);
+  for (let i = 0, j = 0; i < base.length; i += 3, j += 10) {
+    const x = base[i], y = base[i + 1], u = x / width, v = y / height, freeEdge = .5 - v;
+    const corner = Math.pow(Math.max(0, Math.abs(u) * 2 - .5), 2);
+    const left = Math.pow(Math.max(0, -u * 2), 2.4), right = Math.pow(Math.max(0, u * 2), 2.4);
+    const top = Math.pow(Math.max(0, v * 2), 2.4), bottom = Math.pow(Math.max(0, -v * 2), 2.4);
+    coefficients.set([x * u * u * .065, Math.pow(freeEdge, 3) * height * .012,
+      u * u * width * .68 + freeEdge * freeEdge * height * .19, u * v * width * .48,
+      left * top * Math.min(width, height), right * top * Math.min(width, height),
+      left * bottom * Math.min(width, height), right * bottom * Math.min(width, height),
+      v * 5.4, (freeEdge * .8 + corner) * height * .048], j);
   }
   let last = '';
   function deform(curl, twist, flutter, phase, corners = [0, 0, 0, 0]) {
     const key = [curl, twist, flutter, phase, ...corners].map(v => v.toFixed(4)).join(','); if (key === last) return; last = key;
     const a = geo.attributes.position.array;
-    for (let i = 0; i < base.length; i += 3) {
-      const x = base[i], y = base[i + 1], u = x / width, v = y / height;
-      const freeEdge = (.5 - v), corner = Math.pow(Math.max(0, Math.abs(u) * 2 - .5), 2);
-      const bow = curl * (u * u * width * .68 + Math.pow(freeEdge, 2) * height * .19);
-      const torsion = twist * u * v * width * .48;
-      const left = Math.pow(Math.max(0, -u * 2), 2.4), right = Math.pow(Math.max(0, u * 2), 2.4);
-      const top = Math.pow(Math.max(0, v * 2), 2.4), bottom = Math.pow(Math.max(0, -v * 2), 2.4);
-      const cornerLift = (corners[0] * left * top + corners[1] * right * top + corners[2] * left * bottom + corners[3] * right * bottom) * Math.min(width, height);
-      const ripple = flutter * Math.sin(v * 5.4 + phase) * (freeEdge * .8 + corner) * height * .048;
-      a[i] = x - curl * curl * x * u * u * .065;
-      a[i + 1] = y + Math.abs(curl) * Math.pow(freeEdge, 3) * height * .012;
-      a[i + 2] = base[i + 2] + bow + torsion + ripple + cornerLift;
+    for (let i = 0, j = 0; i < base.length; i += 3, j += 10) {
+      const c = coefficients;
+      a[i] = base[i] - curl * curl * c[j];
+      a[i + 1] = base[i + 1] + Math.abs(curl) * c[j + 1];
+      a[i + 2] = base[i + 2] + curl * c[j + 2] + twist * c[j + 3]
+        + corners[0] * c[j + 4] + corners[1] * c[j + 5] + corners[2] * c[j + 6] + corners[3] * c[j + 7]
+        + flutter * Math.sin(c[j + 8] + phase) * c[j + 9];
     }
     geo.attributes.position.needsUpdate = true; geo.computeVertexNormals(); geo.computeBoundingBox();
   }
-  return {mesh, deform, setCompleted, textures: () => [pendingMap, completedMap].filter(Boolean), width, height, kind, subject: pendingMap.userData.subject};
+  return {mesh, deform, prepareCompleted, setCompleted, textures: () => [pendingMap, completedMap].filter(Boolean), width, height, kind, subject: pendingMap.userData.subject};
 }

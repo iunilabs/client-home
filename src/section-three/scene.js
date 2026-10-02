@@ -1,8 +1,5 @@
 import * as THREE from 'three';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
-import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
-import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
-import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {CHANNELS, paperGrain, backdrop} from './art.js';
 import {createPaper} from './paper.js';
 import {createSceneInput} from './input.js';
@@ -12,12 +9,30 @@ import {clamp, mix, smooth, randomSource, flightTrack} from './motion.js';
 import {paperTiming} from './timing.js';
 import {assignPaperLanes, paperDepthHalf} from './separation.js';
 import {workflowState, cardWorkflow} from '../section-four/workflow.js';
+import {createPreparationQueue} from './preparation.js';
 import './style.css';
 
-export async function createPaperSection(journey) {
+let fontsReady;
+export function preparePaperFonts() {
+  return fontsReady ??= Promise.all([document.fonts.load('400 40px Manrope'), document.fonts.load('400 80px "Paper Hand"')]);
+}
+
+export async function createPaperSection(journey, {graphics = null} = {}) {
+  const preparationStart = performance.now(), preparation = createPreparationQueue();
+  const fonts = preparePaperFonts();
+  await preparation.yield();
   const painSection = journey.querySelector('#posibilidades');
   const resolutionSection = journey.querySelector('#resolucion');
-  const canvas = journey.querySelector('[data-paper-canvas]');
+  const placeholder = journey.querySelector('[data-paper-canvas]');
+  const canvas = graphics?.renderer.domElement ?? placeholder;
+  const originalParent = graphics ? canvas.parentElement : null;
+  let attached = false;
+  function attachCanvas(visible) {
+    if (!graphics || attached === visible) return;
+    attached = visible;
+    if (visible) {placeholder.replaceWith(canvas); placeholder.removeAttribute('data-paper-canvas'); canvas.setAttribute('data-paper-canvas', '');}
+    else {canvas.replaceWith(placeholder); canvas.removeAttribute('data-paper-canvas'); placeholder.setAttribute('data-paper-canvas', ''); originalParent.appendChild(canvas);}
+  }
   const errorElement = journey.querySelector('[data-paper-fallback]');
   const stageElement = journey.querySelector('.paper-stage');
   const workflowElement = journey.querySelector('[data-paper-workflow]');
@@ -29,18 +44,42 @@ export async function createPaperSection(journey) {
   const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
   const capture = new URLSearchParams(location.search).has('capture');
   let renderer;
-  try { renderer = new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: 'high-performance'}); }
+  let phaseStart = performance.now();
+  try { renderer = graphics?.renderer ?? new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: 'high-performance'}); }
   catch { errorElement.hidden = false; journey.dataset.paperRender = 'fallback'; throw new Error('WebGL unavailable'); }
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.NeutralToneMapping;
-  renderer.toneMappingExposure = .98;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.shadowMap.autoUpdate = false;
-  const scene = new THREE.Scene(); scene.background = backdrop(); scene.backgroundIntensity = 1.5; scene.fog = new THREE.FogExp2('#e7f2fa', .003);
+  const rendererMs = performance.now() - phaseStart;
+  function configureRenderer() {
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = .98;
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.autoUpdate = false;
+    if (renderer.getPixelRatio() !== pixelBudget.pixelRatio) pixelBudget.resize();
+  }
+  const scene = new THREE.Scene(); scene.fog = new THREE.FogExp2('#e7f2fa', .003);
+  const backgroundTexture = backdrop();
+  // Keep the original tone-mapped gradient in the direct render. Three's
+  // built-in sRGB background bypasses tone mapping outside a compositor.
+  const backgroundMaterial = new THREE.ShaderMaterial({
+    uniforms: {map: {value: backgroundTexture}, intensity: {value: 1.5}},
+    vertexShader: 'varying vec2 vUv; void main(){vUv=uv; gl_Position=vec4(position.xy,1.0,1.0);}',
+    fragmentShader: `uniform sampler2D map; uniform float intensity; varying vec2 vUv;
+      void main(){gl_FragColor=vec4(texture2D(map,vUv).rgb*intensity,1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+    depthTest: false, depthWrite: false,
+  });
+  const background = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), backgroundMaterial);
+  background.frustumCulled = false; background.renderOrder = -Infinity; scene.add(background);
   const camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, .1, 220); camera.position.set(0, 0, 18);
-  const pmrem = new THREE.PMREMGenerator(renderer), room = new RoomEnvironment(), environment = pmrem.fromScene(room, .045);
-  scene.environment = environment.texture; scene.environmentIntensity = .24; pmrem.dispose(); room.dispose();
+  phaseStart = performance.now();
+  let environment = graphics?.environment;
+  if (!environment) {
+    const pmrem = new THREE.PMREMGenerator(renderer), room = new RoomEnvironment();
+    environment = pmrem.fromScene(room, .045); pmrem.dispose(); room.dispose();
+  }
+  scene.environment = environment.texture; scene.environmentIntensity = .24;
+  const environmentMs = performance.now() - phaseStart;
   scene.add(new THREE.HemisphereLight('#f4f8ff', '#a8c4d8', .38));
   const key = new THREE.DirectionalLight('#fff8ed', 2.15); key.position.set(-6, 8, 12); scene.add(key);
   key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
@@ -50,35 +89,35 @@ export async function createPaperSection(journey) {
   const rim = new THREE.DirectionalLight('#d2edff', .9); rim.position.set(2, 6, -7); scene.add(rim);
   const cursorLight = new THREE.SpotLight('#fff4df', 0, 6, .65, .8, 2); scene.add(cursorLight, cursorLight.target);
   const cursorSurface = createCursorSurfaceLight(cursorLight);
-  const renderTarget = new THREE.WebGLRenderTarget(innerWidth, innerHeight, {type: THREE.HalfFloatType, samples: devicePixelRatio > 1 ? 2 : 4});
-  const composer = new EffectComposer(renderer, renderTarget); composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(new OutputPass());
   const pixelBudget = createRenderBudget({setPixelRatio(ratio) {
-    renderer.setPixelRatio(ratio); composer.setPixelRatio(ratio);
+    renderer.setPixelRatio(ratio);
   }}, () => Math.min(devicePixelRatio, innerWidth < 700 ? 3 : 2,
     Math.sqrt(5_200_000 / (innerWidth * innerHeight))), {minScale: .8});
 
-  await Promise.all([document.fonts.load('400 40px Manrope'), document.fonts.load('400 80px "Paper Hand"')]);
+  await fonts; await preparation.yield();
   const grain = paperGrain();
   const closeTextureSize = innerWidth < 700 ? 1536 : 2048;
   const pieces = [], heroes = [], field = [], foreground = [];
   const variantCounts = new Map([['note', 1]]);
   const rand = randomSource(31415);
-  function addPaper(kind, variant, width, height, seed, detailed = false, content = null) {
+  async function addPaper(kind, variant, width, height, seed, detailed = false, content = null) {
     if (!content) {variant = variantCounts.get(kind) ?? 0; variantCounts.set(kind, variant + 1);}
-    const paper = createPaper({kind, variant, width, height, grain, detailed, content, textureResolution: detailed ? closeTextureSize : 512});
+    const textureResolution = detailed ? (pieces.length < 2 ? closeTextureSize : 1024) : 512;
+    const paper = await preparation.run(() => createPaper({kind, variant, width, height, grain, detailed, content, textureResolution}));
+    await preparation.run(() => paper.prepareCompleted());
+    for (const texture of paper.textures()) await preparation.run(() => renderer.initTexture(texture));
     scene.add(paper.mesh); paper.mesh.visible = false;
     const piece = {...paper, flight: flightTrack(seed), seed, phase: seed % 100 / 100 * Math.PI * 2};
     pieces.push(piece); return piece;
   }
-  const note = addPaper('chat', 0, 3.65, 2.25, 97, true, {message: 'Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.', status: 'Pendiente'});
-  const letter = addPaper('letter', 0, 3.85, 4.44, 192, true);
-  for (let i = 0; i < 5; i++) heroes.push(addPaper(CHANNELS[i], i % 2, 3.65, 2.25, 297 + i * 117, true));
+  const note = await addPaper('chat', 0, 3.65, 2.25, 97, true, {message: 'Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.', status: 'Pendiente'});
+  const letter = await addPaper('letter', 0, 3.85, 4.44, 192, true);
+  for (let i = 0; i < 5; i++) heroes.push(await addPaper(CHANNELS[i], i % 2, 3.65, 2.25, 297 + i * 117, true));
   for (let i = 0; i < 36; i++) {
     const kind = i < 8 ? 'note' : i % 9 === 0 ? 'letter' : CHANNELS[i % CHANNELS.length];
     const w = kind === 'note' ? 1.85 + rand() * .6 : kind === 'letter' ? 2.1 : 2.35 + rand() * .7;
     const h = kind === 'note' ? w * 1.06 : kind === 'letter' ? w * 1.15 : w * .62;
-    const p = addPaper(kind, i % 3, w, h, 701 + i * 53);
+    const p = await addPaper(kind, i % 3, w, h, 701 + i * 53);
     const a = i * 2.39996;
     p.waveOffset = i < 8 ? i / 8 : (i - 8) / 27;
     p.scatter = [Math.cos(a) * (.5 + rand() * .44), Math.sin(a) * (.45 + rand() * .5), -4 - rand() * 9];
@@ -87,7 +126,7 @@ export async function createPaperSection(journey) {
   }
   const foregroundKinds = ['qa', 'test', 'deploy', 'summary'];
   for (let i = 0; i < foregroundKinds.length; i++) {
-    const p = addPaper(foregroundKinds[i], i, 4.1, 2.55, 4101 + i * 47, true);
+    const p = await addPaper(foregroundKinds[i], i, 4.1, 2.55, 4101 + i * 47, true);
     p.anchor = [[-.87, -.68, 7.3], [.89, .71, 6.8], [-.84, .62, 6.7], [.92, -.65, 7.5]][i]; foreground.push(p);
   }
   [note, letter, ...heroes, ...foreground, ...field].forEach((piece, i) => {piece.workflowIndex = i;});
@@ -115,7 +154,6 @@ export async function createPaperSection(journey) {
     assignPaperLanes([note, letter, ...heroes, ...foreground, ...field]);
     // Resolve Retina text without oversizing the multisampled render targets.
     pixelBudget.resize(); renderer.setSize(innerWidth, innerHeight);
-    composer.setSize(innerWidth, innerHeight);
     updateTarget(); force = true;
   }
   function contextLost(event) {
@@ -132,7 +170,7 @@ export async function createPaperSection(journey) {
   canvas.addEventListener('webglcontextrestored', contextRestored);
   resize();
 
-  function pose(piece, x, y, rx, ry, rz, scale, curl, twist, flutter, phase) {
+  function pose(piece, x, y, rx, ry, rz, scale, curl, twist, flutter, phase, deferDeformation = false) {
     const {mesh} = piece; atScreen(x, y, piece.depth, mesh.position);
     mesh.rotation.set(clamp(rx, -piece.tilt, piece.tilt), clamp(ry, -piece.tilt, piece.tilt), clamp(rz, -.35, .35), 'YXZ');
     mesh.scale.setScalar(Math.min(scale, piece.maxScale));
@@ -140,7 +178,7 @@ export async function createPaperSection(journey) {
     piece.pose = {curl: clamp(curl + .025 * Math.sin(breezeClock * .62 + piece.phase), -piece.maxCurl, piece.maxCurl),
       twist: clamp(twist + .03 * Math.sin(breezeClock * .74 + piece.phase), -.08, .08), flutter: Math.min(flutter, .26), phase, corners};
     const pose = piece.pose;
-    piece.deform(pose.curl, pose.twist, pose.flutter, pose.phase, pose.corners);
+    if (!deferDeformation) piece.deform(pose.curl, pose.twist, pose.flutter, pose.phase, pose.corners);
   }
   function orderedPose(piece, workflow, card) {
     const {mesh} = piece, initial = piece.pose ?? {curl:0, twist:0, flutter:0, phase:0, corners:[0,0,0,0]}, order = workflow.ordered, air = 1 - order;
@@ -162,14 +200,15 @@ export async function createPaperSection(journey) {
     mesh.rotation.set(rx, ry, mix(mesh.rotation.z, card.rotation, order), 'YXZ');
     piece.deform(curl, twist, flutter, initial.phase, corners);
   }
-  function falling(piece, p, start, duration, anchor, rotation, scale, curl, idle, strength = 1) {
+  function falling(piece, p, start, duration, anchor, rotation, scale, curl, idle, strength = 1, deferDeformation = false) {
     piece.start = start; const t = clamp((p - start) / duration); piece.spawnProgress = t; piece.mesh.visible = p > start;
     if (!piece.mesh.visible) return;
     const f = piece.flight(t), settle = smooth(.7, 1, t), air = 1 - settle;
     pose(piece, anchor[0], anchor[1], rotation[0] + f.pitch * air * strength * .22,
       rotation[1] + f.yaw * air * strength * .22, rotation[2] + f.roll * air * strength * .35, scale,
-      curl + f.pitch * air * .025, f.roll * .035, air * .22 + .04, t * 13 + piece.phase + idle);
+      curl + f.pitch * air * .025, f.roll * .035, air * .22 + .04, t * 13 + piece.phase + idle, deferDeformation && t === 1);
     piece.mesh.position.x += (f.x * .35 + Math.sin(t * Math.PI) * Math.sin(piece.phase) * .15) * scale;
+    if (f.y === 0) return;
     const box = piece.mesh.geometry.boundingBox, offset = new THREE.Vector3();
     let entryY = -Infinity;
     for (let i = 0; i < 8; i++) {
@@ -181,6 +220,7 @@ export async function createPaperSection(journey) {
     piece.mesh.position.y += f.y * (entryY - piece.mesh.position.y);
   }
   function draw(p, seconds, resolutionProgress) {
+    configureRenderer();
     breezeClock = capture || reducedQuery.matches ? 0 : seconds * .72;
     const idle = capture || reducedQuery.matches ? 0 : Math.sin(seconds * .45) * .035;
     const timing = paperTiming(height), dense = smooth(timing.group, timing.grouped, p);
@@ -212,7 +252,7 @@ export async function createPaperSection(journey) {
       const y = isMessage ? -.08 : isLetter ? .18 : Math.sin(piece.phase * 3.7) * .40;
       const finalScale = piece.maxScale * (isMessage ? (portrait ? .32 : .45) : isLetter ? (portrait ? .52 : .66) : field.includes(piece) ? .85 : (portrait ? .78 : .90));
       const position = [mix(anchor[0], x, dense), mix(anchor[1], y, dense) + idle * (1 - dense) * Math.sin(piece.phase)];
-      if (workflow.ordered < 1) falling(piece, p, start, duration, position, rotation.map((r, i) => mix(r, i === 2 ? Math.sin(piece.phase) * .25 : r * .55, dense)), mix(scale, finalScale, dense), curl, idle, strength);
+      if (workflow.ordered < 1) falling(piece, p, start, duration, position, rotation.map((r, i) => mix(r, i === 2 ? Math.sin(piece.phase) * .25 : r * .55, dense)), mix(scale, finalScale, dense), curl, idle, strength, workflow.ordered > 0);
       else {piece.mesh.visible = true; piece.start = start; piece.spawnProgress = 1;}
       const card = cardWorkflow(workflow, piece.workflowIndex, pieces.length, innerWidth, innerHeight, portrait, piece.width / piece.height);
       if (workflow.ordered > 0) orderedPose(piece, workflow, card);
@@ -223,7 +263,7 @@ export async function createPaperSection(journey) {
     camera.updateMatrixWorld();
     const lightState = cursorSurface.update(camera, inputState.pointer, pieces.map(piece => piece.mesh), !inputState.hovering, frameDelta);
     cursorLight.intensity *= .028;
-    renderer.info.autoReset = false; renderer.info.reset(); renderer.shadowMap.needsUpdate = true; composer.render();
+    renderer.info.autoReset = false; renderer.info.reset(); renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera);
     lastState = {progress: p, resolution: workflow, visibleItems: pieces.filter(i => i.mesh.visible).length, groupProgress: dense, secondEntryPixels: timing.several * height, lastEntryPixels: (timing.many + timing.manySpread) * height, lastFallEndPixels: (timing.many + timing.manySpread + timing.manyDuration) * height, groupingPixels: timing.group * height, scrollRange: height, glass: 0, drawCalls: renderer.info.render.calls, geometries: renderer.info.memory.geometries, reducedMotion: reducedQuery.matches,
       hero: {position: note.mesh.position.toArray(), rotation: note.mesh.rotation.toArray().slice(0,3), bend: note.mesh.geometry.attributes.position.array[2]}, letterCorners: [0,30,992,1022].map(i => letter.mesh.geometry.attributes.position.array[i*3+2]), version: 4, depthOfField: false, parallax: {x: inputState.x, y: inputState.y, gyro: inputState.orientation}, cursorLight: {...lightState, intensity: cursorLight.intensity}, contentCount: new Set(pieces.map(i => i.subject)).size, totalItems: pieces.length};
   }
@@ -255,10 +295,28 @@ export async function createPaperSection(journey) {
     },
   };
   let previous = performance.now(), elapsed = 0, frames = 0, totalFrameTime = 0;
+  // Compile and upload before visibility. The tiny viewport also warms shadow
+  // programs and vertex buffers without drawing cards into the user's viewport.
+  await preparation.yield();
+  renderer.initTexture(grain); renderer.initTexture(backgroundTexture);
+  phaseStart = performance.now();
+  configureRenderer();
+  await renderer.compileAsync(scene, camera);
+  const compileMs = performance.now() - phaseStart;
+  configureRenderer();
+  for (const piece of pieces) piece.mesh.visible = true;
+  renderer.setViewport(0, 0, 1, 1); renderer.setScissor(0, 0, 1, 1); renderer.setScissorTest(true);
+  phaseStart = performance.now();
+  renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera);
+  const warmRenderMs = performance.now() - phaseStart;
+  for (const piece of pieces) piece.mesh.visible = false;
+  renderer.setScissorTest(false); renderer.setViewport(0, 0, innerWidth, innerHeight);
+  const preparationState = {...preparation.getState(), durationMs: performance.now() - preparationStart,
+    sharedRenderer: Boolean(graphics), rendererMs, environmentMs, compileMs, warmRenderMs, pendingTextures: pieces.length, completedTextures: pieces.length, shadersReady: true};
   function visibilityChanged() {
     previous = performance.now(); force = true;
     if (document.hidden) {
-      active = false; input.setActive(false); inputState = input.update(0, previous); cursorLight.intensity = 0;
+      active = false; attachCanvas(false); input.setActive(false); inputState = input.update(0, previous); cursorLight.intensity = 0;
     }
   }
   document.addEventListener('visibilitychange', visibilityChanged);
@@ -268,7 +326,9 @@ export async function createPaperSection(journey) {
       if (disposed || lost) return;
       // A queued RAF can predate initialization or context recovery.
       const dt = Math.max(0, Math.min((now - previous) / 1000, .05)); previous = now;
-      active = visible && !document.hidden;
+      const nextActive = visible && !document.hidden;
+      if (nextActive !== active) force = true;
+      active = nextActive; attachCanvas(active);
       input.setActive(active);
       inputState = input.update(dt, now);
       if (!active) {cursorLight.intensity = 0; return;}
@@ -290,17 +350,18 @@ export async function createPaperSection(journey) {
       }
     },
     resize,
-    getState: () => ({...lastState, active, targetProgress: target, resolutionTarget: workflowTarget, firstSubject: note.subject, firstKind: note.kind, firstEntryPixels: note.start * height}),
+    getState: () => ({...lastState, active, prepared: true, preparation: preparationState, targetProgress: target, resolutionTarget: workflowTarget, firstSubject: note.subject, firstKind: note.kind, firstEntryPixels: 80}),
     getReview: () => review,
     dispose() {
-      if (disposed) return; disposed = true; input.dispose();
+      if (disposed) return; disposed = true; attachCanvas(false); input.dispose();
       document.removeEventListener('visibilitychange', visibilityChanged);
       canvas.removeEventListener('webglcontextlost', contextLost);
       canvas.removeEventListener('webglcontextrestored', contextRestored);
       const textures = new Set();
       for (const piece of pieces) {piece.mesh.geometry.dispose(); piece.textures().forEach(texture => textures.add(texture)); piece.mesh.material.dispose();}
       for (const texture of textures) texture.dispose();
-      grain.dispose(); scene.background.dispose(); environment.dispose(); composer.dispose(); renderer.dispose();
+      grain.dispose(); backgroundTexture.dispose(); background.geometry.dispose(); backgroundMaterial.dispose(); key.shadow.dispose();
+      if (!graphics) {environment.dispose(); renderer.dispose();}
     },
   };
 }

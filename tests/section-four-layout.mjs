@@ -82,7 +82,7 @@ try {
     await progress(.3); assert.ok((await page.evaluate(() => window.__puntoes.getPaperReview())).every(c => !c.completed));
     await page.evaluate(() => {const el=document.querySelector('#posibilidades');scrollTo(0,el.offsetTop+(el.offsetHeight-innerHeight));});
     await page.waitForFunction(() => window.__puntoes.getState().paper.resolution.progress === 0);
-    assert.equal(await page.locator('[data-paper-copy]').evaluate(el => Number(getComputedStyle(el).opacity)), 1);
+    assert.equal(await page.locator('[data-paper-copy]').evaluate(el => Number(getComputedStyle(el).opacity)), 0, 'section three copy has already faded before grouping');
     if (name === 'mobile') {
       await page.goto(origin + '?resolution=.6&capture=1');
       await page.waitForFunction(() => Math.abs(window.__puntoes?.getState().paper?.resolution.progress - .6) < .001);

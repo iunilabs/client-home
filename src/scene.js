@@ -22,7 +22,7 @@ import {createThumbGesture,createWristGesture} from './wrist-gesture.js';
 import {createMobileCompassGesture,mobileCompassEnvelope} from './mobile-compass-gesture.js';
 import {createHumanPregrasp} from './human-pregrasp.js';
 
-export async function createExperience(container,{onReady,onFailure,poseOverride,handFactory}){
+export async function createExperience(container,{onReady,onFailure,onGraphicsReady,poseOverride,handFactory}){
  installAssetBase();
  let renderer;
  try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'})}catch(error){onFailure(error);return null}
@@ -36,6 +36,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(26,innerWidth/innerHeight,.1,100),neutralCamera=new THREE.PerspectiveCamera(26,innerWidth/innerHeight,.1,100);
  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment(),env=pmrem.fromScene(room,.04);
  scene.environment=env.texture;scene.environmentIntensity=.62;room.dispose();pmrem.dispose();
+ onGraphicsReady?.({renderer,environment:env});
  const skyLight=new THREE.HemisphereLight('#edf4ff','#7d897a',.28);scene.add(skyLight);
  const sunlight=new THREE.DirectionalLight('#fff0d9',1.35),fillLight=new THREE.DirectionalLight('#c0e4f0',.25),rimLight=new THREE.DirectionalLight('#d6edff',.8);
  sunlight.position.set(-5,9,5);fillLight.position.set(6,3,8);rimLight.position.set(4,6,-7);scene.add(sunlight,fillLight,rimLight);
@@ -58,7 +59,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
  let lighting=illuminate(0);
  const cursorLight=new THREE.SpotLight('#fff5e6',0,6,.35,.35,2);scene.add(cursorLight,cursorLight.target);const cursorSurfaceLight=createCursorSurfaceLight(cursorLight),coarsePointer=matchMedia('(hover: none), (pointer: coarse)');
  let human,ai,timeout;
- try{[human,ai]=await Promise.race([handFactory?handFactory(renderer):Promise.all([createReferenceHand(renderer,{detail:1}),createReferenceHand(renderer,{artificial:true,detail:1})]),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error('Model loading timed out')),15000)})])}catch(error){renderer.dispose();onFailure(error);return null}finally{clearTimeout(timeout)}
+ try{[human,ai]=await Promise.race([handFactory?handFactory(renderer):Promise.all([createReferenceHand(renderer,{detail:1}),createReferenceHand(renderer,{artificial:true,detail:1})]),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error('Model loading timed out')),15000)})])}catch(error){onFailure(error);if(onGraphicsReady)return {render(){},dispose(){env.dispose();renderer.dispose()}};env.dispose();renderer.dispose();return null}finally{clearTimeout(timeout)}
  scene.add(human.root,ai.root);human.root.name='human-hand';ai.root.name='ai-hand';
  const padCorrections=human.source==='Zero supplied reference'?correctFingerPads(human):[];
  const skinContinuity=human.source==='Zero supplied reference'?await createSkinContinuity(human,renderer):null;
@@ -101,7 +102,10 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
  let disposed=false,last=null;
  function project(point){const v=point.clone().project(camera);return [(v.x+1)*innerWidth/2,(1-v.y)*innerHeight/2]}
  function render(progress,pointer,time,reduced=false,scrollRatio,lightPointer=pointer,sectionProgress=0){
-  if(disposed)return;
+  if(disposed||renderer.domElement.parentElement!==container)return;
+  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
+  renderer.shadowMap.enabled=false;renderer.info.autoReset=true;
+  if(renderer.getPixelRatio()!==budget.pixelRatio)budget.resize();
   budget.update(time,reduced);
   const pose=choreography(progress,time,reduced,scrollRatio);Object.assign(pose,poseOverride?.(pose)??{});const p=pose.progress,mobile=portraitFraming();
   lighting=illuminate(pose.ratio,tools.objects);
@@ -168,7 +172,7 @@ export async function createExperience(container,{onReady,onFailure,poseOverride
    humanPregrasp:humanPregrasp.getState(),referencePoseWeight:pose.handPoseWeight,screenLandmarks:{foreground:project(ht),second:ai.root.visible?project(at):null,hand:Object.fromEntries(Object.entries(human.jointTips()).map(([role,tip])=>[role,project(human.scene.parent.localToWorld(new THREE.Vector3(...tip)))]))},tools:tools.getState(),poseAuthority:'absolute joint quaternion track',normalisedScroll:pose.ratio,
    actors:scene.children.filter(o=>o.isGroup&&o.visible).map(o=>o.name),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};};
  }
-  const resize=()=>{calibrateTools();calibrateElbowCamera();budget.resize();renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()};window.addEventListener('resize',resize);resize();
+  const resize=()=>{calibrateTools();calibrateElbowCamera();if(renderer.domElement.parentElement===container){budget.resize();renderer.setSize(innerWidth,innerHeight)}camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()};window.addEventListener('resize',resize);resize();
  await renderer.compileAsync(scene,camera);render(0,{x:0,y:0},0);onReady();
  tools.load().then(()=>{if(!disposed)return renderer.compileAsync(scene,camera)}).catch(error=>{if(!disposed)onFailure(error)});
  return {render,measureWrenchFraming:()=>tools.measureFraming('llave',camera,innerWidth,innerHeight,Object.fromEntries(Object.entries(human.jointTips()).map(([role,point])=>[role,project(human.scene.parent.localToWorld(new THREE.Vector3(...point)))]))),measureClearances:()=>Object.fromEntries(tools.objects.filter(s=>s.group.visible).map(s=>[s.id,measureClearance(human,s.group)])),getState:()=>({...last?.(),worldFingerTips:Object.fromEntries(Object.entries(human.jointTips()).map(([role,point])=>[role,human.scene.parent.localToWorld(new THREE.Vector3(...point)).toArray()])),skinAtlas:human.material.map?.image?.currentSrc??human.material.map?.image?.src,fingerJoints:Object.fromEntries(human.skin.skeleton.bones.filter(b=>/DEF-f_|DEF-thumb/.test(b.name)).map(b=>[b.name,b.quaternion.toArray()])),indexJoints:Object.fromEntries(human.skin.skeleton.bones.filter(b=>b.name.startsWith('DEF-f_index')).map(b=>[b.name,b.quaternion.toArray()])),toolFrames:tools.projectFrames(camera,innerWidth,innerHeight).map(s=>({...s,indexDepth:camera.position.distanceTo(human.tipWorld())})),screenFingerTips:human.jointTips?Object.fromEntries(Object.entries(human.jointTips()).map(([role,point])=>[role,project(human.scene.parent.localToWorld(new THREE.Vector3(...point)))])):null}),dispose(){disposed=true;tools.dispose();window.removeEventListener('resize',resize);const geometry=new Set(),materials=new Set(),textures=new Set();scene.traverse(o=>{if(o.geometry)geometry.add(o.geometry);for(const m of [].concat(o.material??[])){materials.add(m);for(const v of Object.values(m))if(v?.isTexture)textures.add(v)}if(o.isSkinnedMesh)o.skeleton.dispose()});for(const g of geometry)g.dispose();for(const m of materials)m.dispose();for(const t of textures)t.dispose();skinContinuity?.texture.dispose();env.dispose();renderer.dispose()}};

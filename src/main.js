@@ -13,19 +13,21 @@ populateClients();
 const trustSection=document.querySelector('#confianza'),nextSection=document.querySelector('#posibilidades'),resolutionSection=document.querySelector('#resolucion'),paperJourney=document.querySelector('[data-paper-journey]');
 const city=createCity(trustSection,{readScrollTarget:()=>lenis.targetScroll,onExtentChange:()=>{scrollLimit=Math.max(0,document.documentElement.scrollHeight-innerHeight);lenis.resize()},onNavigate:top=>{lenis.reset();lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top)}});
 const motionPreference={matches:false};
+let resolveGraphics;
+const graphicsReady=new Promise(resolve=>{resolveGraphics=resolve});
 let handoffStart=0,turnDistance=0,sectionProgress=0,paperScene=null,paperLoading=false,paperModule=null;
 function cityIsHeld(){return innerWidth<700?city.getTourState().active:city.getEndGuardState().held}
 function paperIsVisible(y){return !cityIsHeld()&&y+innerHeight>paperJourney.offsetTop&&y<paperJourney.offsetTop+paperJourney.offsetHeight}
-function preparePaperSection(){return paperModule??=import('./section-three/scene.js')}
-async function loadPaperSection(){
- if(paperScene||paperLoading||!paperIsVisible(lenis?.scroll??scrollY))return;paperLoading=true;
- try{const {createPaperSection}=await preparePaperSection();if(disposed)return;if(!paperIsVisible(lenis?.scroll??scrollY)){paperLoading=false;return}const scene=await createPaperSection(paperJourney);if(disposed){scene.dispose();return}paperScene=scene}
+function preparePaperSection(){return paperModule??=import('./section-three/scene.js').then(module=>{module.preparePaperFonts().catch(()=>{});return module})}
+async function loadPaperSection(preload=false){
+ if(paperScene||paperLoading||(!preload&&!paperIsVisible(lenis?.scroll??scrollY)))return;paperLoading=true;
+ try{const {createPaperSection}=await preparePaperSection();if(disposed)return;const graphics=await graphicsReady;if(disposed)return;const scene=await createPaperSection(paperJourney,{graphics});if(disposed){scene.dispose();return}paperScene=scene}
  catch(error){console.warn('Paper scene unavailable:',error.message);paperJourney.dataset.paperRender='fallback';paperJourney.querySelector('[data-paper-fallback]').hidden=false}
 }
-// Warm the module only. Textures, meshes and WebGL start after the city releases
-// the page and the paper stage reaches the viewport. Visible loading owns errors.
-const paperObserver=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){preparePaperSection().catch(()=>{});paperObserver.disconnect()}},{rootMargin:'150% 0px'});
-paperObserver.observe(nextSection);
+// Fetch code/fonts before the city. Build and warm the shared scene while the
+// city is on screen, in short batches; entering sections 3/4 only changes poses.
+const paperObserver=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){preparePaperSection().catch(()=>{});paperObserver.disconnect()}},{rootMargin:'100% 0px'});
+paperObserver.observe(trustSection);
 function readProgress(y){return y<=handoffStart?5*y/handoffStart:5+(y-handoffStart)/turnDistance}
 const updateScrollMeter=createScrollMeter(document.querySelector('[data-scroll-meter]'));
 const chapters=[...document.querySelectorAll('[data-scene]')],copies=chapters.map(c=>c.querySelector('.chapter-copy')),labels=['LA APARICIÓN','LA PIEDRA','EL COMPÁS','LA LLAVE','EL ENCUENTRO'];
@@ -80,8 +82,8 @@ function activate(progress){
  const resolving=nextActive&&visualScroll>=(paperJourney.offsetTop+nextSection.offsetHeight);document.body.classList.toggle('resolution-active',resolving);
  if(nextActive){document.querySelector('#chapter-label').textContent=resolving?'DEL PENDIENTE AL HECHO':'EL TRABAJO PENDIENTE';document.querySelector('#chapter-count').textContent=resolving?'04 / 04':'03 / 04'}else if(progress>5){document.querySelector('#chapter-label').textContent='UN PUNTO EN COMÚN';document.querySelector('#chapter-count').textContent='02 / 04'}else{document.querySelector('#chapter-label').textContent=labels[index];document.querySelector('#chapter-count').textContent=`${String(index+1).padStart(2,'0')} / 05`}
 }
-function fallback(error){console.warn('3D unavailable:',error.message);document.body.classList.add('webgl-fallback');stateElement.textContent='Vista sin 3D';document.body.dataset.render='fallback'}
-import('./scene.js').then(({createExperience})=>createExperience(document.querySelector('#scene'),{onReady(){document.body.classList.add('scene-ready');document.body.dataset.render='webgl';stateElement.textContent=''},onFailure:fallback})).then(value=>{experience=value}).catch(fallback);
+function fallback(error){resolveGraphics(null);console.warn('3D unavailable:',error.message);document.body.classList.add('webgl-fallback');stateElement.textContent='Vista sin 3D';document.body.dataset.render='fallback'}
+import('./scene.js').then(({createExperience})=>createExperience(document.querySelector('#scene'),{onGraphicsReady:resolveGraphics,onReady(){document.body.classList.add('scene-ready');document.body.dataset.render='webgl';stateElement.textContent=''},onFailure:fallback})).then(value=>{experience=value}).catch(fallback);
 function frame(now){
  if(disposed)return;
  city.anchorScroll(scrollY);
@@ -93,13 +95,13 @@ function frame(now){
   activate(renderProgress);const visual=Math.min(5,renderProgress);sectionProgress=Math.max(0,renderProgress-5);
   const paperY=lenis?.scroll??scrollY,paperVisible=paperIsVisible(paperY);
   document.body.classList.toggle('paper-active',paperVisible&&paperY>=paperJourney.offsetTop);
-  if(paperVisible&&!paperScene)loadPaperSection();paperScene?.update(now,paperY,paperVisible);
+  if(!paperScene&&(paperVisible||lastCity?.ready&&lastCity?.revealed))loadPaperSection(!paperVisible);paperScene?.update(now,paperY,paperVisible);
   const parallaxScale=perspectiveInput.getState().source==='orientation'?1/GYROSCOPE_PARALLAX_REDUCTION:1;
   // The city uses a rendered image: stop paying for the hidden hand scene.
-  if(!lastCity?.ready||!lastCity.revealed)experience?.render(visual,{x:smoothPointer.x*parallaxScale,y:smoothPointer.y*parallaxScale},now/1000,motionPreference.matches,visual/5,pointer,sectionProgress);
+  if(!paperVisible&&(!lastCity?.ready||!lastCity.revealed))experience?.render(visual,{x:smoothPointer.x*parallaxScale,y:smoothPointer.y*parallaxScale},now/1000,motionPreference.matches,visual/5,pointer,sectionProgress);
   document.querySelector('.scroll-cue').classList.toggle('visible',now-lastScroll>2600&&renderProgress<4.5);
  }
  requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;perspectiveInput?.dispose();lenis?.destroy();experience?.dispose();city.dispose();paperObserver.disconnect();paperScene?.dispose()});
+requestAnimationFrame(frame);window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;perspectiveInput?.dispose();lenis?.destroy();paperScene?.dispose();experience?.dispose();city.dispose();paperObserver.disconnect()});
 window.__puntoes={getPaperReview:()=>paperScene?.getReview().cards()??[],measureWrenchFraming:()=>experience?.measureWrenchFraming(),measureClearances:()=>experience?.measureClearances(),getState:()=>({render:document.body.dataset.render,progress:readProgress(scrollY),sectionProgress,handoffStart,turnDistance,visualProgress:renderProgress,editorial:lastEditorial,city:lastCity,paper:paperScene?.getState()??null,tour:city.getTourState(),endGuard:city.getEndGuardState(),scroll:{engine:lenis?'lenis':'native',current:lenis?.scroll??scrollY,target:lenis?.targetScroll??scrollY,moving:lenis?.isScrolling??false},reduced:motionPreference.matches,perspectiveInput:perspectiveInput?.getState(),pointer:{...smoothPointer},scene:experience?.getState()})};

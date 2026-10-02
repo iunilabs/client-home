@@ -117,6 +117,27 @@ function grain(ctx, w, h, amount, seed) {
   }
   ctx.putImageData(pixels, 0, 0);
 }
+const grainTiles = new Map();
+function surfaceGrain(ctx, w, h, amount, seed) {
+  const key = `${amount}-${seed}`;
+  let tile = grainTiles.get(key);
+  if (!tile) {
+    tile = document.createElement('canvas'); tile.width = tile.height = 128;
+    const tc = tile.getContext('2d'), pixels = tc.createImageData(128, 128);
+    let state = seed;
+    for (let i = 0; i < pixels.data.length; i += 4) {
+      state = (state * 1664525 + 1013904223) >>> 0;
+      const value = 255 - Math.floor(state / 4294967296 * amount * 2);
+      pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = value;
+      pixels.data[i + 3] = 255;
+    }
+    tc.putImageData(pixels, 0, 0); grainTiles.set(key, tile);
+  }
+  // Native tiling preserves fine grain without JS loops over megapixel cards.
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = .3;
+  ctx.fillStyle = ctx.createPattern(tile, 'repeat'); ctx.fillRect(0, 0, w, h); ctx.restore();
+}
 function box(ctx, x, y, width, height, radius, fill, stroke = null) {
   rounded(ctx, x, y, width, height, radius); ctx.fillStyle = fill; ctx.fill();
   if (stroke) {ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke();}
@@ -247,7 +268,7 @@ export function surfaceTexture(kind, variant = 0, resolution = 1024, content = n
   else {bg.addColorStop(0, '#fcfdff'); bg.addColorStop(1, resolved ? '#e8f5ee' : '#f0f7ff');}
   ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
   if (kind !== 'note') {rounded(ctx, 5, 5, w - 10, h - 10, Math.min(w, h) * .07); ctx.strokeStyle = resolved ? '#b2d9c3' : '#ffffff'; ctx.lineWidth = 4; ctx.stroke();}
-  grain(ctx, c.width, c.height, kind === 'note' ? 3 : 1.5, 408 + variant);
+  surfaceGrain(ctx, c.width, c.height, kind === 'note' ? 3 : 1.5, 408 + variant);
   let subject;
   if (kind === 'note') {
     const phrases = noteContent[variant] ?? ['Revisar', `el punto ${variant + 1}.`]; subject = phrases.join(' ');

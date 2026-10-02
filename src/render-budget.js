@@ -6,6 +6,7 @@ export function createRenderBudget(renderer, pixelRatio, {initialScale=1,minScal
   return {
     resize,
     get scale(){return scale},
+    get pixelRatio(){return pixelRatio()*scale},
     update(time,reduced=false){
       if(reduced||time<=0){previous=null;return}
       const interval=previous===null?0:time-previous;previous=time;

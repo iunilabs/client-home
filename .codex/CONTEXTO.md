@@ -1,7 +1,7 @@
 # Contexto
 
-Objetivo: sección 3 con texto plano, blur suave y salida desde 2500 px. Base pública: `b895438`. Worktree aislado `puntoes-paper-copy-1900`; checkout principal intacto.
+Objetivo: corregir pausas al entrar por scroll en secciones 3 y 4 y publicar en Pages. Worktree activo `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`. Incorporados cambios públicos hasta `96143fd`: texto plano de sección 3, entrada 1900 px y salida 2500–2740 px, blur 3 px.
 
-Entrada local a 1900 px, fade completo a 2140 px. Texto empieza fade out a 2500 px y acaba a 2740 px. Altura mínima garantiza ese recorrido en horizontal. Variable compartida de texto y canvas: blur máximo reducido de 8 a 3 px, opacidad del canvas de 1 a .75; vuelve a verse nítido al salir. Conserva contenido y tipografía. Móvil mantiene ancho completo y padding de 24 px.
+Motor y entorno 3D compartidos entre manos y tarjetas; canvas cambia de contenedor y vuelve al retroceder. Durante el mapa se preparan las 47 tarjetas y sus 47 versiones verdes, texturas y shaders, con tandas que ceden al navegador. Grano nativo, deformaciones precalculadas y render directo que conserva el fondo original. Sección 4 solo cambia poses y texturas ya preparadas.
 
-Archivos: `src/section-three/scene.js`, `src/section-three/style.css`. Build `/client-home/` correcto. QA correcto en 390×844, 1440×900 y 844×390: entrada, salida 2500–2740 px, blur máximo 3 px y sin errores. Siguiente: commit, push y verificar Pages.
+Archivos: `src/main.js`, `src/scene.js`, `src/render-budget.js`, `src/section-three/`. QA: unitarias, integración móvil, separación física, 47 transferencias en cuatro tamaños, orientación, fallback y precarga. CPU×4: entradas 29/57 ms. Build `/client-home/` correcto. Publicación autorizada: https://iunilabs.github.io/client-home/. Confirmar workflow y assets públicos tras push.
