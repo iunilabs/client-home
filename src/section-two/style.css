@@ -117,6 +117,9 @@ body:not(.city-active) .city-light-beam,body:not(.city-active) .city-light-ring{
    padding:22px 22px 17px;border:1px solid #fff;border-radius:17px;background:linear-gradient(135deg,#f9fcfd,#e7f3fb);
    color:#25455e;box-shadow:0 7px 22px #0c304533;will-change:transform;pointer-events:none;touch-action:pan-y}
  .city-tour-card.is-current{pointer-events:auto}
+ .city-tour-card.is-reading{max-height:min(55svh,calc(100svh - 210px - env(safe-area-inset-bottom)));
+   overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:thin}
+ .city-tour-card.is-reading .tour-card-story{max-height:none;overflow:visible}
  .tour-card-brand{height:29px;margin-bottom:13px;display:flex;align-items:center;justify-content:space-between;gap:20px}
  .tour-card-brand img{max-height:29px;max-width:142px;width:auto;object-fit:contain}
  .tour-card-brand img[hidden]{display:none}

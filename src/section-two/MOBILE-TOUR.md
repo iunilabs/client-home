@@ -36,7 +36,9 @@ Usar identificadores válidos, una sola vez cada uno. Por ejemplo, `['bbva', 'ce
 
 `travelUntil: .42` significa que la cámara termina su viaje al 42 % del tramo. `cardFrom: .04` y `cardUntil: .48` hacen que la tarjeta comience poco después de arrancar el mapa y termine de entrar al 48 %. Para una pantalla de 844 px, comienza tras unos 49 px de scroll dentro del tramo. La aceleración y el frenado usan una curva con velocidad y aceleración nulas en los extremos.
 
-Las tarjetas anteriores permanecen debajo. Su separación visual se limita a cuatro niveles, 28 px y menos de 1.2 grados, para que no invadan el encuadre. Hay una sola tarjeta DOM por empresa; el contenido procede de [case-studies.js](case-studies.js), también usado en las fichas de escritorio. «Ver más» permite leer el relato completo sin detener el scroll de la página.
+Las tarjetas anteriores permanecen debajo. Su separación visual se limita a cuatro niveles, 28 px y menos de 1.2 grados, para que no invadan el encuadre. Hay una sola tarjeta DOM por empresa; el contenido procede de [case-studies.js](case-studies.js), también usado en las fichas de escritorio. Al abrir «Ver más», la tarjeta completa tiene scroll nativo propio para leer también desde su encabezado, sin perder la empresa elegida. Al cerrarla, vuelve a acompañar el scroll de la página. Un gesto sobre el mapa siempre sigue el recorrido.
+
+El recorrido está ligado a la distancia real de scroll: no captura gestos para convertirlos en pasos ni añade botones «Anterior», «Siguiente» o de activación del movimiento. Tras la obra, el scroll continúa normalmente y la ciudad sale a la misma velocidad que entra el contenido siguiente. Nunca se ejecuta un salto programado a la sección 3 por un último swipe.
 
 ## Visitas desde el footer
 
@@ -58,4 +60,4 @@ La imagen global conserva su resolución nativa. Las capas añaden detalle gener
 
 ## Comprobaciones al modificar la lista
 
-Ejecutar `npm test` y `npm run build -- --base=/client-home/`. Revisar en 320 × 568, 390 × 844 y 430 × 932: entrada desde Puntoes, encuadre de cada parada, tarjeta durante el viaje, scroll inverso, toque de un logo excluido y recuperación de uno ya visto. Comprobar que sigue habiendo diez logos y once tarjetas únicas, que la obra conserva «Hablemos», que no abre un modal móvil y que el footer no tapa las tarjetas.
+Ejecutar `npm test`, `npm run build -- --base=/client-home/` y `npm run test:mobile-scroll` con la web local abierta en 4180 (o indicar `MOBILE_SCROLL_URL`). La prueba de navegador utiliza touch nativo en 320 × 568, 390 × 844 y 430 × 932: movimiento continuo del mapa, tarjetas apiladas, recuperación por logo, lectura desde el encabezado y salida proporcional al último swipe. Revisar también entrada desde Puntoes, encuadre de cada parada, tarjeta durante el viaje y scroll inverso. Comprobar que sigue habiendo diez logos y once tarjetas únicas, que la obra conserva «Hablemos», que no abre un modal móvil y que el footer no tapa las tarjetas.

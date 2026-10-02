@@ -42,6 +42,13 @@ export function createMobileTourDeck(section, route, clients) {
         heading.textContent = label; paragraph.textContent = story[field];
         details.querySelector('.tour-card-story').append(heading, paragraph);
       }
+      // Only an expanded article owns its native reading scroll. The closed
+      // cards and the scene keep the document's continuous tour and exit.
+      details.addEventListener('toggle', () => {
+        card.classList.toggle('is-reading', details.open);
+        card.toggleAttribute('data-lenis-prevent', details.open);
+        if (!details.open) card.scrollTop = 0;
+      });
       card.append(details);
       const draft = document.createElement('p');
       draft.className = 'tour-card-draft'; draft.textContent = 'Caso ilustrativo · texto de muestra';
