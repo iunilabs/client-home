@@ -208,12 +208,39 @@ try {
     await load();
     // Long approach from section 1 must land at the hub, consume the same swipe.
     // Use a chapter link to reset, then approach normally from the preceding area.
-    await page.goto(base+'?scroll=970');
-    await page.waitForFunction(()=>window.__puntoes?.getState().city);
-    await page.waitForTimeout(300);
     const before=anchor-160;
-    await page.evaluate(top=>scrollTo({top,behavior:'instant'}),before);
-    await page.waitForFunction(()=>window.__puntoes.getState().city.ready);
+    let preparationStep='load';
+    try {
+      await page.goto(base+'?scroll=970');
+      await page.waitForFunction(()=>window.__puntoes?.getState().city);
+      preparationStep='initial scroll marker';
+      // The query scroll runs after fonts/load and two RAFs. Observe its result
+      // before positioning the approach, so it cannot overwrite that position.
+      await page.waitForFunction(()=>{
+        const state=window.__puntoes.getState(), expected=state.handoffStart*.97;
+        return expected>0 && Math.abs(scrollY-expected)<2 &&
+          Math.abs(state.scroll.current-expected)<2 && Math.abs(state.scroll.target-expected)<2;
+      });
+      preparationStep='position approach';
+      await page.evaluate(top=>scrollTo({top,behavior:'instant'}),before);
+      preparationStep='city ready';
+      await page.waitForFunction(()=>window.__puntoes.getState().city.ready);
+    } catch(error) {
+      const diagnostic={width,height,anchor,before,step:preparationStep,pageErrors:[...errors]};
+      diagnostic.state=await page.evaluate(()=>{
+        const state=window.__puntoes?.getState(), section=document.querySelector('#confianza'), third=document.querySelector('#posibilidades');
+        return {time:performance.now(),url:location.href,readyState:document.readyState,fonts:document.fonts.status,y:scrollY,
+          expectedQueryPoint:state?.handoffStart*.97,handoff:state?.handoffStart,visualProgress:state?.visualProgress,
+          scroll:state?.scroll,city:state?.city,tour:state?.tour,sectionTop:section?.offsetTop,
+          thirdDocTop:third?third.getBoundingClientRect().top+scrollY:null,limit:document.documentElement.scrollHeight-innerHeight,
+          images:[...document.querySelectorAll('#city-image,#city-extension-image')].map(image=>({id:image.id,src:image.src,currentSrc:image.currentSrc,
+            complete:image.complete,naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight}))};
+      }).catch(snapshotError=>({snapshotError:String(snapshotError)}));
+      diagnostic.screenshot=`${width}-preparation-failure.png`;
+      await page.screenshot({path:`${out}/${diagnostic.screenshot}`}).catch(screenshotError=>{diagnostic.screenshotError=String(screenshotError)});
+      report.preparationFailure=diagnostic;
+      throw error;
+    }
     await page.waitForTimeout(200);
     await swipe({distance:350,y:height*.75,samples:70,delay:20,arrival:'puntoes'});
     assert.equal((await state()).currentId,'puntoes'); assert.ok((await state()).active,JSON.stringify({before,anchor,state:await state()}));
