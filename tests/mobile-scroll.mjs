@@ -1,107 +1,204 @@
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import {mobileTourGeometry} from '../src/section-two/mobile-tour.js';
-import {mobileTourRoute, mobileTourTiming} from '../src/section-two/mobile-tour-config.js';
 
-const base = process.env.MOBILE_SCROLL_URL || 'http://127.0.0.1:4180/';
-const out = process.env.MOBILE_SCROLL_OUT || 'docs/mobile-scroll-2026-10-02';
+const base = process.env.MOBILE_SCROLL_URL || 'http://127.0.0.1:4304/';
+const out = process.env.MOBILE_SCROLL_OUT || 'docs/mobile-snap-2026-10-02';
 await fs.mkdir(out, {recursive: true});
 const browser = await chromium.launch({headless: true,
   ...(process.platform === 'darwin' ? {executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'} : {}),
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']});
 const report = {url: base, passed: false, phones: []};
-
 try {
-  for (const [width, height] of [[320, 568], [390, 844], [430, 932]]) {
-    const context = await browser.newContext({viewport: {width, height}, isMobile: true, hasTouch: true});
+  for (const [width, height] of [[320,568],[390,844],[430,932]].filter(([w])=>!process.env.MOBILE_SCROLL_WIDTH || w===Number(process.env.MOBILE_SCROLL_WIDTH))) {
+    const context = await browser.newContext({viewport: {width,height}, isMobile: true, hasTouch: true});
     const page = await context.newPage(), errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(base + '?city=0');
-    await page.waitForFunction(() => window.__puntoes?.getState().city?.ready);
-    const geometry = mobileTourGeometry({top: await page.locator('#confianza').evaluate(el => el.offsetTop), viewport: height});
-    const at = (index, phase) => geometry.revealed + height * (mobileTourTiming.intro + (index + phase) * mobileTourTiming.stop);
-    async function scrollAt(top) {
-      await page.evaluate(top => scrollTo({top, behavior: 'instant'}), top);
-      await page.waitForFunction(top => Math.abs(scrollY - top) < 1 &&
-        Math.abs(window.__puntoes.getState().visualProgress - window.__puntoes.getState().progress) < .0001, top);
-    }
     const cdp = await context.newCDPSession(page);
-    async function swipe({x = width / 2, y = height * .4, distance = height * .22} = {}) {
-      await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x, y, id: 1}]});
+    const state = () => page.evaluate(() => ({y: scrollY, ...window.__puntoes.getState().tour}));
+    async function swipe({x = width / 2, y = height * .38, dx = 0, distance = 120, samples = 40, delay = 16, rest = 120, settle = 1400} = {}) {
+      await cdp.send('Input.dispatchTouchEvent', {type:'touchStart',touchPoints:[{x,y,id:1}]});
       const frames = [];
-      for (let i = 1; i <= 12; i++) {
-        await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [{x, y: y - distance * i / 12, id: 1}]});
-        await page.waitForTimeout(25);
-        frames.push(await page.evaluate(() => ({scroll: scrollY, transform: document.querySelector('.city-world').style.transform})));
+      for (let i=1;i<=samples;i++) {
+        await cdp.send('Input.dispatchTouchEvent', {type:'touchMove',touchPoints:[{x:x+dx*i/samples,y:y-distance*i/samples,id:1}]});
+        await page.waitForTimeout(delay);
+        frames.push(await page.evaluate(() => ({y:scrollY, id:document.querySelector('#confianza').dataset.cityStop, transform:document.querySelector('.city-world').style.transform})));
       }
-      // Let the finger rest before lifting: measure the swipe, without a fling.
-      await page.waitForTimeout(150);
-      await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
-      await page.waitForTimeout(600);
+      await page.waitForTimeout(rest);
+      await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+      await page.waitForTimeout(settle);
       return frames;
     }
-    assert.equal(await page.locator('.city-tour-controls,.city-perspective-control').count(), 0);
-    assert.equal(await page.locator('.city-client').count(), 10);
-    assert.equal(await page.locator('.city-carousel').evaluate(el => getComputedStyle(el).backgroundImage), 'none');
-    await scrollAt(at(0, .02));
-    const before = await page.locator('.city-world').getAttribute('style');
-    const movement = await swipe();
-    assert.ok(new Set(movement.map(frame => frame.transform)).size >= 4, 'the map visibly travels during the gesture');
-    assert.notEqual(await page.locator('.city-world').getAttribute('style'), before);
-    assert.ok(movement.at(-1).scroll > movement[0].scroll + 50, 'the document scroll is not pinned');
-    assert.equal(await page.locator('.city-tour-card[data-client="bbva"]').isVisible(), true, 'the card enters while travelling');
-    for (let index = 0; index < mobileTourRoute.length; index++) {
-      await scrollAt(at(index, .8));
-      assert.equal(await page.locator('.city-tour-card.is-current').getAttribute('data-client'), mobileTourRoute[index].id);
+    async function load() {
+      await page.goto(base+'?city=0');
+      await page.waitForFunction(() => window.__puntoes?.getState().city?.ready && window.__puntoes.getState().tour.active);
+      await page.waitForTimeout(300);
     }
-    assert.equal(await page.locator('.city-tour-card:visible').count(), 4, 'previous cards accumulate beneath the current one');
-    async function select(id) {
-      const logo = page.locator(`.city-client[data-client="${id}"]`);
-      await logo.focus(); await logo.tap(); await page.waitForTimeout(1400);
+    await load();
+    const anchor=(await state()).y;
+    assert.equal((await state()).currentId,'puntoes');
+    assert.equal(await page.locator('.city-client').count(),10);
+    assert.equal(await page.locator('.city-tour-card').count(),11);
+    assert.equal(await page.locator('.city-tour-controls,.city-perspective-control, .city-tour-card details').count(),0);
+    assert.equal(await page.locator('.city-carousel').evaluate(el=>getComputedStyle(el).backgroundImage),'none');
+    // Taps and ambiguous or horizontal movement never advance the tour.
+    await swipe({distance:3,samples:1,settle:100});
+    await swipe({distance:100,dx:120,samples:20,settle:100});
+    await swipe({distance:0,dx:80,samples:20,settle:100});
+    assert.equal((await state()).currentId,'puntoes');
+    assert.ok(Math.abs((await state()).y-anchor)<2);
+    const slow=await swipe(); // every native move is only 3px
+    assert.equal((await state()).currentId,'bbva');
+    assert.ok(slow.every(f=>Math.abs(f.y-anchor)<2),'document is pinned throughout slow swipe');
+    assert.ok(new Set(slow.map(f=>f.transform)).size>5,'camera animates independently');
+    await page.waitForTimeout(1400);
+    assert.equal((await state()).currentId,'bbva','no idle inertia steps');
+    const bbva=page.locator('.city-tour-card.is-current');
+    const metrics=await bbva.evaluate(el=>({rect:el.getBoundingClientRect().toJSON(),client:el.clientHeight,scroll:el.scrollHeight,intro:getComputedStyle(el.querySelector('.tour-card-intro')).webkitLineClamp,overflow:getComputedStyle(el).overflowY}));
+    const footer=await page.locator('.city-carousel').boundingBox();
+    assert.ok(metrics.rect.y>100 && metrics.rect.bottom < footer.y,'whole card fits above logos');
+    assert.ok(metrics.scroll<=metrics.client+1,'card has no hidden overflowing contents');
+    assert.equal(metrics.intro,'3'); assert.equal(metrics.overflow,'hidden');
+    assert.ok((await bbva.locator('a').getAttribute('href')).endsWith('/clientes/bbva/'));
+    await page.screenshot({path:`${out}/${width}-bbva.png`});
+    // A swipe that outlasts the entire trip still owns only one stop.
+    await swipe({distance:180,samples:60,delay:30,settle:500});
+    assert.equal((await state()).currentId,'naturgy');
+    await page.mouse.wheel(0,100); await page.waitForTimeout(100);
+    await page.mouse.wheel(0,30); await page.waitForTimeout(1400);
+    assert.equal((await state()).currentId,'sabadell');
+    await page.mouse.wheel(0,12); await page.waitForTimeout(100);
+    await page.mouse.wheel(0,5); await page.waitForTimeout(1000);
+    assert.equal((await state()).currentId,'sabadell','decaying wheel residual stays consumed');
+    assert.ok((await state()).active);
+    // A card is a swipe surface, not a text scroller.
+    const cardBox=await page.locator('.city-tour-card.is-current').boundingBox();
+    await swipe({y:cardBox.y+80,distance:120});
+    assert.equal((await state()).currentId,'collaborate');
+    assert.equal(await page.locator('.city-tour-card.is-current a').textContent(),'Hablemos ↗');
+    const exitBefore=(await state()).y;
+    const exit=await swipe({distance:height*.22,samples:30,settle:400});
+    const exitAfter=(await state()).y;
+    assert.ok(exitAfter>exitBefore+60,'new final gesture leaves natively');
+    assert.ok(exitAfter-exitBefore<height*.22+50,'native exit follows finger distance');
+    const translation=await page.locator('.trust-frame').evaluate(el=>new DOMMatrixReadOnly(getComputedStyle(el).transform).m42);
+    assert.ok(Math.abs(translation+(exitAfter-anchor))<3);
+    await page.screenshot({path:`${out}/${width}-exit.png`});
+    await swipe({distance:-height*.4,y:height*.3,samples:35});
+    assert.equal((await state()).currentId,'collaborate'); assert.ok((await state()).active);
+    assert.ok(Math.abs((await state()).y-anchor)<2,'reverse captures last stop');
+    await swipe({distance:-120,y:height*.3});
+    assert.equal((await state()).currentId,'sabadell');
+    // Off-route Cepsa keeps its view and rejoins from there on next gesture.
+    const cepsa=page.locator('.city-client[data-client="cepsa"]');
+    await cepsa.focus(); await cepsa.tap(); await page.waitForTimeout(1400);
+    assert.equal((await state()).currentId,'cepsa');
+    assert.equal(await page.locator('.city-tour-card.is-current').getAttribute('data-client'),'cepsa');
+    const cepsaCamera=await page.locator('.city-world').getAttribute('style');
+    await page.waitForTimeout(600); assert.equal(await page.locator('.city-world').getAttribute('style'),cepsaCamera);
+    await swipe(); assert.equal((await state()).currentId,'collaborate');
+    // All 11 cards remain unique, including recovered manual clients.
+    for (const id of ['accenture','bbva','canal','cepsa','mapfre','mediaset','ree','siemens','naturgy','sabadell']) {
+      const logo=page.locator(`.city-client[data-client="${id}"]`);
+      await logo.focus(); await logo.tap(); await page.waitForTimeout(1350);
+      assert.equal((await state()).currentId,id);
+      assert.equal(await page.locator('.city-tour-card.is-current').count(),1);
+      const bounds=await page.locator('.city-tour-card.is-current').evaluate(el=>({rect:el.getBoundingClientRect().toJSON(),overflow:el.scrollHeight-el.clientHeight}));
+      assert.ok(bounds.rect.bottom<footer.y && bounds.rect.y>100,`fits ${id}`);
+      assert.ok(bounds.overflow<=1,`no clipped content ${id}`);
     }
-    await select('bbva');
-    assert.equal(await page.locator('.city-tour-card[data-client="bbva"]').getAttribute('data-entrance'), 'fade');
-    assert.equal(await page.locator('.city-tour-card[data-client="sabadell"]').isVisible(), true);
-    await scrollAt(at(3, .8)); await page.waitForTimeout(1100);
-    await select('cepsa');
-    const card = page.locator('.city-tour-card[data-client="cepsa"]');
-    await card.locator('summary').click();
-    await page.waitForFunction(() => document.querySelector('.city-tour-card[data-client="cepsa"]').classList.contains('is-reading'));
-    const readingBefore = await page.evaluate(() => scrollY), box = await card.boundingBox();
-    const readingFrames = await swipe({y: box.y + 60, distance: 100});
-    assert.equal(await page.locator('.city-tour-card.is-current').getAttribute('data-client'), 'cepsa');
-    assert.equal(await card.locator('details').evaluate(el => el.open), true);
-    assert.ok(Math.abs(await page.evaluate(() => scrollY) - readingBefore) < 2, 'swiping the expanded article reads it without changing buildings');
-    const reading = await card.evaluate(el => ({top: el.scrollTop, range: el.scrollHeight - el.clientHeight}));
-    assert.ok(reading.top >= Math.min(20, reading.range), 'the expanded article scrolls when its full text exceeds the available space');
-    await page.screenshot({path: `${out}/${width}-reading.png`});
-
-    // A fresh final stop, then an ordinary short swipe across the chapter end.
-    await page.goto(base + '?city=0.99');
-    await page.waitForFunction(() => window.__puntoes?.getState().city?.ready);
-    await scrollAt(geometry.end - 50);
-    const exitBefore = await page.evaluate(() => scrollY);
-    const exitFrames = await swipe();
-    const exitAfter = await page.evaluate(() => scrollY);
-    assert.ok(exitAfter > geometry.end, 'the final gesture can leave the city');
-    assert.ok(exitAfter - exitBefore < height * .22 + 70, 'the final gesture keeps its natural distance, without jumping to section 3');
-    assert.ok(exitAfter < geometry.end + height * .45, 'the next section enters gradually');
-    const exitTranslation = await page.locator('.trust-frame').evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).m42);
-    assert.ok(exitTranslation < -10 && exitTranslation > -height * .45, 'the city slides out proportionally to page scroll');
-    await page.screenshot({path: `${out}/${width}-ordinary-exit.png`});
-    await swipe({distance: -height * .3});
-    assert.ok(await page.evaluate(() => scrollY) < exitAfter - 60, 'reverse gesture moves the document in its natural direction');
-    assert.ok(await page.evaluate(() => scrollY) < geometry.end, 'reverse scroll returns naturally to the city');
-    assert.deepEqual(errors, []);
-    report.phones.push({width, height, errors, movement, reading, readingFrames, exitFrames, exitBefore, exitAfter, exitTranslation});
-    await context.close();
-    console.log(`PASS ${width} × ${height}: continuous map, stack, reading, native exit and reverse`);
+    assert.equal(new Set(await page.locator('.city-tour-card').evaluateAll(els=>els.map(e=>e.dataset.client))).size,11);
+    // Verify real link navigation without creating the future destination.
+    let destination;
+    await page.route('**/clientes/sabadell/',async route=>{destination=route.request().url();await route.fulfill({contentType:'text/html',body:'Future case destination'});});
+    await page.locator('.city-tour-card.is-current .tour-card-more').tap();
+    await page.waitForURL('**/clientes/sabadell/'); assert.ok(destination.endsWith('/clientes/sabadell/'));
+    await load();
+    // Long approach from section 1 must land at the hub, consume the same swipe.
+    // Use a chapter link to reset, then approach normally from the preceding area.
+    await page.goto(base+'?scroll=970');
+    await page.waitForFunction(()=>window.__puntoes?.getState().city?.ready);
+    await page.waitForTimeout(300);
+    const before=await page.locator('#confianza').evaluate(el=>el.offsetTop-innerHeight+90+innerHeight*1.35-160);
+    await page.evaluate(top=>scrollTo({top,behavior:'instant'}),before);
+    await page.waitForTimeout(200);
+    await swipe({distance:350,y:height*.75,samples:70,delay:20});
+    assert.equal((await state()).currentId,'puntoes'); assert.ok((await state()).active,JSON.stringify({before,anchor,state:await state()}));
+    await swipe(); assert.equal((await state()).currentId,'bbva');
+    // Horizontal carousel browsing stays local and does not visit a building.
+    const viewport=page.locator('.city-carousel-viewport');
+    const leftBefore=await viewport.evaluate(el=>el.scrollLeft);
+    await swipe({y:height-35,dx:-100,distance:0,samples:20,settle:200});
+    assert.equal((await state()).currentId,'bbva');
+    assert.ok(await viewport.evaluate(el=>el.scrollLeft)>leftBefore+20);
+    await page.locator('body').click({position:{x:width/2,y:180}});
+    await page.keyboard.press('ArrowDown');await page.waitForTimeout(1400);
+    assert.equal((await state()).currentId,'naturgy');
+    // Active anchor follows a height resize; crossing 700px restores desktop.
+    await page.setViewportSize({width,height:height+80});await page.waitForTimeout(300);
+    assert.ok((await state()).active);assert.equal((await state()).currentId,'naturgy');
+    await page.setViewportSize({width:900,height:600});await page.waitForTimeout(300);
+    assert.equal(await page.locator('#confianza').evaluate(el=>el.classList.contains('city-mobile-tour')),false);
+    await page.setViewportSize({width,height});await page.waitForTimeout(300);
+    await page.locator('#open-clients').click();await page.waitForTimeout(1700);
+    assert.equal((await state()).currentId,'puntoes');assert.ok((await state()).active);
+    await page.locator('body').click({position:{x:width/2,y:180}});
+    await page.keyboard.press('End');await page.waitForTimeout(300);
+    assert.ok(!(await state()).active);
+    assert.ok(await page.evaluate(()=>Math.abs(scrollY-(document.documentElement.scrollHeight-innerHeight))<2));
+    await page.keyboard.press('Home');await page.waitForTimeout(300);
+    assert.equal((await state()).y,0);
+    await page.locator('#open-clients').click();await page.waitForTimeout(1700);
+    assert.equal((await state()).currentId,'puntoes');
+    // Reverse release from the hub also gives the next gesture to the page.
+    await swipe({distance:-100,y:height*.3,settle:300});
+    assert.ok((await state()).y<anchor-40);
+    assert.deepEqual(errors,[]);
+    report.phones.push({width,height,metrics,anchor,exitBefore,exitAfter,translation,slow,exit,errors});
+    await context.close(); console.log(`PASS ${width}x${height}: native snap, slow/long swipe, wheel tail, cards, logos, link, native exit/reverse, long entrance`);
   }
-  report.passed = true;
-} catch (error) {
-  report.error = error.stack; process.exitCode = 1; console.error(error);
-} finally {
-  await fs.writeFile(`${out}/REPORT.json`, JSON.stringify(report, null, 2) + '\n');
-  await browser.close();
-}
+  const cold=await browser.newContext({viewport:{width:320,height:568},isMobile:true,hasTouch:true});
+  const hashPage=await cold.newPage();
+  await hashPage.goto(base+'#confianza');
+  await hashPage.waitForFunction(()=>window.__puntoes?.getState().tour.active);
+  await hashPage.waitForTimeout(3300);
+  assert.ok(await hashPage.evaluate(()=>window.__puntoes.getState().tour.active),'cold fragment stays at hub');
+  await hashPage.getByRole('link',{name:'El encuentro',exact:false}).click();await hashPage.waitForTimeout(1500);
+  assert.ok(await hashPage.evaluate(()=>!window.__puntoes.getState().tour.active));
+  await hashPage.goBack();await hashPage.waitForTimeout(1500);
+  assert.ok(await hashPage.evaluate(()=>window.__puntoes.getState().tour.active),'history back enters city');
+  await hashPage.goForward();await hashPage.waitForTimeout(1500);
+  assert.ok(await hashPage.evaluate(()=>!window.__puntoes.getState().tour.active),'history forward leaves city');
+  report.fragmentAndHistory=true;await cold.close();
+  const reduce=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+  const reducePage=await reduce.newPage();await reducePage.goto(base+'?city=0');
+  await reducePage.waitForFunction(()=>window.__puntoes?.getState().tour.active);
+  await reducePage.locator('body').click({position:{x:190,y:180}});await reducePage.keyboard.press('ArrowDown');
+  await reducePage.waitForTimeout(250);
+  assert.equal(await reducePage.locator('.city-tour-card.is-current').getAttribute('data-client'),'bbva');
+  assert.equal(await reducePage.evaluate(()=>window.__puntoes.getState().tour.moving),false);
+  const reduceLogo=reducePage.locator('.city-client[data-client="cepsa"]');await reduceLogo.focus();await reduceLogo.tap();await reducePage.waitForTimeout(250);
+  assert.equal(await reducePage.locator('.city-tour-card.is-current').getAttribute('data-client'),'cepsa');
+  assert.equal(await reducePage.evaluate(()=>window.__puntoes.getState().reduced),false,'hands preference preserved');
+  report.reducedCity=true;await reduce.close();
+  const desktop=await browser.newPage({viewport:{width:1424,height:873}});
+  await desktop.goto(base+'?scroll=500');
+  await desktop.waitForFunction(()=>window.__puntoes?.getState().scene);
+  const hand=await desktop.evaluate(()=>({s:window.__puntoes.getState().scene,handoff:window.__puntoes.getState().handoffStart}));
+  assert.equal(hand.s.poseAuthority,'absolute joint quaternion track');
+  assert.equal(hand.s.humanMirror,-1);
+  assert.equal(await desktop.locator('#confianza').evaluate(el=>el.classList.contains('city-mobile-tour')),false);
+  await desktop.goto(base+'?city=.5');
+  await desktop.waitForFunction(()=>window.__puntoes?.getState().city?.ready);
+  const desktopY=await desktop.evaluate(()=>scrollY);
+  await desktop.mouse.wheel(0,100);await desktop.waitForTimeout(1000);
+  assert.ok(await desktop.evaluate(()=>scrollY)>desktopY+30,'desktop keeps continuous scroll');
+  const logo=desktop.locator('.city-client[data-client="bbva"]');
+  await logo.focus();await logo.click();
+  assert.ok(await desktop.locator('#city-case').evaluate(el=>el.open),'desktop case dialog retained');
+  await desktop.keyboard.press('Escape');
+  await desktop.close();
+  report.desktop={handPoseAuthority:hand.s.poseAuthority,continuousScroll:true,caseDialog:true};
+  report.passed=true;
+} catch(error) {report.error=error.stack;process.exitCode=1;console.error(error)}
+finally {await fs.writeFile(`${out}/REPORT.json`,JSON.stringify(report,null,2)+'\n');await browser.close()}

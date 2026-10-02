@@ -13,6 +13,7 @@ import {mobileTourRoute, mobileTourBuildings} from './mobile-tour-config.js';
 import {mobileTourGeometry, mobileTourState} from './mobile-tour.js';
 import {createMobileTourDeck} from './mobile-tour-deck.js';
 import {createMobileTourNavigation} from './mobile-tour-navigation.js';
+import {createMobileTourInput} from './mobile-tour-input.js';
 import {createCityDetail} from './city-detail.js';
 
 // Architecture is interpreted from photos; the city layout is imaginary.
@@ -32,6 +33,7 @@ const sites = {
 };
 
 export function createCity(section, options = {}) {
+  const cityMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const frame = section.querySelector('.trust-frame');
   const world = section.querySelector('.city-world');
   const image = section.querySelector('#city-image');
@@ -58,6 +60,7 @@ export function createCity(section, options = {}) {
     if (options.onNavigate) options.onNavigate(top);
     else window.scrollTo({top, behavior: 'instant'});
   }});
+  const input = createMobileTourInput(frame, navigation);
   const detail = createCityDetail(core);
   for (const client of [...cityClients, invitation]) {
     const site = sites[client.id];
@@ -117,6 +120,8 @@ export function createCity(section, options = {}) {
   function resize() {
     const viewport = innerHeight;
     const portrait = innerWidth < 700;
+    const wasPortrait = section.classList.contains('city-mobile-tour');
+    if (wasPortrait !== portrait) navigation.reset();
     section.classList.toggle('city-mobile-tour', portrait);
     if (portrait && loading) deck.load();
     if (portrait) {
@@ -124,6 +129,7 @@ export function createCity(section, options = {}) {
       if (lastWidth !== innerWidth || Math.abs(viewport - tourViewport) > tourViewport * .2) tourViewport = viewport;
       geometry = mobileTourGeometry({top: section.offsetTop, viewport: tourViewport});
       section.style.height = `${geometry.height}px`;
+      navigation.anchorScroll(window.scrollY, geometry);
     } else {
       section.style.removeProperty('height');
       geometry = cityGeometry({top: section.offsetTop, height: section.offsetHeight, viewport,
@@ -187,9 +193,12 @@ export function createCity(section, options = {}) {
   }
 
   function update(scroll, reduced, now = performance.now()) {
+    reduced = reduced || cityMotion.matches;
     if (!geometry || lastWidth !== innerWidth || lastHeight !== innerHeight) resize();
     if (scroll > geometry.start - innerHeight * 2) load();
     const portrait = innerWidth < 700;
+    input.update(portrait && ready, geometry);
+    if (portrait) scroll = navigation.anchorScroll(window.scrollY, geometry);
     const state = portrait ? mobileTourState({scroll, geometry}) : cityState(scroll, geometry, reduced);
     frame.style.opacity = ready ? state.opacity : 0;
     frame.style.visibility = state.active ? 'visible' : 'hidden';
@@ -199,7 +208,14 @@ export function createCity(section, options = {}) {
     let position, tour;
     if (portrait) {
       tour = navigation.update(state, {scroll, now, layout: {width: parseFloat(world.style.width), height: parseFloat(world.style.height),
-        viewportWidth: document.documentElement.clientWidth, viewportHeight: innerHeight}});
+        viewportWidth: document.documentElement.clientWidth, viewportHeight: innerHeight}, geometry, reduced});
+      state.copyOpacity = tour.copyOpacity;
+      if (tour.active) {state.opacity = 1; state.active = true; state.exitY = 0; state.revealed = true}
+      state.stopIndex = tour.guidedCursor;
+      state.current = tour.current;
+      frame.style.opacity = ready ? state.opacity : 0;
+      frame.style.visibility = state.active ? 'visible' : 'hidden';
+      frame.style.transform = `translate3d(0,${-state.exitY}px,0)`;
       position = tour.camera;
       state.zoom = position.zoom;
       pan.update(world, state.zoom, reduced, false);
@@ -208,7 +224,7 @@ export function createCity(section, options = {}) {
       section.dataset.cityStop = tour.current.id;
       section.dataset.cityCard = String(state.stopIndex);
       detail.update({active: interactive, camera: position, current: tour.current.id,
-        next: mobileTourRoute[state.stopIndex + 1]?.id});
+        next: tour.nextId});
     }
     const view = perspective.update(now, {active: interactive && mobile, reduced,
       paused: dialog.isOpen || pan.isDragging || (portrait && tour.moving)});
@@ -249,5 +265,9 @@ export function createCity(section, options = {}) {
   }
 
   resize();
-  return {update, resize, load, dialog, dispose() {water?.dispose(); pan.dispose(); perspective.dispose()}, scrollAt: progress => geometry.revealed + Math.max(0, Math.min(1, progress)) * (geometry.end - geometry.revealed)};
+  return {update, resize, load, dialog,
+    anchorScroll: scroll => innerWidth < 700 ? navigation.anchorScroll(scroll, geometry) : scroll,
+    prepareNavigation: enter => navigation.reset({suspend: !enter}),
+    getTourState: navigation.getState,
+    dispose() {input.dispose(); water?.dispose(); pan.dispose(); perspective.dispose()}, scrollAt: progress => geometry.revealed + Math.max(0, Math.min(1, progress)) * (geometry.end - geometry.revealed)};
 }

@@ -23,8 +23,5 @@ export const mobileTourRoute = mobileTourOrder.map(id => ({id, ...mobileTourBuil
 
 export const mobileTourHub = {id: 'puntoes', center: [52.657, 40.879], size: [19.235, 6.758]};
 
-// Distances are viewport heights; changing the list adjusts the section length.
-export const mobileTourTiming = {intro: .8, stop: 1.45, outro: .25,
-  travelUntil: .42, cardFrom: .04, cardUntil: .48,
-  // Logo visits use milliseconds, independently of scrolling speed.
-  logoTravel: 1250, logoCardFrom: 80, logoCardUntil: 650};
+// Camera and card timing in milliseconds, independent of document scrolling.
+export const mobileTourTiming = {logoTravel: 1250, logoCardFrom: 80, logoCardUntil: 650};

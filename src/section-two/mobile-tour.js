@@ -1,5 +1,5 @@
 import {clamp, mix, smooth} from '../timeline.js';
-import {mobileTourRoute, mobileTourHub, mobileTourTiming} from './mobile-tour-config.js';
+import {mobileTourHub} from './mobile-tour-config.js';
 
 // Zero velocity and acceleration at both ends: depart gently, accelerate,
 // then brake into the building. Its card starts entering during the journey.
@@ -8,32 +8,24 @@ export function tourEase(value) {
   return t * t * t * (t * (6 * t - 15) + 10);
 }
 
-export function mobileTourGeometry({top, viewport, route = mobileTourRoute}) {
+// The itinerary owns a single document anchor. Only entrance and native exit
+// take document space; adding stops does not add empty screens to scroll past.
+export function mobileTourGeometry({top, viewport}) {
   const handoff = top - viewport + 90;
   const revealed = handoff + viewport * 1.35;
-  const span = (mobileTourTiming.intro + route.length * mobileTourTiming.stop + mobileTourTiming.outro) * viewport;
-  return {start: handoff + viewport * .55, fadeEnd: revealed, revealed,
-    end: revealed + span, height: revealed + span + viewport - top, viewport};
+  return {handoff, start: handoff + viewport * .55, fadeEnd: revealed, revealed,
+    end: revealed, height: revealed + viewport - top, viewport};
 }
 
-export function mobileTourState({scroll, geometry, route = mobileTourRoute}) {
-  const {viewport, start, fadeEnd, revealed, end} = geometry;
-  const distance = Math.max(0, (scroll - revealed) / viewport);
-  const travelDistance = Math.max(0, distance - mobileTourTiming.intro);
-  const rawIndex = Math.floor(travelDistance / mobileTourTiming.stop);
-  const stopIndex = distance < mobileTourTiming.intro || !route.length ? -1 : Math.min(route.length - 1, rawIndex);
-  const phase = stopIndex < 0 ? 0 : clamp(travelDistance / mobileTourTiming.stop - stopIndex);
-  const exit = clamp((scroll - end) / viewport);
+export function mobileTourState({scroll, geometry}) {
+  const {viewport, start, fadeEnd, revealed} = geometry;
+  const exit = clamp((scroll - revealed) / viewport);
   const opacity = exit < 1 ? smooth(start, fadeEnd, scroll) : 0;
-  return {stopIndex, phase, introDistance: distance, previous: stopIndex <= 0 ? mobileTourHub : route[stopIndex - 1],
-    current: stopIndex < 0 ? mobileTourHub : route[stopIndex],
-    entrance: tourEase((scroll - start) / (fadeEnd - start)),
-    travel: tourEase(phase / mobileTourTiming.travelUntil),
-    cardProgress: tourEase((phase - mobileTourTiming.cardFrom) / (mobileTourTiming.cardUntil - mobileTourTiming.cardFrom)),
-    progress: clamp((scroll - revealed) / (end - revealed)), opacity,
-    copyOpacity: 1 - smooth(.2, mobileTourTiming.intro, distance),
-    namesOpacity: 0, exitY: exit * viewport, active: opacity > .01 && exit < 1,
-    revealed: opacity >= .999, mode: 'tour'};
+  return {stopIndex: -1, phase: 0, previous: mobileTourHub, current: mobileTourHub,
+    entrance: tourEase((scroll - start) / (fadeEnd - start)), travel: 1, cardProgress: 0,
+    progress: clamp((scroll - start) / (revealed + viewport - start)), opacity,
+    copyOpacity: 1, namesOpacity: 0, exitY: exit * viewport,
+    active: opacity > .01 && exit < 1, revealed: opacity >= .999, mode: 'tour'};
 }
 
 export function mobileBuildingView(stop, {width, height, viewportWidth, viewportHeight}, hub = false) {

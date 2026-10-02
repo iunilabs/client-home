@@ -114,32 +114,23 @@ body:not(.city-active) .city-light-beam,body:not(.city-active) .city-light-ring{
  .city-tour-deck{display:block;position:absolute;z-index:5;left:20px;right:20px;
    bottom:calc(96px + env(safe-area-inset-bottom));pointer-events:none}
  .city-tour-card{position:absolute;left:0;right:0;bottom:0;visibility:hidden;transform-origin:50% 85%;
-   padding:22px 22px 17px;border:1px solid #fff;border-radius:17px;background:linear-gradient(135deg,#f9fcfd,#e7f3fb);
+   height:320px;box-sizing:border-box;overflow:hidden;padding:22px 22px 17px;border:1px solid #fff;border-radius:17px;background:linear-gradient(135deg,#f9fcfd,#e7f3fb);
    color:#25455e;box-shadow:0 7px 22px #0c304533;will-change:transform;pointer-events:none;touch-action:pan-y}
  .city-tour-card.is-current{pointer-events:auto}
- .city-tour-card.is-reading{max-height:min(55svh,calc(100svh - 210px - env(safe-area-inset-bottom)));
-   overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:thin}
- .city-tour-card.is-reading .tour-card-story{max-height:none;overflow:visible}
  .tour-card-brand{height:29px;margin-bottom:13px;display:flex;align-items:center;justify-content:space-between;gap:20px}
  .tour-card-brand img{max-height:29px;max-width:142px;width:auto;object-fit:contain}
  .tour-card-brand img[hidden]{display:none}
  .tour-card-count{font-size:9px;letter-spacing:.08em;color:#7b97a8;margin-left:auto}
  .tour-card-client{font-size:11px;font-weight:550;line-height:1.4;color:#50748b;margin:0 0 9px}
  .tour-card-heading{font-family:DM Serif,Georgia,serif;font-size:clamp(26px,7.3vw,32px);font-weight:400;
-   line-height:1.08;letter-spacing:-.025em;color:#2c759f;margin:0 0 12px}
- .tour-card-intro{font-size:12px;line-height:1.65;color:#476276;margin:0 0 13px}
- .tour-card-details>summary{font-size:11px;display:flex;align-items:center;justify-content:space-between;
-   cursor:pointer;min-height:37px;border-top:1px solid #87afc838;list-style:none;color:#2c759f}
- .tour-card-details>summary::-webkit-details-marker{display:none}
- .tour-card-details[open]>summary span{transform:rotate(45deg)}
- .tour-card-story{max-height:23svh;overflow:auto;overscroll-behavior:contain;padding:8px 4px 0 0;
-   scrollbar-width:thin;touch-action:pan-y}
- .tour-card-story h5{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#397a9f;margin:0 0 5px}
- .tour-card-story p{font-size:11px;line-height:1.7;margin:0 0 15px;color:#476276}
+   line-height:1.08;letter-spacing:-.025em;color:#2c759f;margin:0 0 12px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+ .tour-card-intro{font-size:12px;line-height:1.65;color:#476276;margin:0 0 13px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+ .tour-card-more{font-size:11px;display:flex;align-items:center;color:#2c759f;
+   min-height:37px;border-top:1px solid #87afc838;text-decoration:none}
  .tour-card-draft{font-size:8px;line-height:1.4;color:#839ba9;margin:7px 0 0}
  .tour-card-contact{display:inline-flex;align-items:center;min-height:42px;padding:0 18px;background:#168dcc;
    color:#fff;border-radius:28px;text-decoration:none;font-size:12px}
- .tour-card-details>summary:focus-visible,.tour-card-contact:focus-visible{outline:2px solid #168dcc;outline-offset:3px}
+ .tour-card-more:focus-visible,.tour-card-contact:focus-visible{outline:2px solid #168dcc;outline-offset:3px}
  .city-mobile-tour .city-carousel{z-index:6;bottom:0;padding:8px 0 calc(12px + env(safe-area-inset-bottom));background:none}
  .city-mobile-tour .city-carousel-viewport{overflow-x:auto;scrollbar-width:none;touch-action:pan-y;
    overscroll-behavior-x:contain;mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
@@ -189,5 +180,5 @@ body:not(.city-active) .city-light-beam,body:not(.city-active) .city-light-ring{
  .tour-card-heading{font-size:24px;margin-bottom:8px}
  .tour-card-intro{font-size:11px;line-height:1.5;margin-bottom:8px}
  .tour-card-client{margin-bottom:6px}
- .tour-card-story{max-height:19svh}
+ .city-tour-card{height:256px}
 }

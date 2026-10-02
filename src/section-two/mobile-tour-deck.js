@@ -1,8 +1,8 @@
 import {getCaseStudy, collaborationStory} from './case-studies.js';
 import {mobileCardStack} from './mobile-tour.js';
 
-// Non-modal cards: the page keeps scrolling while the next building is framed.
-// Each client's full existing story stays available under its explicit Ver más.
+// One bounded summary per client. Case pages are future destinations; links
+// keep normal browser navigation and never expand or open a mobile dialog.
 export function createMobileTourDeck(section, route, clients) {
   const deck = document.createElement('div');
   deck.className = 'city-tour-deck';
@@ -34,22 +34,11 @@ export function createMobileTourDeck(section, route, clients) {
       contact.textContent = 'Hablemos ↗';
       card.append(contact);
     } else {
-      const details = document.createElement('details');
-      details.className = 'tour-card-details';
-      details.innerHTML = '<summary>Ver más <span aria-hidden="true">＋</span></summary><div class="tour-card-story" data-lenis-prevent></div>';
-      for (const [field, label] of [['challenge', 'El punto de partida'], ['approach', 'El recorrido'], ['goal', 'Lo que queremos hacer posible']]) {
-        const heading = document.createElement('h5'), paragraph = document.createElement('p');
-        heading.textContent = label; paragraph.textContent = story[field];
-        details.querySelector('.tour-card-story').append(heading, paragraph);
-      }
-      // Only an expanded article owns its native reading scroll. The closed
-      // cards and the scene keep the document's continuous tour and exit.
-      details.addEventListener('toggle', () => {
-        card.classList.toggle('is-reading', details.open);
-        card.toggleAttribute('data-lenis-prevent', details.open);
-        if (!details.open) card.scrollTop = 0;
-      });
-      card.append(details);
+      const link = document.createElement('a');
+      link.className = 'tour-card-more';
+      link.href = `${import.meta.env.BASE_URL}clientes/${client.id}/`;
+      link.textContent = 'Ver más ↗';
+      card.append(link);
       const draft = document.createElement('p');
       draft.className = 'tour-card-draft'; draft.textContent = 'Caso ilustrativo · texto de muestra';
       card.append(draft);
@@ -58,7 +47,6 @@ export function createMobileTourDeck(section, route, clients) {
     return card;
   });
   section.querySelector('.trust-frame').append(deck);
-  let previousClient = null;
   return {
     load() {for (const logo of deck.querySelectorAll('img[data-src]')) if (!logo.src) logo.src = logo.dataset.src;},
     update(state, enabled, {order, entry, retreat = 1}) {
@@ -67,10 +55,6 @@ export function createMobileTourDeck(section, route, clients) {
       deck.style.transform = `translateY(${(1 - retreat) * 36}px)`;
       deck.inert = !showing;
       deck.setAttribute('aria-hidden', String(!showing));
-      if (entry?.id !== previousClient) {
-        for (const details of deck.querySelectorAll('details[open]')) details.open = false;
-        previousClient = entry?.id;
-      }
       const incomingIndex = order.indexOf(entry?.id);
       const readable = entry?.progress > .9 ? entry.id : order.at(incomingIndex < 0 ? -1 : -2);
       for (const card of cards) {

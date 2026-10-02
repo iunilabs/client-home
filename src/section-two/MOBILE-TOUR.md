@@ -1,63 +1,56 @@
-# Recorrido móvil: selección, tarjetas y logos
+# Recorrido móvil: gestos, tarjetas y logos
 
-Estado aprobado el 1 de octubre de 2026: **Puntoes → BBVA → Naturgy → Banco Sabadell → obra**. Esta configuración se aplica a anchuras inferiores a 700 px. El ordenador conserva la ciudad explorable y sus fichas modales.
+Candidato local del 2 de octubre de 2026. A anchuras inferiores a 700 px se mantiene el itinerario configurado **Puntoes → BBVA → Naturgy → Banco Sabadell → obra**. Los diez clientes siguen disponibles en el carrusel, con una tarjeta por empresa y otra de colaboración. El ordenador conserva su ciudad explorable y sus fichas modales.
 
-## Cambiar las empresas y su orden
+## Un gesto, una parada
 
-Editar únicamente `mobileTourOrder` en [mobile-tour-config.js](mobile-tour-config.js):
+La entrada desde la mano conserva los puntos de revelado anteriores. Al llegar a Puntoes se captura un único anclaje del documento, `geometry.revealed`. La entrada larga consume su gesto completo: ni el resto del movimiento ni su inercia visitan BBVA. `anchorScroll` reconcilia el desplazamiento del compositor con Lenis antes de renderizar. No hay pantallas vacías entre edificios: la altura móvil contiene solo la entrada y una pantalla de salida.
 
-```js
-export const mobileTourOrder = ['bbva', 'naturgy', 'sabadell', 'collaborate'];
-```
+Un nuevo swipe vertical de al menos 60 px solicita una parada. La dirección se reconoce desde 10 px acumulados y exige una componente vertical superior a 1.4 veces la horizontal. Se cuentan desplazamientos acumulados, incluidos movimientos lentos con muestras de 3 px. Taps, horizontales y diagonales no navegan. Una dirección ambigua se conserva hasta levantar el dedo. El gesto sobre una tarjeta también puede navegar; sus enlaces conservan el comportamiento normal del navegador. No hay botones de recorrido ni de sensor.
 
-La entrada en Puntoes es independiente de esa lista: no añadir `puntoes`. `collaborate` representa la obra y puede conservarse al final, moverse o retirarse. No es una empresa del carrusel. La duración de la sección y la numeración de las tarjetas se recalculan automáticamente; la transición desde la mano no cambia.
+La cámara viaja por tiempo, no por scroll: `logoTravel: 1250` ms, con aceleración y frenado suaves. La tarjeta empieza a los 80 ms y termina de entrar a los 650 ms. Un gesto iniciado durante un viaje se consume completo, aunque la cámara llegue antes de que se levante el dedo. Un burst de rueda solicita como máximo una parada; las colas decrecientes extienden el bloqueo incluso con pausas entre muestras. La rueda horizontal queda fuera de la navegación vertical.
 
-Identificadores disponibles:
+Al llegar a la obra, el gesto que la solicitó sigue consumido. **Solo un nuevo gesto hacia delante libera el documento**. Se comprueba el límite antes de cancelar un movimiento vertical, de modo que Chrome conserva su scroll nativo desde el principio del gesto. `release` no escribe scroll ni salta a sección 3. La escena sale una cantidad igual al desplazamiento real del documento. Un gesto inverso vuelve a capturar la última parada al cruzar el anclaje. En Puntoes, un nuevo gesto inverso libera de la misma forma la vuelta a sección 1.
 
-| Identificador | Empresa / destino |
+## Tarjetas y destinos futuros
+
+Once artículos únicos forman una pila con alturas iguales y fondos opacos; solo la tarjeta activa permite foco y enlaces. Las anteriores quedan debajo, con un máximo de cuatro escalones visibles. Repetir una visita recupera el mismo artículo. La tarjeta ocupa 320 px en pantallas normales y 256 px en pantallas de altura máxima de 650 px. Los resúmenes se limitan a tres líneas con elipsis; los títulos a dos. No hay scroll de lectura, `details`, relato desplegable ni modal móvil. La franja inferior de logos queda libre incluso a 320 × 568.
+
+El contenido breve existente procede de `case-studies.js`; las empresas conservan el aviso «Caso ilustrativo · texto de muestra». No se añaden relatos reales. Colaboración conserva su enlace externo «Hablemos».
+
+«Ver más» es un enlace normal a `${import.meta.env.BASE_URL}clientes/<id>/`. En el build con `--base=/client-home/`, los destinos futuros son:
+
+| Cliente | Destino reservado |
 | --- | --- |
-| `accenture` | Accenture |
-| `bbva` | BBVA |
-| `canal` | Canal de Isabel II |
-| `cepsa` | Cepsa |
-| `mapfre` | MAPFRE |
-| `mediaset` | Mediaset |
-| `ree` | Red Eléctrica |
-| `siemens` | Siemens |
-| `naturgy` | Naturgy |
-| `sabadell` | Banco Sabadell |
-| `collaborate` | Obra / «¿Quieres colaborar?» |
+| Accenture | `/client-home/clientes/accenture/` |
+| BBVA | `/client-home/clientes/bbva/` |
+| Canal de Isabel II | `/client-home/clientes/canal/` |
+| Cepsa | `/client-home/clientes/cepsa/` |
+| MAPFRE | `/client-home/clientes/mapfre/` |
+| Mediaset | `/client-home/clientes/mediaset/` |
+| Red Eléctrica | `/client-home/clientes/ree/` |
+| Siemens | `/client-home/clientes/siemens/` |
+| Naturgy | `/client-home/clientes/naturgy/` |
+| Banco Sabadell | `/client-home/clientes/sabadell/` |
 
-Usar identificadores válidos, una sola vez cada uno. Por ejemplo, `['bbva', 'cepsa', 'mediaset', 'collaborate']` sustituye las tres empresas manteniendo la obra. **La lista no filtra el carrusel**: los diez clientes siguen disponibles y tienen su propia tarjeta aunque se excluyan del recorrido.
+Estas páginas **todavía no existen**. Este cambio reserva sus URLs; no crea páginas ni intercepta enlaces con contenido sustituto. La prueba de navegador sustituye únicamente la respuesta de red de Sabadell para comprobar una navegación real sin depender de una futura página.
 
-## Entrada de tarjetas y movimiento de cámara
+## Carrusel, teclado y cambios de pantalla
 
-`mobileTourTiming`, en el mismo archivo, controla la coreografía. `intro`, `stop` y `outro` se miden en alturas de pantalla. Cada parada ocupa `1.45` pantallas de scroll; la primera pausa en Puntoes ocupa `0.8`.
+Se conserva el contrato de `createCityCarousel`: callbacks `onSelect`, `onOpen`, y métodos `select`, `update`, `load`, `setModal`, `logoFor`. No se modifica `city-carousel.js`. El swipe horizontal de sus logos sigue siendo local al carrusel; una intención vertical se dedica al recorrido. Los diez logos conservan su estilo blanco y footer transparente.
 
-`travelUntil: .42` significa que la cámara termina su viaje al 42 % del tramo. `cardFrom: .04` y `cardUntil: .48` hacen que la tarjeta comience poco después de arrancar el mapa y termine de entrar al 48 %. Para una pantalla de 844 px, comienza tras unos 49 px de scroll dentro del tramo. La aceleración y el frenado usan una curva con velocidad y aceleración nulas en los extremos.
+Seleccionar un logo cambia la cámara desde su posición visible. Si pertenece al itinerario, también cambia el cursor; si está fuera (como Cepsa), conserva la siguiente parada pendiente. La cámara y la tarjeta seleccionadas permanecen hasta un nuevo gesto, que viaja directamente desde esa posición. No se desplaza el documento al seleccionar logos.
 
-Las tarjetas anteriores permanecen debajo. Su separación visual se limita a cuatro niveles, 28 px y menos de 1.2 grados, para que no invadan el encuadre. Hay una sola tarjeta DOM por empresa; el contenido procede de [case-studies.js](case-studies.js), también usado en las fichas de escritorio. Al abrir «Ver más», la tarjeta completa tiene scroll nativo propio para leer también desde su encabezado, sin perder la empresa elegida. Al cerrarla, vuelve a acompañar el scroll de la página. Un gesto sobre el mapa siempre sigue el recorrido.
+Tab y Enter mantienen el foco y activación normales de enlaces y logos. Las flechas verticales, PageUp/PageDown y espacio solicitan una parada cuando el foco no está en un control; se ignora la repetición automática. Home/End permiten abandonar el recorrido y sincronizan Lenis. Los enlaces de capítulos suspenden el anclaje antes de navegar; el enlace a confianza reinicia en Puntoes. Los cambios pequeños de altura conservan el anclaje para tolerar la barra de URL; cambios superiores al 20 % o de anchura lo recalculan sin perder la parada. El enlace a confianza usa ese mismo anclaje. Al cruzar 700 px se restablece la navegación de escritorio, y regresar a móvil reinicia su cursor.
 
-El recorrido está ligado a la distancia real de scroll: no captura gestos para convertirlos en pasos ni añade botones «Anterior», «Siguiente» o de activación del movimiento. Tras la obra, el scroll continúa normalmente y la ciudad sale a la misma velocidad que entra el contenido siguiente. Nunca se ejecuta un salto programado a la sección 3 por un último swipe.
+## Configuración y arte
 
-## Visitas desde el footer
+Editar solo `mobileTourOrder` en `mobile-tour-config.js` para cambiar la selección u orden de paradas. No incluir `puntoes`; no repetir identificadores. La lista no filtra clientes ni tarjetas. `collaborate` representa la obra. `mobileTourBuildings` y `mobileTourHub` conservan coordenadas y encuadres del retrato V13. El arte V13, las capas V14 y su procedencia no cambian. `city-detail.js` sigue cargando destino actual y próximo por su interfaz existente. Las manos tampoco cambian. La ciudad consulta localmente `prefers-reduced-motion`: acorta sus viajes y llegada de tarjetas a 100 ms, conservando gestos y selección manual; no altera la preferencia de animación de la experiencia de manos.
 
-El footer es transparente, con logos blancos de proporciones originales. Avanza despacio y permite desplazarse horizontalmente con el dedo; una intención vertical conserva el scroll de la página. El teclado puede recorrer todos los botones y pausa el avance automático.
+## Validación
 
-Tocar un logo lleva la cámara desde su posición visible al edificio en `logoTravel: 1250` ms. La tarjeta comienza a entrar a los `logoCardFrom: 80` ms y termina a los `logoCardUntil: 650` ms. Si ya había aparecido, la misma tarjeta vuelve a lo alto de la pila con un fundido, conservando las demás; no se crean duplicados.
+Ejecutar `npm test`, `npm run build -- --base=/client-home/` y `npm run test:mobile-scroll`. El navegador usa Chrome con CDP `Input.dispatchTouchEvent` en 320 × 568, 390 × 844 y 430 × 932. Por defecto visita `http://127.0.0.1:4304/`; `MOBILE_SCROLL_URL` permite usar el preview con su base `/client-home/`. Capturas y reporte se guardan en `docs/mobile-snap-2026-10-02` (ignorado en Git).
 
-Si el cliente pertenece al recorrido, Lenis sitúa el scroll en el tramo correspondiente mientras la cámara realiza su viaje independiente. Al continuar bajando, se visita la siguiente parada de la lista. Si el cliente está fuera de la lista, se conserva el scroll; el siguiente desplazamiento vertical retoma el recorrido mediante una transición desde la cámara visible. La recuperación manual conserva el historial de tarjetas. Si se avanza desde la introducción tras visitar un logo, la tarjeta permanece mientras se retoma el recorrido. Al retroceder a Puntoes, la pila se retira suavemente desde su opacidad visible; solo se vacía cuando ya es invisible. Se desactiva el foco antes de llegar a ese punto. Un regreso rápido no presenta fugazmente tarjetas de edificios intermedios. Sin visitas manuales, subir el scroll invierte el recorrido normal.
+La regresión rápida `MOBILE_SCROLL_URL=http://127.0.0.1:4314/client-home/ node tests/mobile-access.mjs` comprueba en el último build el fragmento en frío, movimiento normal/reducido, Cepsa, enlaces después de reducir la altura y Atrás/Adelante.
 
-La unión con Lenis está en el callback `onNavigate` de `main.js`: solo sincroniza el scroll y su progreso visual para evitar que el suavizado anterior cancele la visita recién solicitada. No cambia las poses ni los tiempos de la mano.
-
-## Encuadres y nitidez
-
-`mobileTourBuildings` y `mobileTourHub` calibran centro, tamaño y puntos en porcentajes del retrato V13 de 941 × 1672. `size` debe abarcar la arquitectura completa, incluida la antena de Mediaset y la grúa de la obra. Cambiar únicamente el orden no requiere tocar esas coordenadas.
-
-[city-detail.js](city-detail.js) permite sumar capas nativas de mayor detalle a rectángulos concretos del mapa. Cada `rect` usa píxeles del V13 original: `[izquierda, arriba, ancho, alto]`. Se cargan el destino actual y el siguiente; el ordenador no descarga estos recursos. Los bordes se mezclan con la imagen base y el detalle entra gradualmente con el zoom y la carga, sin reemplazar el mapa en un solo fotograma.
-
-La imagen global conserva su resolución nativa. Las capas añaden detalle generado localmente; no constituyen una reproducción arquitectónica comprobada ni un reescalado anunciado como 4K. Al cambiar las tres empresas, revisar si los nuevos destinos tienen capa de detalle: la navegación funciona en cualquier caso con V13, pero los destinos sin capa conservan su nitidez original. Sus dimensiones, prompts exactos y procedencia se documentan en [assets/README.md](assets/README.md).
-
-## Comprobaciones al modificar la lista
-
-Ejecutar `npm test`, `npm run build -- --base=/client-home/` y `npm run test:mobile-scroll` con la web local abierta en 4180 (o indicar `MOBILE_SCROLL_URL`). La prueba de navegador utiliza touch nativo en 320 × 568, 390 × 844 y 430 × 932: movimiento continuo del mapa, tarjetas apiladas, recuperación por logo, lectura desde el encabezado y salida proporcional al último swipe. Revisar también entrada desde Puntoes, encuadre de cada parada, tarjeta durante el viaje y scroll inverso. Comprobar que sigue habiendo diez logos y once tarjetas únicas, que la obra conserva «Hablemos», que no abre un modal móvil y que el footer no tapa las tarjetas.
+La prueba comprueba gestos lentos, largos, diagonales, horizontales y taps; mapa animado con documento fijo; residuos de rueda; swipe sobre tarjeta; salida proporcional e inversa; Cepsa y todas las empresas; artículos únicos y sus medidas; enlaces reales; entrada larga; carrusel horizontal; teclado; altura, escritorio/móvil y enlaces de capítulos. Los tests unitarios comprueban el estado y los límites sin depender del navegador. Chrome emulado no sustituye una prueba física de Safari/iOS, barra de URL dinámica ni gestos del sistema.
