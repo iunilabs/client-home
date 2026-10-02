@@ -14,7 +14,8 @@ import {smooth} from '../timeline.js';
 
 // Each native detail image reconstructs a precise V13 source rectangle.
 // The base portrait remains visible; soft boundaries prevent rectangular seams.
-// Only visited/next stops download a tile. Desktop never requests these images.
+// Puntoes is the mobile office's single visual source, prepared before the
+// map appears. Other stops download on visit/next. Desktop requests no tiles.
 export const cityDetails = {
   puntoes: {url: puntoesUrl, rect: [346, 418, 300, 532]},
   bbva: {url: bbvaUrl, rect: [332, 70, 280, 496]},
@@ -45,26 +46,46 @@ export function createCityDetail(core) {
       const [horizontal, vertical] = detail.feather;
       image.style.maskImage = `linear-gradient(90deg,transparent,#000 ${horizontal}%,#000 ${100 - horizontal}%,transparent),linear-gradient(180deg,transparent,#000 ${vertical}%,#000 ${100 - vertical}%,transparent)`;
     }
-    const tile = {id, image, detail, ready: false, requested: false, failed: false, loadedAt: 0};
-    image.addEventListener('load', () => {tile.ready = true; tile.loadedAt = performance.now()});
-    image.addEventListener('error', () => {tile.failed = true; tile.ready = false; image.remove()});
+    let settle;
+    const preparation = new Promise(resolve => {settle = resolve});
+    const tile = {id, image, detail, preparation, ready: false, requested: false, failed: false, loadedAt: 0};
+    const unavailable = () => {tile.failed = true; tile.ready = false; image.remove(); settle(false)};
+    const decoded = () => {if (tile.failed) return; tile.ready = true; tile.loadedAt = performance.now(); settle(true)};
+    image.addEventListener('load', () => {
+      // A loaded file can still need decoding. Reveal the mobile map only once
+      // this exact office texture can be drawn on its first visible frame.
+      if (typeof image.decode === 'function') image.decode().then(decoded, unavailable);
+      else decoded();
+    });
+    image.addEventListener('error', unavailable);
     core.prepend(image); tiles.set(id, tile);
   }
   function load(id) {
     const tile = tiles.get(id);
     if (tile && !tile.requested) {tile.requested = true; tile.image.src = tile.detail.url}
+    return tile?.preparation;
   }
   return {
-    update({active, camera, current, next, now = performance.now()}) {
+    preparePuntoes() {return load('puntoes')},
+    isPuntoesSettled() {const tile = tiles.get('puntoes'); return tile.ready || tile.failed},
+    update({active, visible = active, camera, current, next, now = performance.now()}) {
       if (active) {load(current); load(next)}
       for (const tile of tiles.values()) {
         // The detail follows the same world transform throughout the journey.
-        // No swap at arrival: contrast/detail increases gradually with zoom.
+        // Puntoes stays opaque at every mobile zoom. Blending two separately
+        // generated offices changes its columns and entrance as the camera
+        // approaches. Its context still uses the existing soft edge mask.
+        // Other clients gain detail gradually with zoom.
         // The broad Siemens campus fits at ~2.4x on tall phones; it needs
         // full detail there too. A loaded neighbour must never cover the
         // current building with its lower-detail surrounding scenery.
         tile.image.style.zIndex = tile.id === current ? '2' : '1';
-        tile.image.style.opacity = active && tile.ready && !tile.failed ? smooth(1.7, 2.3, camera.zoom) * smooth(0, 500, now - tile.loadedAt) : 0;
+        let opacity = 0;
+        if (tile.ready && !tile.failed) {
+          if (tile.id === 'puntoes') opacity = Number(visible);
+          else if (active) opacity = smooth(1.7, 2.3, camera.zoom) * smooth(0, 500, now - tile.loadedAt);
+        }
+        tile.image.style.opacity = opacity;
       }
     },
   };

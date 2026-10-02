@@ -110,31 +110,33 @@ test('desktop debug map entry is fully faded and bounded even on a short viewpor
 
 for(const mode of ['scroll','wheel']) test(`fractional anchor preserves native release and selected reverse entry via ${mode}`,()=>{
   const previousWindow=globalThis.window,handlers=new Map();
-  const geometry={...mobileTourGeometry({top:5200,viewport:932}),revealed:5542.17};
+  const base=mobileTourGeometry({top:5200,viewport:932}),revealed=Math.floor(base.revealed)+.17;
+  const geometry={...base,revealed,fadeEnd:revealed,end:revealed,height:revealed+932-5200};
+  const anchorRounded=Math.floor(revealed);
   const layout={width:550,height:977,viewportWidth:430,viewportHeight:932};
   const nav=createMobileTourNavigation();
   const frame=(scroll,now)=>nav.update(mobileTourState({scroll,geometry}),{scroll,now,layout,geometry});
   frame(geometry.revealed,0);nav.select('sabadell',{now:10});frame(geometry.revealed,4000);
   nav.select('collaborate',{now:4010});frame(geometry.revealed,8000);assert.ok(nav.release(1));
-  globalThis.window={scrollY:5542,addEventListener:(name,handler)=>handlers.set(name,handler),removeEventListener(){}};
+  globalThis.window={scrollY:anchorRounded,addEventListener:(name,handler)=>handlers.set(name,handler),removeEventListener(){}};
   const input=createMobileTourInput(null,nav,{readTarget:()=>window.scrollY});input.update(true,geometry);
   const scroll=y=>{window.scrollY=y;frame(input.reconcile(y),9000)};
   const wheel=deltaY=>handlers.get('wheel')({timeStamp:1000,deltaX:0,deltaY,deltaMode:0,target:{closest:()=>null},cancelable:true,preventDefault(){},stopImmediatePropagation(){}});
   try {
-    scroll(5542);
+    scroll(anchorRounded);
     // Subpixel rounding back at the anchor is not a deliberate inverse entry.
-    input.reconcile(5542.4);input.reconcile(5542);assert.equal(nav.getState().active,false);
-    if(mode==='wheel')wheel(80);else scroll(5543);
+    input.reconcile(anchorRounded+.4);input.reconcile(anchorRounded);assert.equal(nav.getState().active,false);
+    if(mode==='wheel')wheel(80);else scroll(anchorRounded+1);
     assert.equal(nav.getState().active,false,'first forward pixel across the fractional anchor stays native');
     assert.equal(nav.getState().released,1);assert.equal(nav.getState().currentId,'collaborate');
     scroll(geometry.revealed+180);
-    if(mode==='wheel')wheel(-200);else scroll(5542);
+    if(mode==='wheel')wheel(-200);else scroll(anchorRounded);
     assert.equal(nav.getState().active,true);assert.equal(nav.getState().currentId,'collaborate');
     assert.equal(nav.getState().manualId,'sabadell','inverse capture preserves the human selection');
-    nav.enter(geometry);assert.ok(nav.release(-1));scroll(5542);scroll(geometry.revealed-100);
+    nav.enter(geometry);assert.ok(nav.release(-1));scroll(anchorRounded);scroll(geometry.revealed-100);
     if(mode==='wheel')wheel(-80);else scroll(geometry.revealed-180);
     assert.equal(nav.getState().active,false,'native exit toward section 1 remains free');
-    if(mode==='wheel')wheel(300);else scroll(5543);
+    if(mode==='wheel')wheel(300);else scroll(anchorRounded+1);
     assert.equal(nav.getState().active,true);assert.equal(nav.getState().currentId,'puntoes');
     assert.equal(nav.getState().manualId,null,'a new forward entrance starts the default route');
   } finally {

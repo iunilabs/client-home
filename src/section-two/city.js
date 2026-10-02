@@ -136,7 +136,7 @@ export function createCity(section, options = {}) {
     section.classList.toggle('city-mobile-tour', portrait);
     // Copy has its own beat before the map on both layouts.
     section.append(copy);
-    if (portrait && loading) deck.load();
+    if (portrait && loading) {detail.preparePuntoes(); deck.load()}
     if (portrait) {
       // Keep the itinerary stable when Safari retracts its address bar.
       if (lastWidth !== innerWidth || Math.abs(viewport - tourViewport) > tourViewport * .2) tourViewport = viewport;
@@ -208,7 +208,7 @@ export function createCity(section, options = {}) {
     extension.addEventListener('error', unavailable);
     image.src = desktopUrl;
     extension.src = extendedDesktopUrl;
-    if (innerWidth < 700) deck.load();
+    if (innerWidth < 700) {detail.preparePuntoes(); deck.load()}
     carousel.load();
   }
 
@@ -217,19 +217,22 @@ export function createCity(section, options = {}) {
     if (!geometry || lastWidth !== innerWidth || lastHeight !== innerHeight) resize();
     if (scroll > geometry.start - innerHeight * 2) load();
     const portrait = innerWidth < 700;
+    // Do not reveal the thicker base-map office while its single mobile
+    // texture is loading/decoding. A failed tile settles to the static base.
+    const mapReady = ready && (!portrait || detail.isPuntoesSettled());
     input.update(portrait, geometry);
     if (portrait) scroll = input.reconcile(window.scrollY);
     else scroll = Math.min(scroll, endGuard.reconcile(window.scrollY));
     const state = portrait ? mobileTourState({scroll, geometry}) : cityState(scroll, geometry, reduced);
-    frame.style.opacity = ready ? state.opacity : 0;
+    frame.style.opacity = mapReady ? state.opacity : 0;
     frame.style.visibility = state.active ? 'visible' : 'hidden';
     frame.style.transform = `translate3d(0,${-state.exitY}px,0)`;
-    const interactive = ready && state.active && state.opacity > .55;
+    const interactive = mapReady && state.active && state.opacity > .55;
     const mobile = innerWidth < 700 || matchMedia('(pointer: coarse)').matches;
     let position, tour;
     if (portrait) {
       tour = navigation.update(state, {scroll: input.navigationScroll(scroll), now, layout: {width: parseFloat(world.style.width), height: parseFloat(world.style.height),
-        viewportWidth: document.documentElement.clientWidth, viewportHeight: innerHeight}, geometry, reduced});
+        viewportWidth: document.documentElement.clientWidth, viewportHeight: innerHeight}, geometry, reduced, ready: mapReady});
       if (!input.isNavigating()) {
         if (tour.active) boundary.set(!navigation.canRelease(1), geometry);
         else if (scroll < geometry.start && tour.released <= 0) boundary.set(true, geometry);
@@ -238,17 +241,17 @@ export function createCity(section, options = {}) {
       if (tour.active) {state.opacity = 1; state.active = true; state.exitY = 0; state.revealed = true}
       state.stopIndex = tour.guidedCursor;
       state.current = tour.current;
-      frame.style.opacity = ready ? state.opacity : 0;
+      frame.style.opacity = mapReady ? state.opacity : 0;
       frame.style.visibility = state.active ? 'visible' : 'hidden';
       frame.style.transform = `translate3d(0,${-state.exitY}px,0)`;
       position = tour.camera;
       state.zoom = position.zoom;
       pan.update(world, state.zoom, reduced, false);
       world.style.transformOrigin = `${position.focusX * 100}% ${position.focusY * 100}%`;
-      deck.update(state, ready && interactive, tour);
+      deck.update(state, mapReady && interactive, tour);
       section.dataset.cityStop = tour.current.id;
       section.dataset.cityCard = String(state.stopIndex);
-      detail.update({active: interactive, camera: position, current: tour.current.id,
+      detail.update({active: interactive, visible: true, camera: position, current: tour.current.id,
         next: tour.nextId});
     }
     const view = perspective.update(now, {active: interactive && mobile, reduced,
@@ -270,7 +273,7 @@ export function createCity(section, options = {}) {
     copy.setAttribute('aria-hidden', String(state.copyOpacity < .1));
     list.style.opacity = state.namesOpacity;
     // Do not focus an invisible/offscreen point while the city enters or leaves.
-    const readable = ready && state.active && state.opacity > .55 && state.namesOpacity > .2;
+    const readable = mapReady && state.active && state.opacity > .55 && state.namesOpacity > .2;
     if (portrait) for (const button of markers) button.inert = true;
     else {
       const bounds = markers.map(button => button.getBoundingClientRect());
@@ -285,8 +288,8 @@ export function createCity(section, options = {}) {
     document.body.classList.toggle('city-active', state.active);
     section.dataset.cityProgress = state.progress.toFixed(3);
     water?.update(now, state.active && !dialog.isOpen, reduced);
-    carousel.update(now, {...state, ready, tourClient: tour?.entry?.id}, reduced);
-    return {...state, ready};
+    carousel.update(now, {...state, ready: mapReady, tourClient: tour?.entry?.id}, reduced);
+    return {...state, ready: mapReady};
   }
 
   resize();

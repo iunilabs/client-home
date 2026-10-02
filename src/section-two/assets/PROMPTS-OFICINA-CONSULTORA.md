@@ -57,3 +57,7 @@ No garage doors, loading bays, workshop equipment, industrial warehouse, enormou
 CRUCIAL: preserve every pixel's geography and composition outside the tiny specified office. Use the second image only to guide the office facade replacement.
 ```
 
+
+## Continuidad de la oficina móvil
+
+La revisión posterior conserva los archivos generados y sus hashes. La oficina móvil utiliza el mismo tile Puntoes desde el primer frame visible del mapa y durante todo el zoom, preparado y decodificado antes de revelar la sección. Su opacidad es siempre 1; la máscara de los bordes continúa integrando su contexto con V13. El mapa V13 sirve de respaldo fijo si la descarga o decodificación falla. Las once capas restantes mantienen su carga por visita y sus fundidos; escritorio no solicita estos tiles. No se realiza una generación independiente del mapa ni del detalle.

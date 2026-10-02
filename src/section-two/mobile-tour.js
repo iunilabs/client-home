@@ -22,6 +22,16 @@ export function mobileTravelProfile(from, to, {width, height, viewportWidth, vie
   };
 }
 
+// Complete only the part of the entrance not already shown by scrolling.
+// Capturing a fast swipe must keep zooming towards Puntoes, without the
+// pullback reserved for journeys between client buildings.
+export function mobileEntranceDuration(from, to) {
+  const zoom = Math.abs(to.zoom - from.zoom) / Math.max(.01, to.zoom - 1.5);
+  const focus = Math.hypot(to.focusX - from.focusX, to.focusY - from.focusY) /
+    Math.hypot(.56 - mobileTourHub.center[0] / 100, .43 - mobileTourHub.center[1] / 100);
+  return mobileTourTiming.logoTravel * Math.sqrt(clamp(Math.max(zoom, focus)));
+}
+
 // The itinerary owns a single document anchor. Only entrance and native exit
 // take document space; adding stops does not add empty screens to scroll past.
 export function mobileTourGeometry({top, viewport}) {

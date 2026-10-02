@@ -60,7 +60,8 @@ test('lazy requests, active layer priority, full campus detail and failed-image 
     assert.equal(requests.length, 2);
     find('puntoes').fire('load'); find('bbva').fire('load');
     controller.update({active: true, camera: {zoom: 3}, current: 'puntoes', next: 'bbva', now: performance.now() + 250});
-    assert.ok(find('puntoes').style.opacity > .4 && find('puntoes').style.opacity < .6, 'new detail fades in over 500ms instead of swapping at arrival');
+    assert.equal(find('puntoes').style.opacity, 1, 'the office uses one opaque source from its first frame');
+    assert.ok(find('bbva').style.opacity > .4 && find('bbva').style.opacity < .6, 'other detail still fades in over 500ms');
     controller.update({active: true, camera: {zoom: 3}, current: 'puntoes', next: 'bbva', now: performance.now() + 600});
     assert.equal(find('puntoes').style.opacity, 1);
     assert.ok(+find('puntoes').style.zIndex > +find('bbva').style.zIndex);
@@ -81,5 +82,67 @@ test('lazy requests, active layer priority, full campus detail and failed-image 
     assert.ok(images.every(image => image.parent === core && !image.style.transform), 'all layers inherit the single world transform');
     controller.update({active: false, camera: {zoom: 1}});
     assert.ok(images.every(image => image.style.opacity === 0));
+  } finally {globalThis.document = oldDocument;}
+});
+
+test('Puntoes is prepared once, decoded before reveal, and stays identical throughout zoom', async () => {
+  const oldDocument = globalThis.document;
+  const images = [], requests = [];
+  let finishDecode;
+  globalThis.document = {createElement: () => {
+    const listeners = {};
+    const image = {style: {}, dataset: {}, addEventListener: (name, fn) => {listeners[name] = fn;},
+      fire: name => listeners[name](), remove() {this.removed = true;},
+      set src(url) {this.url = url; requests.push(url);}};
+    images.push(image); return image;
+  }};
+  try {
+    const controller = createCityDetail({prepend() {}});
+    const office = images.find(image => image.dataset.client === 'puntoes');
+    office.decode = () => new Promise(resolve => {finishDecode = resolve});
+    assert.equal(requests.length, 0, 'construction/desktop alone requests no tiles');
+    const preparation = controller.preparePuntoes();
+    assert.equal(controller.preparePuntoes(), preparation, 'preparation is cached');
+    assert.equal(requests.length, 1, 'approaching the mobile map prepares only Puntoes');
+    office.fire('load');
+    assert.equal(controller.isPuntoesSettled(), false, 'load alone does not expose an undecoded office');
+    finishDecode();
+    assert.equal(await preparation, true);
+    assert.equal(controller.isPuntoesSettled(), true);
+    const url = office.url;
+    for (const zoom of [1.5, 1.7, 2, 2.3, 4, 1.5]) {
+      controller.update({active: false, visible: true, camera: {zoom}, current: 'puntoes', now: performance.now()});
+      assert.equal(office.style.opacity, 1, 'intro opacity and zoom never blend a second office');
+      assert.equal(office.url, url, 'the same texture follows the whole camera journey');
+    }
+    assert.equal(requests.length, 1, 'a visible intro does not preload every other client');
+    controller.update({active: false, camera: {zoom: 1.5}});
+    assert.equal(office.style.opacity, 0, 'desktop still hides mobile-only art');
+  } finally {globalThis.document = oldDocument;}
+});
+
+test('failed Puntoes preparation settles to the static fallback without retries', async () => {
+  const oldDocument = globalThis.document;
+  const images = [], requests = [];
+  globalThis.document = {createElement: () => {
+    const listeners = {};
+    const image = {style: {}, dataset: {}, addEventListener: (name, fn) => {listeners[name] = fn;},
+      fire: name => listeners[name](), remove() {this.removed = true;},
+      decode: () => Promise.reject(new Error('decode failed')),
+      set src(url) {requests.push(url);}};
+    images.push(image); return image;
+  }};
+  try {
+    const controller = createCityDetail({prepend() {}});
+    const office = images.find(image => image.dataset.client === 'puntoes');
+    const preparation = controller.preparePuntoes();
+    office.fire('load');
+    assert.equal(await preparation, false);
+    assert.equal(controller.isPuntoesSettled(), true, 'failure releases map readiness');
+    assert.equal(office.removed, true);
+    controller.update({active: true, visible: true, camera: {zoom: 3}, current: 'puntoes'});
+    assert.equal(office.style.opacity, 0);
+    assert.equal(controller.preparePuntoes(), preparation);
+    assert.equal(requests.length, 1, 'failed source is not requested again on every frame');
   } finally {globalThis.document = oldDocument;}
 });

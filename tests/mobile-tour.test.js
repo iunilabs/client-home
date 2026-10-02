@@ -14,8 +14,106 @@ function setup(route = mobileTourRoute) {
   const writes = [];
   const nav=createMobileTourNavigation({route,onNavigate:y=>writes.push(y)});
   const frame=(now,scroll=geometry.revealed)=>nav.update(state(scroll),{scroll,now,layout,geometry});
-  frame(0); return {nav,frame,writes};
+  frame(0); frame(leg); return {nav,frame,writes};
 }
+
+test('the mobile entrance keeps its progressive zoom with either system motion preference', () => {
+  const normal=createMobileTourNavigation(), reduced=createMobileTourNavigation();
+  const hub=mobileBuildingView(mobileTourHub,layout,true);
+  let previous=1.5;
+  for (const [index,fraction] of [0,.1,.25,.5,.75,.9].entries()) {
+    const scroll=geometry.start+(geometry.revealed-geometry.start)*fraction;
+    const options={scroll,now:index*100,layout,geometry};
+    const a=normal.update(state(scroll),{...options,reduced:false});
+    const b=reduced.update(state(scroll),{...options,reduced:true});
+    assert.deepEqual(b.camera,a.camera);
+    assert.ok(a.camera.zoom>=previous && a.camera.zoom<hub.zoom);
+    previous=a.camera.zoom;
+  }
+  assert.ok(previous>1.5,'the map approaches Puntoes instead of appearing fully zoomed');
+});
+
+test('capturing a fast entrance continues the visible zoom monotonically to Puntoes', () => {
+  const nav=createMobileTourNavigation();
+  const scroll=geometry.start+(geometry.revealed-geometry.start)*.25;
+  const visible=nav.update(state(scroll),{scroll,now:0,layout,geometry,reduced:true});
+  nav.enter(geometry);
+  const frame=now=>nav.update(state(geometry.revealed),{scroll:geometry.revealed,now,layout,geometry,reduced:true});
+  const captured=frame(100);
+  assert.deepEqual(captured.camera,visible.camera,'anchor capture cannot replace the last visible camera');
+  assert.equal(captured.active,true);assert.equal(captured.moving,true);
+  let previous=captured.camera.zoom;
+  for (let elapsed=0;elapsed<=leg;elapsed+=50) {
+    const next=frame(100+elapsed);
+    assert.ok(next.camera.zoom>=previous-1e-10,'the intro does not pull back before approaching');
+    previous=next.camera.zoom;
+  }
+  assert.equal(nav.getState().moving,false);
+  assert.deepEqual(frame(100+leg).camera,mobileCameraAt(mobileBuildingView(mobileTourHub,layout,true),layout));
+});
+
+test('a cold or explicit entrance waits for the visible portrait and can pause decoding without losing zoom', () => {
+  const nav=createMobileTourNavigation();
+  const frame=(now,ready)=>nav.update(state(geometry.revealed),{scroll:geometry.revealed,now,layout,geometry,ready,reduced:true});
+  assert.equal(frame(0,false).camera.zoom,1.5);
+  assert.equal(frame(10000,false).camera.zoom,1.5);
+  const firstVisible=frame(10010,true);
+  assert.equal(firstVisible.camera.zoom,1.5);assert.equal(firstVisible.moving,true);
+  const middle=frame(10710,true);
+  assert.ok(middle.camera.zoom>1.5 && middle.camera.zoom<mobileBuildingView(mobileTourHub,layout,true).zoom);
+  const paused=frame(10810,false);
+  assert.deepEqual(frame(20810,false).camera,paused.camera);
+  assert.deepEqual(frame(20820,true).camera,paused.camera);
+  const arrived=frame(20820+leg,true);
+  assert.equal(arrived.moving,false);
+  assert.deepEqual(arrived.camera,mobileCameraAt(mobileBuildingView(mobileTourHub,layout,true),layout));
+});
+
+test('a late first reveal before the anchor shows its unconsumed zoom without locking document scroll', () => {
+  const nav=createMobileTourNavigation(),scroll=geometry.start+(geometry.revealed-geometry.start)*.8;
+  const frame=(now,ready)=>nav.update(state(scroll),{scroll,now,layout,geometry,ready,reduced:true});
+  assert.equal(frame(0,false).camera.zoom,1.5);
+  const firstVisible=frame(2000,true);
+  assert.equal(firstVisible.camera.zoom,1.5);assert.equal(firstVisible.active,false);assert.equal(firstVisible.moving,true);
+  assert.equal(nav.anchorScroll(scroll),scroll,'visual recovery does not capture native scrolling');
+  const target=mobileTourCamera(state(scroll),layout),middle=frame(2700,true);
+  assert.ok(middle.camera.zoom>1.5 && middle.camera.zoom<target.zoom);
+  assert.deepEqual(frame(2800,false).camera,middle.camera);
+  assert.deepEqual(frame(12800,false).camera,middle.camera);
+  assert.deepEqual(frame(12810,true).camera,middle.camera);
+  const restored=frame(12810+leg,true);
+  assert.deepEqual(restored.camera,target);assert.equal(restored.active,false);assert.equal(restored.moving,false);
+
+  nav.reset();frame(20000,false);frame(22000,true);const approaching=frame(22600,true);
+  nav.enter(geometry);
+  const captured=nav.update(state(geometry.revealed),{scroll:geometry.revealed,now:22600,layout,geometry,ready:true});
+  assert.deepEqual(captured.camera,approaching.camera,'a new anchor continues the visible late-reveal camera');
+  assert.equal(captured.active,true);
+});
+
+test('a fresh swipe during the hub introduction retargets from that exact camera', () => {
+  const nav=createMobileTourNavigation();
+  const frame=now=>nav.update(state(geometry.revealed),{scroll:geometry.revealed,now,layout,geometry});
+  frame(0);const visible=frame(300);
+  assert.equal(visible.moving,true);
+  assert.ok(nav.step(1,{now:300}));
+  const client=frame(300);
+  assert.equal(client.current.id,'bbva');assert.deepEqual(client.camera,visible.camera);
+  assert.ok(nav.step(1,{now:400}));
+  assert.equal(frame(400).current.id,'naturgy');
+});
+
+test('leaving above the map restores a progressive entrance on the next approach', () => {
+  const {nav,frame}=setup();
+  assert.ok(nav.release(-1));
+  const outside=frame(100,geometry.start-20);
+  assert.equal(outside.released,0);assert.equal(outside.camera.zoom,1.5);
+  const scroll=geometry.start+(geometry.revealed-geometry.start)*.5;
+  const approaching=frame(200,scroll);
+  assert.equal(approaching.active,false);
+  assert.ok(approaching.camera.zoom>1.5 && approaching.camera.zoom<mobileBuildingView(mobileTourHub,layout,true).zoom);
+  assert.deepEqual(frame(300).camera,approaching.camera);
+});
 
 test('one anchor preserves the hand entrance and removes empty itinerary scroll', () => {
   const short=mobileTourGeometry({top:5200,viewport:844,route:[]});
