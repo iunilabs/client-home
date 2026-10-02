@@ -1,9 +1,7 @@
 # Contexto
 
-Objetivo: publicar sección 4 como continuación de «Cada pendiente pesa.» Las mismas 47 tarjetas se alinean a la izquierda y pasan una a una a la derecha, con estados, bordes y checks verdes. El texto comercial sobre IA queda para después.
+Objetivo: ajustar y publicar el texto «Cada pendiente pesa» de sección 3. Base pública: `4a7d81e`. Worktree aislado `puntoes-paper-copy-1900`; checkout principal y secciones anteriores intactos.
 
-Rama `fix/mobile-section-two`, conservando clientes y zoom publicados. Un solo canvas comparte secciones 3 y 4; las profundidades permanentes evitan intersecciones. Scroll reversible, fallback sin WebGL y orientación móvil que conserva progreso. Renderer se detiene en composición estática.
+Entrada por scroll local: empieza a 1900 px, termina el fade a 2140 px. Se conserva la retirada al pasar a sección 4. Caja glass con fondo blanco azulado semitransparente, blur de 14 px y borde suave; en móvil ocupa el ancho completo con padding de 24 px. El título usa los tamaños de sección 1. Altura mínima permite la entrada también en horizontal.
 
-Archivos: `index.html`, `src/main.js`, `src/section-three/`, nuevo `src/section-four/workflow.js`; `city.js` limita conjuntamente ambas secciones durante el recorrido móvil. Tests: unitarias, sección 3 integrada y 47 transferencias en cuatro tamaños, input vivo, swipe y fallback. Build `/client-home/` correcto.
-
-Dev: http://127.0.0.1:4318/?resolution=.32; producción local puerto 4392. Publicación autorizada: https://iunilabs.github.io/client-home/, workflow `deploy.yml` desde main. Al retomar, contrastar Git y despliegue.
+Archivos: `src/section-three/scene.js`, `src/section-three/style.css`. Comprobaciones: 118 pruebas y build `/client-home/` correctos; timing/ancho/tipografía verificados en 320, 390, 640 horizontal y 1440 px; capturas revisadas. Dev: puerto 4398. Siguiente: commit, push a `main` y confirmar GitHub Pages. No publicar si la rama remota avanzó sin integrar.
