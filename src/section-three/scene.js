@@ -72,7 +72,7 @@ export async function createPaperSection(journey) {
     const p = addPaper(CHANNELS[i], i, 4.1, 2.55, 4101 + i * 47);
     p.anchor = [[-.87, -.68, 7.3], [.89, .71, 6.8], [-.84, .62, 6.7], [.92, -.65, 7.5]][i]; p.start = .31 + i * .075; foreground.push(p);
   }
-  let portrait = false, target = 0, progress = 0, height = 0, active = false, force = true, disposed = false, lastState = null;
+  let portrait = false, target = 0, progress = 0, height = 0, active = false, force = true, disposed = false, lost = false, lastState = null;
   const point = new THREE.Vector3();
   const input = createSceneInput({capture, reducedQuery, button: journey.querySelector('[data-paper-motion]'), onChange: () => {force = true;}});
   let inputState = input.update(1 / 60, performance.now()), breezeClock = 0, frameDelta = 1 / 60;
@@ -89,8 +89,18 @@ export async function createPaperSection(journey) {
     composer.setPixelRatio(ratio); composer.setSize(innerWidth, innerHeight);
     height = Math.max(1, journey.offsetHeight - innerHeight); updateTarget(); force = true;
   }
-  function contextLost(event) {event.preventDefault(); errorElement.hidden = false; journey.dataset.paperRender = 'fallback'; active = false;}
+  function contextLost(event) {
+    event.preventDefault(); lost = true; active = false;
+    input.setActive(false); inputState = input.update(0, performance.now()); cursorLight.intensity = 0;
+    errorElement.hidden = false; journey.dataset.paperRender = 'fallback';
+  }
+  function contextRestored() {
+    if (disposed) return;
+    lost = false; previous = performance.now(); force = true;
+    errorElement.hidden = true; journey.dataset.paperRender = 'webgl'; resize();
+  }
   canvas.addEventListener('webglcontextlost', contextLost);
+  canvas.addEventListener('webglcontextrestored', contextRestored);
   resize();
 
   function pose(piece, x, y, z, rx, ry, rz, scale, curl, twist, flutter, phase) {
@@ -196,7 +206,7 @@ export async function createPaperSection(journey) {
   journey.classList.add('paper-ready'); journey.dataset.paperRender = 'webgl';
   return {
     update(now, y, visible) {
-      if (disposed) return;
+      if (disposed || lost) return;
       const dt = Math.min((now - previous) / 1000, .05); previous = now;
       active = visible && !document.hidden;
       input.setActive(active);
@@ -222,6 +232,7 @@ export async function createPaperSection(journey) {
       if (disposed) return; disposed = true; input.dispose();
       document.removeEventListener('visibilitychange', visibilityChanged);
       canvas.removeEventListener('webglcontextlost', contextLost);
+      canvas.removeEventListener('webglcontextrestored', contextRestored);
       const textures = new Set();
       for (const piece of pieces) {piece.mesh.geometry.dispose(); textures.add(piece.mesh.material.map); piece.mesh.material.dispose();}
       for (const texture of textures) texture.dispose();
