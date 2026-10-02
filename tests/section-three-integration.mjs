@@ -34,6 +34,7 @@ try {
   await page.waitForFunction(() => Math.abs(window.__puntoes.getState().paper.progress - .155) < .001);
   await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('[data-paper-canvas]')).opacity) > .99);
   assert.equal((await state()).paper.firstSubject, 'Oye, ¿has conseguido automatizar eso? Lo necesitábamos ayer.');
+  assert.equal((await state()).paper.firstEntryPixels, 90);
   await page.screenshot({path: output + '02-first-paper-desktop.png'});
   await paperProgress(.60);
   const density = (await state()).paper;
@@ -79,11 +80,22 @@ try {
   await mobile.waitForFunction(() => Math.abs(window.__puntoes.getState().paper.progress - .155) < .001);
   await mobile.waitForFunction(() => Number(getComputedStyle(document.querySelector('[data-paper-canvas]')).opacity) > .99);
   assert.ok(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  assert.equal(await mobile.evaluate(() => window.__puntoes.getState().paper.firstEntryPixels), 90);
+  assert.equal(await mobile.locator('#posibilidades').evaluate(el => getComputedStyle(el).position), 'relative', 'direct paper query restores the complete native range');
   await mobile.screenshot({path: output + '05-first-paper-mobile.png'});
   await mobile.goto(origin + '?city=0');
   await mobile.waitForFunction(() => window.__puntoes?.getState().city?.ready && window.__puntoes.getState().tour.active);
   const cdp = await mobileContext.newCDPSession(mobile);
-  async function swipe(distance = 160, settle = 1150) {
+  async function waitForTourArrival(id) {
+    await mobile.waitForFunction(expected => {
+      const tour = window.__puntoes.getState().tour;
+      const card = document.querySelector('.city-tour-card.is-current');
+      return tour.active && tour.currentId === expected && !tour.moving &&
+        (expected === 'puntoes' || card?.dataset.client === expected && !card.inert);
+    }, id, {timeout: 6000});
+    assert.ok(await mobile.evaluate(() => !window.__puntoes.getState().paper?.active), 'paper render is suspended during the guided city tour');
+  }
+  async function swipe(distance = 160, arrival = null) {
     const x = 195, y = 440;
     await cdp.send('Input.dispatchTouchEvent', {type:'touchStart', touchPoints:[{x, y, id:1}]});
     for (let i = 1; i <= 20; i++) {
@@ -92,17 +104,30 @@ try {
     }
     await mobile.waitForTimeout(100);
     await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd', touchPoints:[]});
-    await mobile.waitForTimeout(settle);
+    if (arrival) await waitForTourArrival(arrival);
+    else await mobile.waitForTimeout(1150);
   }
   const tour = () => mobile.evaluate(() => ({y:scrollY, ...window.__puntoes.getState().tour}));
-  for (const id of ['bbva', 'naturgy', 'sabadell', 'collaborate']) {await swipe(); assert.equal((await tour()).currentId, id);}
+  await waitForTourArrival('puntoes');
+  for (const id of ['bbva', 'naturgy', 'sabadell', 'collaborate']) await swipe(160, id);
   const before = (await tour()).y; await swipe(220);
   assert.ok((await tour()).y > before + 70, 'a new gesture leaves the city tour');
-  await swipe(-250); assert.equal((await tour()).currentId, 'collaborate'); assert.equal((await tour()).active, true);
+  await swipe(-250, 'collaborate'); assert.equal((await tour()).active, true);
   await swipe(); await swipe(600); await swipe(600);
   await mobile.waitForFunction(() => window.__puntoes.getState().paper?.active);
   await mobile.screenshot({path: output + '06-mobile-city-exit.png'});
-  report.mobile = {cityTourSequence:true, nativeExit:true, reverseReentry:true, noHorizontalOverflow:true};
+  // Explicit destinations must restore the document extent before the jump.
+  await mobile.goto(origin + '#posibilidades');
+  await mobile.waitForFunction(() => window.__puntoes?.getState().paper?.active && Math.abs(scrollY - document.querySelector('#posibilidades').offsetTop) < 2);
+  assert.equal(await mobile.locator('#posibilidades').evaluate(el => getComputedStyle(el).position), 'relative');
+  assert.equal((await tour()).active, false);
+  await mobile.goto(origin + '?city=0');
+  await mobile.waitForFunction(() => window.__puntoes?.getState().city?.ready && window.__puntoes.getState().tour.active);
+  await waitForTourArrival('puntoes');
+  await mobile.locator('body').click({position:{x:195,y:180}});
+  await mobile.keyboard.press('End');
+  await mobile.waitForFunction(() => !window.__puntoes.getState().tour.active && window.__puntoes.getState().paper?.active && Math.abs(scrollY - (document.documentElement.scrollHeight - innerHeight)) < 2);
+  report.mobile = {cityTourSequence:true, nativeExit:true, reverseReentry:true, noHorizontalOverflow:true, explicitPaperQuery:true, explicitPaperFragment:true, nativeEnd:true, hiddenPaperSuspended:true};
   console.log('Mobile: client itinerary, native exit into paper section and reverse reentry: passed');
   await mobileContext.close();
   await page.emulateMedia({reducedMotion:'reduce'});

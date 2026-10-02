@@ -13,13 +13,18 @@ populateClients();
 const trustSection=document.querySelector('#confianza'),nextSection=document.querySelector('#posibilidades');
 const city=createCity(trustSection,{readScrollTarget:()=>lenis.targetScroll,onExtentChange:()=>{scrollLimit=Math.max(0,document.documentElement.scrollHeight-innerHeight);lenis.resize()},onOpen:()=>lenis.stop(),onClose:()=>lenis.start(),onNavigate:top=>{lenis.reset();lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top)}});
 const motionPreference={matches:false};
-let handoffStart=0,turnDistance=0,sectionProgress=0,paperScene=null,paperLoading=false;
+let handoffStart=0,turnDistance=0,sectionProgress=0,paperScene=null,paperLoading=false,paperModule=null;
+function cityIsHeld(){return innerWidth<700?city.getTourState().active:city.getEndGuardState().held}
+function paperIsVisible(y){return !cityIsHeld()&&y+innerHeight>nextSection.offsetTop&&y<nextSection.offsetTop+nextSection.offsetHeight}
+function preparePaperSection(){return paperModule??=import('./section-three/scene.js')}
 async function loadPaperSection(){
- if(paperScene||paperLoading)return;paperLoading=true;
- try{const {createPaperSection}=await import('./section-three/scene.js');if(disposed)return;const scene=await createPaperSection(nextSection);if(disposed){scene.dispose();return}paperScene=scene}
+ if(paperScene||paperLoading||!paperIsVisible(lenis?.scroll??scrollY))return;paperLoading=true;
+ try{const {createPaperSection}=await preparePaperSection();if(disposed)return;if(!paperIsVisible(lenis?.scroll??scrollY)){paperLoading=false;return}const scene=await createPaperSection(nextSection);if(disposed){scene.dispose();return}paperScene=scene}
  catch(error){console.warn('Paper scene unavailable:',error.message);nextSection.querySelector('[data-paper-fallback]').hidden=false}
 }
-const paperObserver=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){loadPaperSection();paperObserver.disconnect()}},{rootMargin:'150% 0px'});
+// Warm the module only. Textures, meshes and WebGL start after the city releases
+// the page and the paper stage reaches the viewport. Visible loading owns errors.
+const paperObserver=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){preparePaperSection().catch(()=>{});paperObserver.disconnect()}},{rootMargin:'150% 0px'});
 paperObserver.observe(nextSection);
 function readProgress(y){return y<=handoffStart?5*y/handoffStart:5+(y-handoffStart)/turnDistance}
 const updateScrollMeter=createScrollMeter(document.querySelector('[data-scroll-meter]'));
@@ -35,7 +40,7 @@ function navigateTo(target,immediate=false){city.prepareNavigation(target===trus
 // Initial fragment scrolling can run after fonts.ready. Resolve it after the
 // document load and layout, so the browser cannot overwrite the city anchor.
 const initialLayout=Promise.all([document.fonts.ready,new Promise(resolve=>{if(document.readyState==='complete')resolve();else window.addEventListener('load',resolve,{once:true})})]);
-initialLayout.then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{updateOffsets();const params=new URLSearchParams(location.search),cityMarker=params.get('city'),paperMarker=params.get('paper');if(!location.hash&&paperMarker!==null&&Number.isFinite(Number(paperMarker))){city.prepareNavigation(false);const top=nextSection.offsetTop+Math.max(0,Math.min(1,Number(paperMarker)))*(nextSection.offsetHeight-innerHeight);lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top);loadPaperSection()}else if(!location.hash&&cityMarker!==null&&Number.isFinite(Number(cityMarker))){const top=city.scrollAt(Number(cityMarker));lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top);city.load()}else if(location.hash)navigateTo(document.querySelector(location.hash),true);else{const marker=params.get('scroll');if(marker!==null&&Number.isFinite(Number(marker))){const top=handoffStart*Math.max(0,Math.min(1000,Number(marker)))/1000;if(lenis)lenis.scrollTo(top,{immediate:true});else scrollTo({top,behavior:'instant'});renderProgress=readProgress(top)}}})));
+initialLayout.then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{updateOffsets();const params=new URLSearchParams(location.search),cityMarker=params.get('city'),paperMarker=params.get('paper');if(!location.hash&&paperMarker!==null&&Number.isFinite(Number(paperMarker))){city.prepareNavigation(false);const top=nextSection.offsetTop+Math.max(0,Math.min(1,Number(paperMarker)))*(nextSection.offsetHeight-innerHeight);lenis.reset();lenis.scrollTo(top,{immediate:true,onComplete:()=>city.finishNavigation()});renderProgress=readProgress(top);loadPaperSection()}else if(!location.hash&&cityMarker!==null&&Number.isFinite(Number(cityMarker))){const top=city.scrollAt(Number(cityMarker));lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top);city.load()}else if(location.hash)navigateTo(document.querySelector(location.hash),true);else{const marker=params.get('scroll');if(marker!==null&&Number.isFinite(Number(marker))){const top=handoffStart*Math.max(0,Math.min(1000,Number(marker)))/1000;if(lenis)lenis.scrollTo(top,{immediate:true});else scrollTo({top,behavior:'instant'});renderProgress=readProgress(top)}}})));
 perspectiveInput=createPerspectiveInput(window,{onChange(value){pointer=value;document.documentElement.style.setProperty('--mx',`${(value.x+1)*innerWidth/2}px`);document.documentElement.style.setProperty('--my',`${(1-value.y)*innerHeight/2}px`)}});
 window.addEventListener('scroll',()=>{city.anchorScroll(scrollY);lastScroll=performance.now();document.querySelector('.scroll-cue').classList.remove('visible')},{passive:true});
 window.addEventListener('keydown',e=>{if(e.defaultPrevented||e.metaKey||e.ctrlKey||e.altKey||modal.open||city.dialog.isOpen||e.target.closest('input,textarea,select,[contenteditable="true"]'))return;if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(e.key)&&lenis?.isScrolling==='smooth')lenis.scrollTo(lenis.actualScroll,{immediate:true})},{passive:true});
@@ -61,8 +66,7 @@ function activate(progress){
  chapters.at(-1).querySelector('.chapter-inner').inert=progress>5.22||index!==4;
  chapters.at(-1).querySelector('.chapter-inner').setAttribute('aria-hidden',String(progress>5.22||index!==4));
  document.querySelector('.replay').inert=progress<4.5||progress>5;
- const cityHeld=innerWidth<700?city.getTourState().active:city.getEndGuardState().held;
- const nextActive=!cityHeld&&visualScroll>=nextSection.offsetTop-innerHeight*.5;
+ const nextActive=!cityIsHeld()&&visualScroll>=nextSection.offsetTop-innerHeight*.5;
  document.body.classList.toggle('next-active',nextActive);
  if(nextActive){document.querySelector('#chapter-label').textContent='EL TRABAJO PENDIENTE';document.querySelector('#chapter-count').textContent='03 / 03'}else if(progress>5){document.querySelector('#chapter-label').textContent='UN PUNTO EN COMÚN';document.querySelector('#chapter-count').textContent='02 / 03'}else{document.querySelector('#chapter-label').textContent=labels[index];document.querySelector('#chapter-count').textContent=`${String(index+1).padStart(2,'0')} / 05`}
 }
@@ -76,10 +80,10 @@ function frame(now){
  if(!document.hidden){
   const dt=Math.min((now-lastFrame)/1000,.1),response=perspectiveInput.getResponseRate();lastFrame=now;smoothPointer.x=mix(smoothPointer.x,pointer.x,1-Math.exp(-dt*response));smoothPointer.y=mix(smoothPointer.y,pointer.y,1-Math.exp(-dt*response));
   const target=readProgress(lenis?.scroll??scrollY);renderProgress=mix(renderProgress,target,1-Math.exp(-dt/.09));if(Math.abs(target-renderProgress)<.0001)renderProgress=target;
-  const paperY=lenis?.scroll??scrollY,paperVisible=paperY+innerHeight>nextSection.offsetTop&&paperY<nextSection.offsetTop+nextSection.offsetHeight;
+  activate(renderProgress);const visual=Math.min(5,renderProgress);sectionProgress=Math.max(0,renderProgress-5);
+  const paperY=lenis?.scroll??scrollY,paperVisible=paperIsVisible(paperY);
   document.body.classList.toggle('paper-active',paperVisible&&paperY>=nextSection.offsetTop);
   if(paperVisible&&!paperScene)loadPaperSection();paperScene?.update(now,paperY,paperVisible);
-  activate(renderProgress);const visual=Math.min(5,renderProgress);sectionProgress=Math.max(0,renderProgress-5);
   const parallaxScale=perspectiveInput.getState().source==='orientation'?1/GYROSCOPE_PARALLAX_REDUCTION:1;
   // The city uses a rendered image: stop paying for the hidden hand scene.
   if(!lastCity?.ready||!lastCity.revealed)experience?.render(visual,{x:smoothPointer.x*parallaxScale,y:smoothPointer.y*parallaxScale},now/1000,motionPreference.matches,visual/5,pointer,sectionProgress);
