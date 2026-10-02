@@ -53,9 +53,16 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, rea
     target.closest('a') && !target.closest('.city-tour-card');
   const eligible = () => available && navigation.getState().active;
   const block = event => {if (event.cancelable) event.preventDefault(); event.stopImmediatePropagation()};
-  const crossing = (from, delta) => available && geometry && (
-    delta > 0 && from < geometry.revealed && from + delta >= geometry.revealed ||
-    delta < 0 && from > geometry.revealed && from + delta <= geometry.revealed);
+  const crossing = (from, delta) => {
+    if (!available || !geometry) return false;
+    // A native exit can cross the fractional anchor again after scrollY rounds
+    // to an integer. Only motion back against that release can re-enter.
+    const released = navigation.getState().released;
+    if (released && Math.sign(delta) === released) return false;
+    const boundary = geometry.revealed + (delta < 0 ? .5 : -.5);
+    return delta > 0 && from < boundary && from + delta >= boundary ||
+      delta < 0 && from > boundary && from + delta <= boundary;
+  };
   function onWheel(event) {
     if (!available || event.ctrlKey || event.metaKey || Math.abs(event.deltaX) >= Math.abs(event.deltaY) || excluded(event.target)) return;
     const now = wheelEventTime(event), active = eligible();
