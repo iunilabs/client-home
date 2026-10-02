@@ -201,26 +201,37 @@ try {
   const reducedTrack = page.locator('.city-carousel-track');
   await page.waitForTimeout(700);
   const reducedTransform = await reducedTrack.evaluate(element => getComputedStyle(element).transform);
-  assert.equal(await page.locator('.city-carousel').getAttribute('data-motion'), 'reduced-motion');
+  assert.ok(['resuming', 'automatic'].includes(await page.locator('.city-carousel').getAttribute('data-motion')));
   await page.waitForTimeout(1800);
-  assert.equal(await reducedTrack.evaluate(element => getComputedStyle(element).transform), reducedTransform, 'reduced motion never starts ornamental autoplay');
+  assert.notEqual(await reducedTrack.evaluate(element => getComputedStyle(element).transform), reducedTransform, 'mobile logos keep their gentle automatic navigation with reduced motion');
   const reducedCdp = await reducedContext.newCDPSession(page);
   const stripBox = await page.locator('.city-carousel').boundingBox();
   await reducedCdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x: 350, y: stripBox.y + stripBox.height / 2, id: 1}]});
+  const beforeReducedDrag = await reducedTrack.evaluate(element => getComputedStyle(element).transform);
   await reducedCdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [{x: 245, y: stripBox.y + stripBox.height / 2, id: 1}]});
   await page.waitForTimeout(60);
   const manuallyDragged = await reducedTrack.evaluate(element => getComputedStyle(element).transform);
   await reducedCdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
   await page.waitForTimeout(300);
-  assert.notEqual(manuallyDragged, reducedTransform, 'reduced motion still permits deliberate direct dragging');
+  assert.notEqual(manuallyDragged, beforeReducedDrag, 'reduced motion still permits deliberate direct dragging');
   assert.equal(await reducedTrack.evaluate(element => getComputedStyle(element).transform), manuallyDragged, 'reduced motion omits fling and automatic movement after the drag');
   await reducedContext.close();
+
+  const reducedDesktop = await browser.newContext({viewport: {width: 1440, height: 900}, reducedMotion: 'reduce'});
+  const reducedDesktopPage = await reducedDesktop.newPage();
+  await reducedDesktopPage.goto(base);
+  await reducedDesktopPage.waitForFunction(() => window.__puntoes?.getState().city?.ready && !document.querySelector('.city-carousel').inert);
+  const reducedDesktopTrack = reducedDesktopPage.locator('.city-carousel-track');
+  const desktopStill = await reducedDesktopTrack.evaluate(element => getComputedStyle(element).transform);
+  await reducedDesktopPage.waitForTimeout(1200);
+  assert.equal(await reducedDesktopTrack.evaluate(element => getComputedStyle(element).transform), desktopStill, 'desktop reduced motion keeps its original stationary carousel');
+  await reducedDesktop.close();
 
   report.passed = true;
   report.keyboardReached = [...keyboardReached].sort();
   report.ids = ids;
   report.desktop = {hoverPaused: true, hiddenReturnNoJump: true, manualClientSelection: selectable};
-  report.reducedMotion = {autoplay: false, directDrag: true, ornamentalInertia: false, transform: manuallyDragged};
+  report.reducedMotion = {mobileAutoplay: true, desktopAutoplay: false, directDrag: true, ornamentalInertia: false, transform: manuallyDragged};
   report.positionSamples = report.positions.map(entry => ({
     direction: entry.direction,
     before: stable(entry.before),

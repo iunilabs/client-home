@@ -13,6 +13,7 @@ export function createCarouselMotion() {
   let lastGesture = -Infinity;
   let dragging = false;
   let reduced = false;
+  let reducedAutoplay = false;
   let ramp = 0;
 
   return {
@@ -20,9 +21,13 @@ export function createCarouselMotion() {
     get velocity() { return velocity },
     get dragging() { return dragging },
     setOffset(value) { offset = value },
-    setReduced(value) {
+    setReduced(value, {autoplay = false} = {}) {
+      const changed = value !== reduced;
       reduced = value;
-      if (reduced) { velocity = 0; ramp = 0 }
+      reducedAutoplay = autoplay;
+      // The mobile logo strip remains a moving navigation aid. Its gentle
+      // autoplay may run while reduced motion still suppresses finger flings.
+      if (reduced) { velocity = 0; if (changed || !autoplay) ramp = 0 }
     },
     beginDrag() {
       dragging = true;
@@ -47,9 +52,10 @@ export function createCarouselMotion() {
     frame(now, blocked = false, autoSpeed = AUTO_SPEED) {
       const elapsed = lastTime === null ? 0 : Math.max(0, (now - lastTime) / 1000);
       lastTime = now;
-      if (!elapsed || blocked || dragging || reduced) {
-        if (blocked || reduced) { velocity = 0; ramp = 0 }
-        return {delta: 0, phase: reduced ? 'reduced-motion' : dragging ? 'dragging' : blocked ? 'paused' : 'idle'};
+      const reducedPause = reduced && !reducedAutoplay;
+      if (!elapsed || blocked || dragging || reducedPause) {
+        if (blocked || reducedPause) { velocity = 0; ramp = 0 }
+        return {delta: 0, phase: reducedPause ? 'reduced-motion' : dragging ? 'dragging' : blocked ? 'paused' : 'idle'};
       }
 
       // Integrate exponential friction exactly over elapsed time, then blend

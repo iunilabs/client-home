@@ -61,6 +61,27 @@ test('reduced motion cancels fling and ornamental auto movement while preserving
   assert.equal(motion.offset, 85);
 });
 
+test('mobile reduced motion keeps gentle autoplay, omits flings and resumes after the finger releases', () => {
+  const motion = createCarouselMotion();
+  motion.frame(0);
+  motion.beginDrag();
+  motion.dragTo(85);
+  motion.setReduced(true, {autoplay: true});
+  assert.equal(motion.frame(200, true, 22).delta, 0, 'a held finger pauses even with mobile autoplay enabled');
+  motion.endDrag(300, 600);
+  assert.equal(motion.velocity, 0, 'reduced motion still suppresses the fling');
+  assert.equal(motion.frame(400, false, 22).delta, 0);
+  let distance = 0;
+  for (let now = 500; now <= 4300; now += 100) {
+    motion.setReduced(true, {autoplay: true});
+    distance += motion.frame(now, false, 22).delta;
+  }
+  assert.ok(distance > 25, 'reapplying the preference every frame does not reset the automatic ramp');
+  assert.equal(motion.frame(4400, false, 22).phase, 'automatic');
+  motion.setReduced(true);
+  assert.equal(motion.frame(4500).phase, 'reduced-motion', 'the default desktop contract still pauses reduced motion');
+});
+
 test('pausing for a modal clears momentum and restarts the two second idle clock', () => {
   const motion = createCarouselMotion();
   motion.frame(0);

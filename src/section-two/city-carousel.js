@@ -228,6 +228,10 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     else motion.interrupt(performance.now());
   };
   for (const type of ['touchend', 'touchcancel']) viewport.addEventListener(type, finishTouch, {passive: true});
+  // With two fingers, the last one may end outside the strip. Listening only
+  // on the viewport would keep touchHeld/dragging set forever in that case.
+  const finishMobileTouch = event => {if (tourMode && touchHeld) finishTouch(event)};
+  for (const type of ['touchend', 'touchcancel']) window.addEventListener(type, finishMobileTouch, {capture: true, passive: true});
 
   carousel.addEventListener('pointerdown', event => {
     if (event.pointerType === 'touch') {pointerFocus = true; lastPointerFocusAt = performance.now()}
@@ -289,9 +293,9 @@ export function createCityCarousel(section, clients, {onSelect, onOpen}) {
     carousel.inert = !state.ready || !state.active || state.opacity < .55 || opacity < .2;
     if (isTour) select(state.tourClient ?? null);
     const carouselReduced = reduced || reducedMotionQuery.matches;
-    motion.setReduced(carouselReduced);
+    motion.setReduced(carouselReduced, {autoplay: isTour});
     const hoverPaused = hovered && !isTour && now - gestureEndedAt > 2000;
-    const blocked = focused || touchHeld || modal || carouselReduced || !state.active || document.hidden || keyboardBrowsing || opacity < .2 || hoverPaused;
+    const blocked = focused || touchHeld || modal || (carouselReduced && !isTour) || !state.active || document.hidden || keyboardBrowsing || opacity < .2 || hoverPaused;
     const result = motion.frame(now, blocked, isTour ? 22 : 34);
     carousel.dataset.paused = String(blocked || opacity < .2);
     carousel.dataset.motion = opacity < .2 ? 'hidden' : result.phase;
