@@ -1,7 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {flightTrack} from '../src/section-three/motion.js';
-import {paperTiming} from '../src/section-three/timing.js';
+import {paperTiming, paperMotionPixels, paperScrollPixels} from '../src/section-three/timing.js';
+
+test('later choreography speeds up without shifting early entrances or scroll reversal', () => {
+  for (const pixels of [0, 80, 350, 920, 1420, 2000]) assert.equal(paperMotionPixels(pixels), pixels);
+  assert.equal(paperMotionPixels(2200) - paperMotionPixels(2000), 300);
+  for (const range of [3140, 3882.4, 4600]) {
+    const compressed = paperScrollPixels(range);
+    assert.ok(compressed < range);
+    assert.ok(Math.abs(paperMotionPixels(compressed) - range) < .001);
+  }
+});
 
 test('paper entrances retain their pixel anchors and finish before grouping on every viewport', () => {
   for (const range of [1794, 2944, 3882.4, 4600]) {

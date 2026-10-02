@@ -2,8 +2,9 @@
 @font-face{font-family:Paper Hand;src:url('/fonts/Caveat.woff2') format('woff2');font-weight:400 700;font-display:swap}
 .paper-journey{background:#f4f9fd}
 .paper-chapters{margin-top:-100svh}
-.paper-section{position:relative;height:560svh;min-height:calc(100svh + 3140px)}
-.resolution-section{position:relative;height:400svh}
+/* Keep the first 2000 px, then compress the remaining journey at 1.5x. */
+.paper-section{position:relative;height:calc(100svh + 2000px + (max(3140px,460svh) - 2000px)/1.5)}
+.resolution-section{position:relative;height:300svh}
 .paper-stage{position:sticky;top:0;z-index:4;height:100svh;overflow:hidden;background:radial-gradient(ellipse at 45% 35%,#fff,#f5faff 55%,#cee4f4)}
 .paper-stage canvas{display:block;width:100%;height:100%;opacity:0;filter:blur(calc(var(--paper-copy-reveal,0)*3px));transition:opacity .7s}
 .paper-ready .paper-stage canvas{opacity:calc(1 - var(--paper-copy-reveal,0)*.25)}

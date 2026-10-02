@@ -1,7 +1,7 @@
 # Contexto
 
-Objetivo: fade in del texto de sección 3 desde 920 px locales. Worktree aislado `puntoes-paper-copy-1900`; base pública `076203b`, con precarga, renderer compartido y optimización de sección 4. Checkout principal intacto.
+Objetivo: fade out del texto desde 2000 px y recorrido posterior más rápido. Worktree aislado `puntoes-paper-copy-1900`; base pública `9d831d7`. Checkout principal intacto.
 
-Entrada ahora 920–1420 px, conservando duración de 500 px. Fade out 2500–2740 px y blur 3 px intactos. Tarjetas: primera desde 80 px, siguiente tanda desde 350 px; a 500 ya están dentro del encuadre según QA móvil/escritorio anterior.
+Entrada conservada en 920–1420 px; salida ahora 2000–2240. Desde 2000, movimiento de tarjetas a 1,5× por píxel de scroll. Se comprime altura de sección 3 conservando trayectoria y entradas anteriores (primera 80, tanda 350). Sección 4 pasa de 400 a 300 svh, también 1,5× para su recorrido. Helpers `paperMotionPixels`/`paperScrollPixels` mantienen diagnóstico y reversibilidad. Blur 3 px y contenido intactos.
 
-Archivo editado: `src/section-three/scene.js`. Único cambio funcional: límites de fade in; reutilizada QA previa de curva y CSS. Siguiente: build, commit, push y verificar Pages.
+Archivos: `src/section-three/timing.js`, `scene.js`, `style.css`, `tests/section-three-motion.test.js`. Build y 120 pruebas correctos. QA correcto en móvil, escritorio y horizontal: timings, recorrido comprimido, final y retroceso. Siguiente: commit, push y verificar Pages.

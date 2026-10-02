@@ -6,7 +6,7 @@ import {createSceneInput} from './input.js';
 import {createCursorSurfaceLight} from '../cursor-surface-light.js';
 import {createRenderBudget} from '../render-budget.js';
 import {clamp, mix, smooth, randomSource, flightTrack} from './motion.js';
-import {paperTiming} from './timing.js';
+import {paperTiming, paperMotionPixels, paperScrollPixels} from './timing.js';
 import {assignPaperLanes, paperDepthHalf} from './separation.js';
 import {workflowState, cardWorkflow} from '../section-four/workflow.js';
 import {createPreparationQueue} from './preparation.js';
@@ -230,19 +230,20 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     }
     piece.mesh.position.y += f.y * (entryY - piece.mesh.position.y);
   }
-  function draw(p, seconds, resolutionProgress) {
+  function draw(scrollProgress, seconds, resolutionProgress) {
     configureRenderer();
     breezeClock = capture || reducedQuery.matches ? 0 : seconds * .72;
     const idle = capture || reducedQuery.matches ? 0 : Math.sin(seconds * .45) * .035;
-    const timing = paperTiming(height), dense = smooth(timing.group, timing.grouped, p);
+    const copyScroll = scrollProgress * height, motionHeight = paperMotionPixels(height);
+    const p = paperMotionPixels(copyScroll) / motionHeight;
+    const timing = paperTiming(motionHeight), dense = smooth(timing.group, timing.grouped, p);
     const workflow = workflowState(resolutionProgress, pieces.length);
     key.shadow.normalBias = mix(.015, .08, workflow.ordered);
     const shadowSize = workflow.ordered > 0 ? (workflowBudget.scale < .8 ? 512 : 1024) : 2048;
     if (key.shadow.mapSize.x !== shadowSize) shadowsInvalid = true;
     key.shadow.mapSize.setScalar(shadowSize);
     // Local pixels keep the editorial entrance consistent across viewports.
-    const copyScroll = p * height;
-    stageElement.style.setProperty('--paper-copy-reveal', (smooth(920, 1420, copyScroll) * (1 - smooth(2500, 2740, copyScroll)) * (1 - smooth(0, .12, resolutionProgress))).toFixed(4));
+    stageElement.style.setProperty('--paper-copy-reveal', (smooth(920, 1420, copyScroll) * (1 - smooth(2000, 2240, copyScroll)) * (1 - smooth(0, .12, resolutionProgress))).toFixed(4));
     workflowElement.style.setProperty('--workflow-reveal', workflow.reveal.toFixed(4));
     pendingCount.textContent = workflow.pending;
     doneCount.textContent = workflow.completed;
@@ -285,7 +286,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     renderer.info.autoReset = false; renderer.info.reset();
     const shadowsChanged = shadowsInvalid || !lastState || workflow.ordered < 1 || lastState.resolution.ordered < 1 || Math.abs(lastState.resolution.cursor - workflow.cursor) > .00001;
     renderer.shadowMap.needsUpdate = shadowsChanged; renderer.render(scene, camera); shadowsInvalid = false;
-    lastState = {progress: p, resolution: workflow, visibleItems: pieces.filter(i => i.mesh.visible).length, groupProgress: dense, secondEntryPixels: timing.several * height, lastEntryPixels: (timing.many + timing.manySpread) * height, lastFallEndPixels: (timing.many + timing.manySpread + timing.manyDuration) * height, groupingPixels: timing.group * height, scrollRange: height, glass: 0, drawCalls: renderer.info.render.calls, geometries: renderer.info.memory.geometries, reducedMotion: reducedQuery.matches,
+    lastState = {progress: scrollProgress, resolution: workflow, visibleItems: pieces.filter(i => i.mesh.visible).length, groupProgress: dense, secondEntryPixels: paperScrollPixels(timing.several * motionHeight), lastEntryPixels: paperScrollPixels((timing.many + timing.manySpread) * motionHeight), lastFallEndPixels: paperScrollPixels((timing.many + timing.manySpread + timing.manyDuration) * motionHeight), groupingPixels: paperScrollPixels(timing.group * motionHeight), scrollRange: height, glass: 0, drawCalls: renderer.info.render.calls, geometries: renderer.info.memory.geometries, reducedMotion: reducedQuery.matches,
       hero: {position: note.mesh.position.toArray(), rotation: note.mesh.rotation.toArray().slice(0,3), bend: note.mesh.geometry.attributes.position.array[2]}, letterCorners: [0,30,992,1022].map(i => letter.deformedGeometry.attributes.position.array[i*3+2]), version: 4, depthOfField: false, parallax: {x: inputState.x, y: inputState.y, gyro: inputState.orientation}, cursorLight: {...lightState, intensity: cursorLight.intensity}, contentCount: new Set(pieces.map(i => i.subject)).size, totalItems: pieces.length, performance: {pixelRatio: renderer.getPixelRatio(), shadowSize: key.shadow.mapSize.x, shadowsUpdated: shadowsChanged,
         flatCards: pieces.filter(piece => piece.mesh.geometry !== piece.deformedGeometry).length, triangles: renderer.info.render.triangles}};
   }
