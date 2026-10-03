@@ -11,7 +11,9 @@ Se recomienda Node.js 24 y npm.
 
 La portada está en /. Las utilidades de revisión de mano y modelos están en /mano.html y /modelos.html durante el desarrollo local; no se publican en GitHub Pages.
 
-El header presenta Consultoría, IA y automatización, Formación, Clientes, Nosotros y Hablemos. Son opciones provisionales sin destino. Bajo 1100 px se abre un menú modal con hamburguesa, cierre, Escape y ciclo de foco; el mapa no recibe gestos mientras está abierto. Los enlaces profundos a capítulos siguen disponibles. Para verificar el header: `npm run test:header` (`HEADER_URL` permite cambiar la dirección local).
+El header presenta Consultoría, IA y automatización, Formación, Clientes, Nosotros y Hablemos. Son seis páginas independientes con contenido comercial, enlazadas desde la portada y con indicación de la vista activa. Bajo 1100 px se abre un menú modal con hamburguesa, cierre, Escape y ciclo de foco; el mapa no recibe gestos mientras está abierto. Los enlaces profundos a capítulos siguen disponibles. Para verificar el header: `npm run test:header` (`HEADER_URL` permite cambiar la dirección local).
+
+Las páginas interiores usan HTML estático y un módulo ligero para navegación, filtros de formación y contacto. No cargan Three.js ni los modelos 3D de la portada. Header y footer se generan en desarrollo y build desde `src/site/templates.js`; Vite mantiene las rutas de carpeta para acceso directo en GitHub Pages. Contenido y fuentes: `src/site/SOURCES.md`. `npm run test:pages` revisa las seis vistas a 320, 390 y 1440 px, enlaces, imágenes, navegación/vuelta atrás, filtros, contacto interceptado y contenido sin JavaScript (`SITE_URL` cambia la dirección).
 
 El menú móvil se despliega desde la hamburguesa, introduce opciones y líneas en cascada y se recoge al cerrar. Las animaciones decorativas terminan; Escape puede interrumpir la apertura. Movimiento reducido evita las transiciones. `npm run test:header-motion` comprueba secuencia, interrupciones, cierre, resize y rendimiento móvil emulado con CPU ×4.
 

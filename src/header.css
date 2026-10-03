@@ -1,8 +1,8 @@
 .header{z-index:15;gap:24px;background:linear-gradient(#f7fafdf2,#f7fafd00)}
 .header .brand{flex-shrink:0}
 .header .header-links{display:flex;align-items:center;gap:clamp(18px,2vw,32px);list-style:none;margin:0;padding:0}
-.header .header-links button{min-height:44px;padding:10px 0;font-size:12px;font-weight:600;white-space:nowrap;cursor:default}
-.header .header-links button:hover{color:#087caa}
+.header .header-links a{min-height:44px;padding:10px 0;font-size:12px;font-weight:600;white-space:nowrap;cursor:default}
+.header .header-links a:hover{color:#087caa}
 .header .header-links .header-contact{display:flex;align-items:center;justify-content:center;gap:16px;padding:11px 20px;border:1px solid #009ddb35;border-radius:30px;background:#e6f3fa;color:#24617f}
 .header-menu-toggle{display:none;align-items:center;justify-content:center;width:46px;height:46px;padding:0;border:1px solid #45698526;border-radius:50%;background:#f7fafdeb;box-shadow:0 3px 16px #20394f08}
 .header-menu-symbol{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
@@ -21,7 +21,7 @@
 .header .header-mobile-menu nav{display:block}
 .header .header-mobile-menu .header-links{display:block}
 .header-mobile-menu .header-links li{position:relative}
-.header .header-mobile-menu .header-links button{display:flex;align-items:center;gap:16px;width:100%;min-height:52px;padding:clamp(12px,1.8svh,19px) 0;font-size:clamp(23px,3.9svh,36px);line-height:1.2;font-weight:500;letter-spacing:-.035em;white-space:normal;text-align:left}
+.header .header-mobile-menu .header-links a{display:flex;align-items:center;gap:16px;width:100%;min-height:52px;padding:clamp(12px,1.8svh,19px) 0;font-size:clamp(23px,3.9svh,36px);line-height:1.2;font-weight:500;letter-spacing:-.035em;white-space:normal;text-align:left}
 .header-menu-number{flex-shrink:0;width:20px;font-size:10px;font-weight:500;letter-spacing:.03em;color:#6c91a9}
 .header .header-mobile-menu .header-links .header-contact{justify-content:flex-start;border:0;border-radius:0;background:transparent;color:#087ca9}
 .header-menu-arrow{margin-left:auto;font-size:25px}
@@ -31,9 +31,9 @@
 .header-links>li{--menu-order:0}.header-links>li:nth-child(2){--menu-order:1}.header-links>li:nth-child(3){--menu-order:2}.header-links>li:nth-child(4){--menu-order:3}.header-links>li:nth-child(5){--menu-order:4}.header-links>li:nth-child(6){--menu-order:5}
 .header .brand img{transition:transform .35s cubic-bezier(.22,1,.36,1);animation:header-detail-in .65s cubic-bezier(.22,1,.36,1) backwards}
 .header-desktop-nav .header-links>li{animation:header-detail-in .55s cubic-bezier(.22,1,.36,1) calc(.1s + var(--menu-order)*.05s) backwards}
-.header .header-links button{transition:color .25s,background .25s,transform .25s}
-.header-desktop-nav button:not(.header-contact){position:relative}
-.header-desktop-nav button:not(.header-contact)::after{content:"";position:absolute;bottom:5px;left:0;right:0;height:1px;background:var(--blue);transform:scaleX(0);transform-origin:right;transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.header .header-links a{transition:color .25s,background .25s,transform .25s}
+.header-desktop-nav a:not(.header-contact){position:relative}
+.header-desktop-nav a:not(.header-contact)::after{content:"";position:absolute;bottom:5px;left:0;right:0;height:1px;background:var(--blue);transform:scaleX(0);transform-origin:right;transition:transform .3s cubic-bezier(.22,1,.36,1)}
 .header .header-links .header-contact>span{transition:transform .3s cubic-bezier(.22,1,.36,1)}
 .header-menu-toggle,.header-menu-close{position:relative;transition:transform .3s cubic-bezier(.22,1,.36,1),background .3s,border-color .3s}
 .header-menu-toggle::after,.header-menu-close::after{content:"";position:absolute;inset:-5px;border:1px solid #009ddb38;border-radius:50%;opacity:0;transform:scale(.85);transition:opacity .3s,transform .35s cubic-bezier(.22,1,.36,1);pointer-events:none}
@@ -52,8 +52,8 @@
 .header-mobile-menu[open] .header-menu-arrow{animation:header-arrow-in .5s cubic-bezier(.22,1,.36,1) .4s backwards}
 .header-mobile-menu[open] .header-menu-footer{animation:header-detail-in .5s ease .45s backwards}
 .header-mobile-menu[open] .header-menu-footer .blue-dot{animation:header-dot-pulse .7s ease .55s 2}
-.header .header-mobile-menu .header-links button:active .header-menu-label{transform:translateX(6px)}
-.header .header-mobile-menu .header-links button:focus-visible .header-menu-label{animation:none}
+.header .header-mobile-menu .header-links a:active .header-menu-label{transform:translateX(6px)}
+.header .header-mobile-menu .header-links a:focus-visible .header-menu-label{animation:none}
 .header-mobile-menu.is-closing .header-menu-label,.header-mobile-menu.is-closing .header-menu-number,.header-mobile-menu.is-closing .header-menu-footer,.header-mobile-menu.is-closing .header-menu-arrow{animation:none;opacity:0;transform:translateY(-10px)}
 .header-mobile-menu.is-closing .header-links li::after{animation:none;transform:scaleX(0)}
 .header-mobile-menu.is-closing::backdrop{animation:none;opacity:0;transition:opacity .22s}
@@ -61,13 +61,13 @@
 .header-mobile-menu.is-closing .header-menu-symbol--close>span:last-child{animation-name:header-close-second}
 @media(hover:hover) and (pointer:fine){
  .header .brand:hover img{transform:scale(1.04) rotate(-3deg)}
- .header-desktop-nav button:not(.header-contact):hover::after,.header-desktop-nav button:not(.header-contact):focus-visible::after{transform:scaleX(1);transform-origin:left}
+ .header-desktop-nav a:not(.header-contact):hover::after,.header-desktop-nav a:not(.header-contact):focus-visible::after{transform:scaleX(1);transform-origin:left}
  .header .header-links .header-contact:hover{background:#d8edf9}
  .header .header-links .header-contact:hover>span:last-child{transform:translate(3px,-3px)}
  .header-menu-toggle:hover,.header-menu-close:hover{background:#e6f3fa;border-color:#009ddb45}
  .header-menu-toggle:hover::after,.header-menu-close:hover::after{opacity:1;transform:scale(1)}
  .header-menu-toggle:hover .header-menu-symbol>span:last-child{width:20px}
- .header .header-mobile-menu .header-links button:hover .header-menu-label{transform:translateX(6px)}
+ .header .header-mobile-menu .header-links a:hover .header-menu-label{transform:translateX(6px)}
 }
 @keyframes header-detail-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes header-item-in{from{opacity:0;transform:translate(22px,18px)}to{opacity:1;transform:none}}
@@ -81,3 +81,5 @@
 @media(prefers-reduced-motion:reduce){
  .header *, .header *::before,.header *::after,.header-mobile-menu::backdrop{animation:none!important;transition:none!important}
 }
+
+.header .header-links a{border-bottom:0;cursor:pointer;text-decoration:none}.header nav a span{margin-left:0}.header-desktop-nav a{display:inline-block}.header .header-links a[aria-current=page]{color:#087ca9}.header-desktop-nav a[aria-current=page]::after{transform:scaleX(1)}

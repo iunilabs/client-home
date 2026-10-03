@@ -3,6 +3,7 @@ import {SKIN_ASSETS} from './src/skin-assets.js';
 import {readFileSync,mkdirSync,copyFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
+import {pages,siteHeader,siteFooter} from './src/site/templates.js';
 
 // If skin sources change, retain the original calculation until the baked
 // field is regenerated; never use stale colour corrections in production.
@@ -13,14 +14,19 @@ if(!skinCacheValid)console.warn('Baked skin field unavailable or outdated; origi
 export default defineConfig(({mode})=>{
 const studies=mode==='studies';
 let outputDirectory;
+let siteBase='/';
+const commercialEntries=['index.html',...pages.map(([slug])=>`${slug}/index.html`)];
 return {
   define:{__SKIN_CACHE_VALID__:JSON.stringify(skinCacheValid)},
-  plugins:studies?[]:[{name:'commercial-public-assets',apply:'build',configResolved(config){outputDirectory=resolve(config.root,config.build.outDir)},closeBundle(){
+  plugins:[{name:'shared-site-navigation',configResolved(config){siteBase=config.base},transformIndexHtml:{order:'pre',handler(html,ctx){
+    const current=pages.find(([slug])=>ctx.filename.endsWith(`/${slug}/index.html`))?.[0]??'';
+    return html.replace('<!--site-header-->',siteHeader(current,siteBase)).replace('<!--site-footer-->',siteFooter(siteBase));
+  }}},...(studies?[]:[{name:'commercial-public-assets',apply:'build',configResolved(config){outputDirectory=resolve(config.root,config.build.outDir)},closeBundle(){
     // Fail the build if an approved resource is missing; never publish a
     // partially copied set. The development server still serves all studies.
     const {files}=JSON.parse(readFileSync(new URL('./production-assets.json',import.meta.url),'utf8'));
     for(const path of files){const target=resolve(outputDirectory,path);mkdirSync(dirname(target),{recursive:true});copyFileSync(new URL('./public/'+path,import.meta.url),target)}
-  }}],
-  build: { manifest:true,copyPublicDir:studies,rolldownOptions: { input: studies?['index.html','modelos.html','mano.html']:['index.html'] } },
+  }}])],
+  build: { manifest:true,copyPublicDir:studies,rolldownOptions: { input: studies?[...commercialEntries,'modelos.html','mano.html']:commercialEntries } },
 };
 });

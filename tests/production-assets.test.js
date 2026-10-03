@@ -3,16 +3,16 @@ import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {SKIN_ASSETS} from '../src/skin-assets.js';
+import {pages} from '../src/site/templates.js';
 
 const root=resolve(import.meta.dirname,'..');
 const {files}=JSON.parse(readFileSync(resolve(root,'production-assets.json'),'utf8'));
 
-test('the production inventory covers local resources used by the landing',()=>{
+test('the production inventory covers local resources used by every commercial page',()=>{
   const approved=new Set(files);
   assert.equal(approved.size,files.length);
   for(const path of files){assert.ok(!path.startsWith('/')&&!path.split('/').includes('..'));assert.ok(existsSync(resolve(root,'public',path)),path);}
-  const html=readFileSync(resolve(root,'index.html'),'utf8');
-  const pending=[{path:resolve(root,'index.html'),text:html}],seen=new Set();
+  const pending=['index.html','src/site/templates.js',...pages.map(([slug])=>`${slug}/index.html`)].map(source=>({path:resolve(root,source),text:readFileSync(resolve(root,source),'utf8')})),seen=new Set();
   while(pending.length){
     const {path,text}=pending.pop();if(seen.has(path))continue;seen.add(path);
     for(const match of text.matchAll(/["\'`(]\/(?:fonts|images|clients|textures|models|licenses|decoders)\/[\w./-]+\.[\w]+/g))

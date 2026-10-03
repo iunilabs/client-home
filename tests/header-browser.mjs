@@ -31,16 +31,10 @@ try{
       await page.keyboard.press('Shift+Tab');
       assert.ok(await page.evaluate(()=>document.activeElement.closest('#header-mobile-menu')));
     }
-    assert.deepEqual(await nav.locator('button').evaluateAll(nodes=>nodes.map(n=>n.textContent.replace(/^\s*\d{2}/,'').replace('↗','').trim())),labels);
-    const before=await page.evaluate(()=>({url:location.href,y:scrollY}));
-    for(const button of await nav.locator('button').all()){
-      assert.equal(await button.getAttribute('aria-disabled'),'true');
-      await button.scrollIntoViewIfNeeded();
-      const box=await button.boundingBox();
-      if(mobile)await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);
-      else await page.mouse.click(box.x+box.width/2,box.y+box.height/2);
-    }
-    assert.deepEqual(await page.evaluate(()=>({url:location.href,y:scrollY})),before,'options have no navigation or scroll effects');
+    assert.deepEqual(await nav.locator('a').evaluateAll(nodes=>nodes.map(n=>n.textContent.replace(/^\s*\d{2}/,'').replace('↗','').trim())),labels);
+    const paths=['consultoria','ia-automatizacion','formacion','clientes','nosotros','hablemos'];
+    assert.deepEqual(await nav.locator('a').evaluateAll(nodes=>nodes.map(n=>new URL(n.href).pathname)),paths.map(path=>new URL(base).pathname+path+'/'));
+    for(const link of await nav.locator('a').all())assert.equal(await link.getAttribute('aria-disabled'),null);
     if([390,1440].includes(width)){
       if(mobile)await dialog.evaluate(element=>{element.scrollTop=0});
       await page.screenshot({path:`${out}/${width}-${mobile?'open':'desktop'}.png`});
@@ -63,7 +57,7 @@ try{
       assert.ok(await page.evaluate(()=>getComputedStyle(document.body).overflow!=='hidden'));
     }
     assert.deepEqual(errors,[]);
-    console.log(`PASS ${width}×${height}: layout, placeholders${mobile?', touch, focus, Escape, scroll recovery and resize':''}`);
+    console.log(`PASS ${width}×${height}: layout, real navigation${mobile?', touch, focus, Escape, scroll recovery and resize':''}`);
     await context.close();
   }
   // The map remains held while its menu is open; closing restores its input.

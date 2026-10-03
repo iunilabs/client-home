@@ -21,7 +21,8 @@
     "test:clients": "node tests/browser.mjs",
     "test:intro": "node tests/browser.mjs",
     "test:choreography": "node tests/browser.mjs",
-    "test:experience": "node tests/experience.mjs"
+    "test:experience": "node tests/experience.mjs",
+    "test:pages": "node tests/site-pages.mjs"
   },
   "dependencies": {
     "lenis": "^1.3.26",

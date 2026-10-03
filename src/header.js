@@ -45,6 +45,7 @@ export function initHeader(header,{onOpen=()=>{},onClose=()=>{}}={}){
   }
   function resized(event){if(event.matches)closeMenu({immediate:true});}
   function cancelled(event){event.preventDefault();closeMenu();}
+  function selected(event){if(event.target.closest('a[href]'))closeMenu({immediate:true});}
   function keepFocus(event){
     if(event.key!=='Tab')return;
     const controls=[...menu.querySelectorAll('button:not([disabled]),a[href]')];
@@ -58,6 +59,7 @@ export function initHeader(header,{onOpen=()=>{},onClose=()=>{}}={}){
   menu.addEventListener('close',closed);
   menu.addEventListener('cancel',cancelled);
   menu.addEventListener('keydown',keepFocus);
+  menu.addEventListener('click',selected);
   desktop.addEventListener('change',resized);
   return ()=>{
     closeMenu({immediate:true});
@@ -66,6 +68,7 @@ export function initHeader(header,{onOpen=()=>{},onClose=()=>{}}={}){
     menu.removeEventListener('close',closed);
     menu.removeEventListener('cancel',cancelled);
     menu.removeEventListener('keydown',keepFocus);
+    menu.removeEventListener('click',selected);
     desktop.removeEventListener('change',resized);
   };
 }
