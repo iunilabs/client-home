@@ -20,6 +20,8 @@ uniform float forearmBlendEnabled;
 uniform float skinReliefScale;
 uniform float skinWorldScale;
 uniform float skinCreaseGuidance;
+uniform float skinNaturalStrength;
+uniform vec3 skinNaturalTone;
 varying vec3 vSkinPosition;
 varying vec3 vSkinNormal;
 varying float vNailMask;
@@ -86,11 +88,13 @@ vec3 dermalNormal(vec3 n,float h){
 }
 `;
 
-export function createHumanSkin(map,{worldScale=18,forearmMap=map,blendForearm=true,reliefScale=1,guidedCreases=false,epidermisMap}={}){
+export function createHumanSkin(map,{worldScale=18,forearmMap=map,blendForearm=true,reliefScale=1,guidedCreases=false,epidermisMap,natural=false}={}){
   map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=8;
   forearmMap.colorSpace=THREE.SRGBColorSpace;forearmMap.wrapS=forearmMap.wrapT=THREE.RepeatWrapping;forearmMap.anisotropy=8;
   const material=new THREE.MeshPhysicalMaterial({map,color:'#ffffff',roughness:.48,metalness:0,ior:1.4,specularIntensity:.65,clearcoat:0,sheen:0,envMapIntensity:.65});
   const uniforms={epidermisMap:{value:epidermisMap??epidermisTexture()},forearmMap:{value:forearmMap},skinPhotoStep:{value:new THREE.Vector2(1/map.image.width,1/map.image.height)},poreStrength:{value:1},forearmBlendEnabled:{value:blendForearm?1:0},skinReliefScale:{value:reliefScale},skinWorldScale:{value:worldScale},skinCreaseGuidance:{value:guidedCreases?1:0}};
+  uniforms.skinNaturalStrength={value:natural?1:0};
+  uniforms.skinNaturalTone={value:new THREE.Color('#d4aa93')};
   material.onBeforeCompile=shader=>{
     Object.assign(shader.uniforms,uniforms);
     shader.vertexShader=`attribute float nailMask;\nattribute float skinThinness;\nattribute float skinCreaseArea;\nvarying vec3 vSkinPosition;\nvarying vec3 vSkinNormal;\nvarying float vNailMask;\nvarying float vSkinThinness;\nvarying float vSkinCreaseArea;\n`+shader.vertexShader;
@@ -101,10 +105,15 @@ export function createHumanSkin(map,{worldScale=18,forearmMap=map,blendForearm=t
     shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`diffuseColor*=guidedSkinAlbedo(vMapUv);
       float armBlend=(1.0-smoothstep(-.065,-.023,vSkinPosition.x))*forearmBlendEnabled;
       diffuseColor.rgb=mix(diffuseColor.rgb,armAlbedo(vSkinPosition,normalize(vSkinNormal)),armBlend);
+      // Keep subtle photographed detail, with a consistent, softly warm tone
+      // instead of magnifying the source atlas's stains across the forearm.
+      float toneBlend=mix(.55,.88,armBlend)*skinNaturalStrength;
+      diffuseColor.rgb=mix(diffuseColor.rgb,skinNaturalTone,toneBlend);
     `);
     shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
       float epidermis=skinDetail(vSkinPosition,normalize(vSkinNormal));
       roughnessFactor=mix(clamp(.48+(epidermis-.5)*.3,.36,.60),.3,vNailMask);
+      roughnessFactor=mix(roughnessFactor,.48,skinNaturalStrength*.65*(1.0-vNailMask));
     `);
     shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
       float fold=mix(1.0,vSkinCreaseArea,skinCreaseGuidance);
@@ -119,7 +128,7 @@ export function createHumanSkin(map,{worldScale=18,forearmMap=map,blendForearm=t
       reflectedLight.indirectDiffuse+=diffuseColor.rgb*vec3(.075,.022,.01)*edge*vSkinThinness;
     `);
   };
-  material.customProgramCacheKey=()=> 'puntoes-photographic-skin-6';
+  material.customProgramCacheKey=()=> 'puntoes-photographic-skin-7';
   material.userData={finish:'photographic-skin',uniforms,textureOrigin:'LibHand UV atlas, detailed with imagegen; forearm generated from the user reference'};
   return material;
 }
