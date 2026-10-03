@@ -62,6 +62,15 @@ export function createMobileTourDeck(section, route, clients, {onClose = () => {
       desktopId = id;
     },
     bounds() {return deck.getBoundingClientRect();},
+    keepDesktopVisible(exitY) {
+      const card = cards.find(card => card.classList.contains('is-current'));
+      if (!card || deck.dataset.mode !== 'desktop') return;
+      // Let the card leave with the map, but keep its header/close control
+      // below the site's fixed header while there is still visible map.
+      const top = deck.offsetTop - card.offsetHeight;
+      const offset = Math.min(exitY, Math.max(0, 82 + exitY - top));
+      deck.style.transform = `translateY(${offset}px)`;
+    },
     update(state, enabled, {order, entry, outgoingId = null, moving = false, retreat = 1, manualId = null, routeLength = route.length, desktop = false}) {
       deck.dataset.mode = desktop ? 'desktop' : 'mobile';
       presented = presented.filter(id => order.includes(id));

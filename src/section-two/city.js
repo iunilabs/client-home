@@ -141,7 +141,8 @@ export function createCity(section, options = {}) {
       point: {x: (parseFloat(core.style.left) + coreWidth * x / 100) / width,
         y: (parseFloat(core.style.top) + coreHeight * y / 100) / height},
       originX: (parseFloat(world.style.transformOrigin) || 50) / 100,
-      originY: (parseFloat(world.style.transformOrigin.split(' ')[1]) || 50) / 100, zoom, cardRight});
+      originY: (parseFloat(world.style.transformOrigin.split(' ')[1]) || 50) / 100, zoom, cardRight,
+      exitY: Math.max(0, -frame.getBoundingClientRect().top)});
   }
   function closeDesktopCard(animate = true, restoreFocus = true) {
     const opener = desktopOpener;
@@ -298,7 +299,7 @@ export function createCity(section, options = {}) {
     if (!portrait) {
       desktopReduced = reduced;
       overviewZoom = state.zoom;
-      if (focusedClient && (!state.active || state.exitY > 1)) closeDesktopCard(false, false);
+      if (focusedClient && !state.active) closeDesktopCard(false, false);
       const camera = focus.update(now);
       if (camera) camera.zoom = state.zoom;
       position = pan.update(world, state.zoom, camera ? false : reduced, interactive && !focus.moving, reserve);
@@ -308,7 +309,10 @@ export function createCity(section, options = {}) {
         if (!focusedClient && !focus.moving) focus.reset();
       }
       desktopView = {x: position.x, y: position.y, zoom: state.zoom};
-      if (focusedClient && interactive) deck.show(focusedClient); else deck.hide();
+      if (focusedClient && interactive) {
+        deck.show(focusedClient);
+        deck.keepDesktopVisible(state.exitY);
+      } else deck.hide();
       delete section.dataset.cityStop;
       delete section.dataset.cityCard;
       navigation.reset();

@@ -3,9 +3,11 @@ import {cityPanBounds} from './city-pan.js';
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export function cityFocusTarget({point, width, height, viewportWidth, viewportHeight,
-  originX, originY, zoom, cardRight}) {
+  originX, originY, zoom, cardRight, exitY = 0}) {
   const screenX = (cardRight + 24 + viewportWidth - 32) / 2;
-  const screenY = viewportHeight * .44;
+  // The frame scrolls upward during the handoff. Centre in its remaining
+  // visible area, expressed in the frame's local coordinates.
+  const screenY = exitY + Math.max(0, viewportHeight - exitY) * .44;
   const bounds = cityPanBounds({width, height, zoom, viewportWidth, viewportHeight, originX, originY});
   return {
     x: clamp(screenX - viewportWidth / 2 + (.5 - point.x) * width * zoom +

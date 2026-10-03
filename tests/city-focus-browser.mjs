@@ -83,8 +83,9 @@ try {
   assert.equal(restored.camera.x, invitationOverview.x); assert.equal(restored.camera.y, invitationOverview.y);
   await select(page, 'sabadell'); await check(page, 'sabadell');
   expectedZooms.delete(page);
+  const oldWorldWidth=await page.locator('.city-world').evaluate(el=>parseFloat(el.style.width));
   await page.setViewportSize({width: 900, height: 600});
-  await page.waitForFunction(() => window.__puntoes.getState().city.focus?.moving);
+  await page.waitForFunction(width => parseFloat(document.querySelector('.city-world').style.width)<width,oldWorldWidth);
   await check(page, 'sabadell');
   await page.screenshot({path: `${out}/desktop-inline-900.png`});
   const point = await page.evaluate(() => {
