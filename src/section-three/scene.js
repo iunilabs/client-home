@@ -254,6 +254,8 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     // Local pixels keep the editorial entrance consistent across viewports.
     const copyReveal=(smooth(920,1420,copyScroll)*(1-smooth(0,.24,resolutionProgress))).toFixed(4);
     if(stageElement.style.getPropertyValue('--paper-copy-reveal')!==copyReveal)stageElement.style.setProperty('--paper-copy-reveal',copyReveal);
+    const resolutionCopyReveal=smooth(.24,.34,resolutionProgress).toFixed(4);
+    if(stageElement.style.getPropertyValue('--resolution-copy-reveal')!==resolutionCopyReveal)stageElement.style.setProperty('--resolution-copy-reveal',resolutionCopyReveal);
     if(lastState?.resolution.reveal!==workflow.reveal)workflowElement.style.setProperty('--workflow-reveal',workflow.reveal.toFixed(4));
     if(lastState?.resolution.completed!==workflow.completed){
       pendingCount.textContent=workflow.pending;doneCount.textContent=workflow.completed;

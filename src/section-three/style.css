@@ -59,3 +59,28 @@
 }
 @media(prefers-reduced-motion:reduce){.paper-stage canvas{transition:none}.enhanced .paper-copy{transform:translateY(-50%)}}
 @media(max-height:460px){.paper-column-label{top:34%}}
+
+/* Editorial conclusion stays outside the two card stacks and their progress. */
+.paper-resolution-copy{position:absolute;inset:0;pointer-events:none;opacity:var(--resolution-copy-reveal,0);color:#377ca6}
+.paper-resolution-copy h2{position:absolute;top:12%;left:12%;right:12%;margin:0;font-size:clamp(30px,3.2vw,50px);line-height:1.12;letter-spacing:-.035em}
+.paper-resolution-copy h2 em{color:#287fae}
+.paper-resolution-break{display:none}
+.paper-resolution-copy p{position:absolute;left:12%;right:12%;bottom:8%;max-width:660px;margin:0;color:#536f84;font-size:clamp(14px,1.2vw,18px);line-height:1.65}
+.resolution-active .paper-journey[data-paper-render=fallback] .paper-resolution-copy{opacity:1}
+@media(max-width:699px){
+ .resolution-active .scroll-meter{display:none}
+ .paper-resolution-copy h2{top:14%;left:7%;right:7%;font-size:clamp(25px,6.8vw,36px)}
+ .paper-resolution-break{display:block}
+ .paper-resolution-copy p{left:7%;right:7%;font-size:14px;line-height:1.5}
+}
+@media(max-height:620px) and (max-width:699px){
+ .paper-resolution-copy h2{top:13%;font-size:25px}
+ .paper-resolution-copy p{font-size:13px}
+ .paper-workflow-progress{bottom:26%}
+}
+@media(max-height:460px) and (min-width:600px){
+ .resolution-active .scroll-meter{display:none}
+ .paper-resolution-copy h2{top:19%;left:7%;right:53%;font-size:25px}
+ .paper-resolution-break{display:block}
+ .paper-resolution-copy p{top:19%;bottom:auto;left:53%;right:7%;font-size:13px;line-height:1.5}
+}

@@ -1,9 +1,7 @@
 # Contexto
 
-Objetivo: animar el header funcional aprobado, especialmente en móvil. Checkout `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`, base `a932646`. Seis opciones siguen sin destino; logo mantiene inicio.
+Objetivo: completar el mensaje del tramo de tarjetas ordenadas antes del contacto, dentro de la sección combinada 3/4. Checkout `puntoes-mobile-card-readability`, rama `feature/workflow-commercial-copy`, base `81c6d4b`.
 
-Móvil: despliegue circular desde hamburguesa, icono que se convierte en cruz, opciones/números/líneas en cascada, halo azul y cierre inverso. Escritorio: entrada suave, subrayados y detalles de logo/CTA. Animaciones finitas, sin recursos nuevos. Diálogo conserva foco, bloqueo de fondo y scroll interno. Escape interrumpe apertura; desktop cancela inmediatamente; movimiento reducido abre/cierra sin animación.
+Titular: «Menos pendientes. Más posibilidades.» Párrafo: «Integramos la IA en tus procesos para resolver tareas repetitivas y dar más espacio a lo que hace crecer tu negocio.» `index.html`, `src/section-three/style.css` y `scene.js`: titular sobre tarjetas, cuerpo bajo progreso; entrada entre .24–.34 del recorrido de resolución, tras desaparecer el texto anterior. Física y tiempos conservados. Marcador técnico oculto solo durante resolución móvil/horizontal para evitar solapamientos.
 
-Archivos: `index.html`, `src/header.css`, `src/header.js`, pruebas `header-browser.mjs` y `header-motion.mjs`. Build y funcionalidad en siete tamaños correctos. Prueba de animación: DPR 3, CPU ×4, mediana 17 ms y p95 18 ms; cierres rápidos, resize y movimiento reducido correctos. Sin teléfono físico.
-
-Publicación autorizada en GitHub Pages. Al retomar, contrastar último workflow y versión pública.
+130 pruebas y build correctos. Chrome: escritorio, 320×568, 390×844 y 844×390; completado y transición comprobados, viewport restaurado. Siguiente: publicar y verificar Pages. Contacto y encabezado reciente conservados.
