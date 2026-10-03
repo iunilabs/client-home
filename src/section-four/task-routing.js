@@ -1,38 +1,45 @@
-import {smooth} from '../section-three/motion.js';
-import {routeFor,routingPose,applyRoutingAppearance} from './routing-model.js';
+import {applyRoutingAppearance} from './routing-model.js';
+import {WORKFLOW} from './workflow.js';
 import './task-routing.css';
 
-// A single scroll cursor drives the papers, routes and outcome counters.
-function resultFor(piece){
-  const route=routeFor(piece.kind);
-  if(route===0)return piece.kind==='email'?'Solicitud clasificada y priorizada':'Tarea agrupada con su contexto';
-  if(route===1)return piece.kind==='document'?'Datos extraídos y preparados':piece.kind==='test'?'Pruebas ejecutadas · resultado disponible':'Resumen preparado para revisión';
-  return ['qa','deploy','ticket'].includes(piece.kind)?'A Tecnología · con contexto':piece.kind==='approval'?'A Finanzas · pendiente de validación':'A Operaciones · con responsable';
-}
-export function createTaskRouting(journey){
-  if(!journey.hasAttribute('data-task-routing'))return null;
-  const stage=journey.querySelector('.paper-stage'), panels=[...journey.querySelectorAll('[data-route]')];
-  const action=journey.querySelector('[data-routing-action]'), paths=[...journey.querySelectorAll('[data-route-line]')];
-  let key='',previousProgress=0;
+export function createTaskRouting(journey, {onSelect = () => {}} = {}) {
+  if (!journey.hasAttribute('data-task-routing')) return null;
+  const stage = journey.querySelector('.paper-stage'), story = journey.querySelector('[data-routing-story]');
+  const cases = [...story.querySelectorAll('[data-routing-case]')], steps = [...story.querySelectorAll('[data-example-step]')];
+  const conclusion = journey.querySelector('.paper-resolution-copy');
+  const select = event => {
+    const button = event.target.closest('[data-example-select]'); if (!button) return;
+    const index = Number(button.dataset.exampleSelect);
+    onSelect(WORKFLOW.processStart + (WORKFLOW.finished - WORKFLOW.processStart) * (index + .8) / WORKFLOW.examples);
+  };
+  story.addEventListener('click', select);
+  let current = -1, concluding = null, exposed = null;
   return {
-    status(state){return state.ordered<1?'Preparando el flujo':state.pending?'La IA organiza y reparte':'Trabajo organizado y encaminado';},
-    update(state,pieces){
-      const reveal=smooth(.18,.3,state.progress).toFixed(4);
-      if(stage.style.getPropertyValue('--routing-reveal')!==reveal)stage.style.setProperty('--routing-reveal',reveal);
-      if(state.progress===0&&previousProgress>0)for(const piece of pieces)for(const material of piece.materials()){material.opacity=1;material.transparent=false;material.needsUpdate=true;piece.mesh.castShadow=true;}
-      previousProgress=state.progress;
-      const active=state.activeIndex===null?null:pieces.find(p=>p.workflowIndex===state.activeIndex);
-      const activeRoute=active?routeFor(active.kind):-1;
-      const nextKey=`${state.completed}/${activeRoute}/${state.ordered===1}`;
-      if(key===nextKey)return;
-      key=nextKey;
-      const counts=[0,0,0],last=[null,null,null];
-      for(const piece of pieces)if(piece.workflowIndex<state.completed){const route=routeFor(piece.kind);counts[route]++;if(!last[route]||piece.workflowIndex>last[route].workflowIndex)last[route]=piece;}
-      panels.forEach((panel,i)=>{panel.querySelector('[data-route-count]').textContent=counts[i];panel.classList.toggle('is-active',activeRoute===i);const example=panel.querySelector('[data-route-example]');example.textContent=last[i]?resultFor(last[i]):['Solicitudes clasificadas','Datos preparados','Con responsable y contexto'][i];});
-      paths.forEach(path=>path.classList.toggle('is-active',+path.dataset.routeLine===activeRoute));
-      action.textContent=state.ordered<1?'Entiende y reparte':activeRoute<0?'Flujo completado':['Clasifica y prioriza','Prepara el resultado','Asigna al equipo'][activeRoute];
+    update(state) {
+      const visible = state.progress >= .18;
+      if (exposed !== visible) {
+        exposed = visible; stage.style.setProperty('--routing-reveal', visible ? 1 : 0);
+        story.inert = !visible || state.conclusion; story.setAttribute('aria-hidden', String(!visible || state.conclusion));
+      }
+      if (concluding !== state.conclusion) {
+        concluding = state.conclusion; stage.classList.toggle('routing-conclusion', concluding);
+        conclusion.inert = !concluding; conclusion.setAttribute('aria-hidden', String(!concluding));
+        story.inert = !visible || concluding; story.setAttribute('aria-hidden', String(!visible || concluding));
+      }
+      if (current !== state.exampleIndex) {
+        current = state.exampleIndex;
+        cases.forEach((element, index) => {element.hidden = index !== current;});
+        steps.forEach((step, index) => {
+          step.classList.toggle('is-current', index === current);
+          step.querySelector('button').setAttribute('aria-pressed', String(index === current));
+          if (index === current) step.setAttribute('aria-current', 'step'); else step.removeAttribute('aria-current');
+        });
+      }
+      story.style.setProperty('--result-reveal', state.resultReveal.toFixed(4));
     },
-    pose(card,piece){return routingPose(card,piece.kind,innerWidth,innerHeight);},
-    appearance:applyRoutingAppearance
+    fallback() {exposed = null; concluding = null; current = -1; stage.classList.remove('routing-conclusion'); story.inert = true; story.setAttribute('aria-hidden', 'true'); conclusion.inert = false; conclusion.setAttribute('aria-hidden', 'false');},
+    dispose() {story.removeEventListener('click', select);},
+    pose: card => card,
+    appearance: applyRoutingAppearance,
   };
 }

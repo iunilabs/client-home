@@ -1,7 +1,7 @@
 /* Section-local styles: keep the existing header, hands and city untouched. */
 @font-face{font-family:Paper Hand;src:url('/fonts/Caveat.woff2') format('woff2');font-weight:400 700;font-display:swap}
 /* Ordering follows the falls at 1900 px, with no right-hand grouping phase. */
-.paper-journey{position:relative;background:#f4f9fd;--paper-chaos-range:1900px;height:calc(100svh + var(--paper-chaos-range) + 200svh)}
+.paper-journey{position:relative;background:#f4f9fd;--paper-chaos-range:1900px;height:calc(100svh + var(--paper-chaos-range) + 125svh)}
 .paper-resolution-anchor{position:absolute;top:var(--paper-chaos-range);left:0;width:0;height:0;pointer-events:none}
 .paper-stage{position:sticky;top:0;z-index:4;height:100svh;overflow:hidden;background:radial-gradient(ellipse at 45% 35%,#fff,#f5faff 55%,#cee4f4)}
 .paper-stage canvas{display:block;width:100%;height:100%;opacity:0;filter:blur(calc(var(--paper-copy-reveal,0)*3px));transition:opacity .7s}
@@ -17,17 +17,6 @@
 .paper-motion{position:absolute;bottom:68px;right:var(--gutter);border:1px solid #86b4cd50;border-radius:3px;padding:9px 12px;background:#f4faffcc;color:#52758f;font:500 9px Manrope,Arial;letter-spacing:.04em;cursor:pointer}
 .paper-motion[hidden],.paper-fallback[hidden]{display:none}
 .paper-fallback{position:absolute;left:76%;top:50%;transform:translate(-50%,-50%) rotate(-8deg);padding:32px 24px;width:min(360px,40vw);background:#e5f0f6;color:#35637b;box-shadow:0 20px 70px #365b7720;font-family:DM Serif,serif;font-size:clamp(20px,3vw,42px);line-height:1.25}
-.paper-workflow{position:absolute;inset:0;opacity:var(--workflow-reveal,0);pointer-events:none;color:#496d83}
-.paper-column-label{position:absolute;top:22%;width:28%;display:flex;gap:12px;align-items:center;font:500 13px Manrope,Arial;letter-spacing:.02em}
-.paper-column-label>[data-pending-count],.paper-column-label>[data-done-count]{margin-left:auto;font-size:11px;font-variant-numeric:tabular-nums;border-radius:20px;padding:5px 9px;background:#e5eef5}
-.paper-pending-label{left:12%}
-.paper-done-label{right:12%;color:#237856}
-.paper-done-label>[data-done-count]{background:#e0f1e8}
-.paper-check{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#d9eee2;color:#237856;font-size:13px}
-.paper-workflow-progress{position:absolute;bottom:18%;left:12%;right:12%;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font:500 11px Manrope,Arial;color:#668596}
-.paper-workflow-track{flex-basis:100%;height:2px;background:#d9e6eb;overflow:hidden}
-.paper-workflow-track>span{display:block;width:0;height:100%;background:#59a582}
-.paper-journey[data-paper-render=fallback] .paper-workflow{display:none}
 .paper-journey[data-paper-render=fallback] canvas{opacity:0}
 .paper-fallback-done{display:none}
 .resolution-active .paper-journey[data-paper-render=fallback] .paper-copy{opacity:0}
@@ -36,11 +25,6 @@
 .resolution-active .paper-journey[data-paper-render=fallback] .paper-fallback-done{display:block}
 .paper-active .chapter-progress{color:#527894;text-shadow:none}
 @media(max-width:699px){
- .paper-column-label{top:27%;width:38%;font-size:11px;gap:6px}
- .paper-pending-label{left:7%}.paper-done-label{right:7%}
- .paper-column-label>[data-pending-count],.paper-column-label>[data-done-count]{padding:4px 6px;font-size:10px}
- .paper-check{width:18px;height:18px;font-size:11px}
- .paper-workflow-progress{left:7%;right:7%;bottom:24%;font-size:10px}
  .paper-copy{width:100%;max-width:none;left:0;padding:0 24px}
  .paper-copy .eyebrow{font-size:8px;letter-spacing:.08em;margin-bottom:16px}
  .paper-copy h2{font-size:clamp(28px,9vw,52px);line-height:1.14;margin-bottom:20px}
@@ -49,8 +33,6 @@
  .paper-fallback{padding:24px 16px;font-size:22px}
 }
 @media(max-height:620px){
- .paper-column-label{top:25%;font-size:11px}
- .paper-workflow-progress{bottom:16%}
  .paper-copy{top:calc(50% + 6px)}
  .paper-copy .eyebrow{font-size:8px;margin-bottom:12px}
  .paper-copy h2{font-size:clamp(27px,5vw,44px);margin-bottom:16px}
@@ -58,7 +40,6 @@
  .paper-impact{margin-top:16px}
 }
 @media(prefers-reduced-motion:reduce){.paper-stage canvas{transition:none}.enhanced .paper-copy{transform:translateY(-50%)}}
-@media(max-height:460px){.paper-column-label{top:34%}}
 
 /* Editorial conclusion stays outside the two card stacks and their progress. */
 .paper-resolution-copy{position:absolute;inset:0;pointer-events:none;opacity:var(--resolution-copy-reveal,0);color:#377ca6}
@@ -76,7 +57,6 @@
 @media(max-height:620px) and (max-width:699px){
  .paper-resolution-copy h2{top:13%;font-size:25px}
  .paper-resolution-copy p{font-size:13px}
- .paper-workflow-progress{bottom:26%}
 }
 @media(max-height:460px) and (min-width:600px){
  .resolution-active .scroll-meter{display:none}

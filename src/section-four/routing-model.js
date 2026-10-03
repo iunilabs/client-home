@@ -1,33 +1,31 @@
-import {smooth,mix} from '../section-three/motion.js';
+export const EXAMPLES = [
+  {id: 'correo', label: 'Correo', icon: 'email', type: 'EMAIL', beforeTitle: 'Otra solicitud por correo',
+    before: 'Leer el mensaje, buscar el contexto y decidir quién debe atenderlo.',
+    action: 'Clasifica y prioriza', afterTitle: 'Una solicitud con prioridad',
+    after: 'Tema, contexto y siguiente paso preparados para el equipo.',
+    details: ['Solicitud clasificada', 'Prioridad propuesta', 'Responsable identificado'],
+    review: 'Tu equipo confirma la prioridad.'},
+  {id: 'documento', label: 'Documento', icon: 'document', type: 'DOCUMENTO', beforeTitle: 'Datos dentro de un archivo',
+    before: 'Abrir el documento y copiar a mano la información que hace falta.',
+    action: 'Extrae y estructura', afterTitle: 'Información lista para utilizar',
+    after: 'Los datos relevantes, organizados para continuar el proceso.',
+    details: ['Datos extraídos', 'Información estructurada', 'Campos pendientes señalados'],
+    review: 'Tu equipo valida los datos.'},
+  {id: 'incidencia', label: 'Incidencia', icon: 'ticket', type: 'INCIDENCIA', beforeTitle: 'La misma duda, otra vez',
+    before: 'Buscar casos anteriores y volver a preparar una respuesta desde cero.',
+    action: 'Busca y prepara', afterTitle: 'Una respuesta con contexto',
+    after: 'Antecedentes y una propuesta para que soporte pueda actuar.',
+    details: ['Casos relacionados', 'Respuesta propuesta', 'Contexto para soporte'],
+    review: 'Tu equipo revisa y decide.'},
+];
 
-// Repetitive work can be prepared automatically; approvals still go to people.
-export function routeFor(kind){
-  if(['note','task','email'].includes(kind))return 0;
-  if(['document','summary','test'].includes(kind))return 1;
-  return 2;
-}
-export function routingPose(card,kind,width,height){
-  const mobile=width<700, short=height<=460;
-  const through=smooth(0,.6,card.travel), outgoing=smooth(.6,1,card.travel);
-  const lane=routeFor(kind);
-  const startY=mobile ? .18 : short ? -.24 : card.y;
-  const hubY=mobile?-.08:short?-.24:-.1;
-  const destinationY=mobile?-.34:(short?[.15,-.14,-.43]:[.29,0,-.29])[lane];
-  return {...card,
-    x:mobile?mix(0,[-.6,0,.6][lane],outgoing):mix(mix(-.48,0,through),.5,outgoing),
-    y:mix(mix(startY,hubY,through),destinationY,outgoing),
-    pixelWidth:card.pixelWidth*mix(1,.3,through),
-    done:false, opacity:1-smooth(.6,.94,card.travel)};
-}
-
-export function applyRoutingAppearance(piece,card,state){
-  const opacity=mix(1,card.opacity,state.ordered);
-  for(const material of piece.materials()){
-    const transparent=opacity<1;
-    if(material.transparent!==transparent){material.transparent=transparent;material.needsUpdate=true;}
-    material.opacity=opacity;
+export function applyRoutingAppearance(piece, card, state) {
+  const opacity = state.backgroundOpacity;
+  for (const material of piece.materials()) {
+    const transparent = opacity < 1;
+    if (material.transparent !== transparent) {material.transparent = transparent; material.needsUpdate = true;}
+    material.opacity = opacity;
   }
-  // Until ordering finishes, visibility belongs to the original fall choreography.
-  if(state.ordered===1)piece.mesh.visible=card.opacity>.001;
-  piece.mesh.castShadow=card.opacity>.5;
+  if (state.ordered === 1) piece.mesh.visible = opacity > .001;
+  piece.mesh.castShadow = opacity > .5;
 }

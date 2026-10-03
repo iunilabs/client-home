@@ -19,7 +19,7 @@ export function preparePaperFonts() {
   return fontsReady ??= Promise.all([document.fonts.load('400 40px Manrope'), document.fonts.load('400 80px "Paper Hand"')]);
 }
 
-export async function createPaperSection(journey, {graphics = null} = {}) {
+export async function createPaperSection(journey, {graphics = null, onNavigate = top => scrollTo(0, top)} = {}) {
   const preparationStart = performance.now(), preparation = createPreparationQueue();
   const fonts = preparePaperFonts();
   await preparation.yield();
@@ -36,19 +36,13 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
   }
   const errorElement = journey.querySelector('[data-paper-fallback]');
   const stageElement = journey.querySelector('.paper-stage');
-  const workflowElement = journey.querySelector('[data-paper-workflow]');
-  const pendingCount = journey.querySelector('[data-pending-count]');
-  const doneCount = journey.querySelector('[data-done-count]');
-  const workflowStatus = journey.querySelector('[data-workflow-status]');
-  const workflowTotal = journey.querySelector('[data-workflow-total]');
-  const workflowFill = journey.querySelector('[data-workflow-fill]');
-  const taskRouting = createTaskRouting(journey);
+  const taskRouting = createTaskRouting(journey, {onSelect: progress => onNavigate(paperJourneyScrollAt(getPaperJourneyLayout(journey), 'workflow', progress))});
   const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
   const capture = new URLSearchParams(location.search).has('capture');
   let renderer;
   let phaseStart = performance.now();
   try { renderer = graphics?.renderer ?? new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: 'high-performance'}); }
-  catch { errorElement.hidden = false; journey.dataset.paperRender = 'fallback'; throw new Error('WebGL unavailable'); }
+  catch { taskRouting?.fallback(); errorElement.hidden = false; journey.dataset.paperRender = 'fallback'; throw new Error('WebGL unavailable'); }
   const rendererMs = performance.now() - phaseStart;
   function configureRenderer() {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -109,7 +103,6 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     if (!content) {variant = variantCounts.get(kind) ?? 0; variantCounts.set(kind, variant + 1);}
     const textureResolution = detailed ? (pieces.length < 2 ? closeTextureSize : 1024) : 512;
     const paper = await preparation.run(() => createPaper({kind, variant, width, height, grain, detailed, content, textureResolution}));
-    await preparation.run(() => paper.prepareCompleted());
     for (const texture of paper.textures()) await preparation.run(() => renderer.initTexture(texture));
     scene.add(paper.mesh); paper.mesh.visible = false;
     const piece = {...paper, flight: flightTrack(seed), seed, phase: seed % 100 / 100 * Math.PI * 2};
@@ -173,7 +166,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
   function contextLost(event) {
     event.preventDefault(); lost = true; active = false;
     input.setActive(false); inputState = input.update(0, performance.now()); cursorLight.intensity = 0;
-    errorElement.hidden = false; journey.dataset.paperRender = 'fallback';
+    taskRouting?.fallback(); errorElement.hidden = false; journey.dataset.paperRender = 'fallback';
   }
   function contextRestored() {
     if (disposed) return;
@@ -246,7 +239,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     const copyScroll = scrollProgress * height, motionHeight = fallMotionHeight;
     const timing = paperTiming(motionHeight);
     const workflow = workflowState(resolutionProgress, pieces.length);
-    taskRouting?.update(workflow,pieces);
+    taskRouting?.update(workflow);
     const fallProgress = paperMotionPixels(copyScroll) / motionHeight;
     // Remaining falls settle while ordering; no card teleports or appears late.
     const p = mix(fallProgress, Math.max(fallProgress, timing.many + timing.manySpread + timing.manyDuration), workflow.ordered);
@@ -255,18 +248,8 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     if (key.shadow.mapSize.x !== shadowSize) shadowsInvalid = true;
     key.shadow.mapSize.setScalar(shadowSize);
     // Local pixels keep the editorial entrance consistent across viewports.
-    const copyReveal=(smooth(920,1420,copyScroll)*(1-smooth(0,.24,resolutionProgress))).toFixed(4);
+    const copyReveal=(smooth(920,1420,copyScroll)*(1-smooth(0,.18,resolutionProgress))).toFixed(4);
     if(stageElement.style.getPropertyValue('--paper-copy-reveal')!==copyReveal)stageElement.style.setProperty('--paper-copy-reveal',copyReveal);
-    const resolutionCopyReveal=smooth(.24,.34,resolutionProgress).toFixed(4);
-    if(stageElement.style.getPropertyValue('--resolution-copy-reveal')!==resolutionCopyReveal)stageElement.style.setProperty('--resolution-copy-reveal',resolutionCopyReveal);
-    if(lastState?.resolution.reveal!==workflow.reveal)workflowElement.style.setProperty('--workflow-reveal',workflow.reveal.toFixed(4));
-    if(lastState?.resolution.completed!==workflow.completed){
-      pendingCount.textContent=workflow.pending;doneCount.textContent=workflow.completed;
-      workflowTotal.textContent=`${workflow.completed} / ${pieces.length}`;
-      workflowFill.style.width=`${workflow.fraction*100}%`;
-    }
-    const status=taskRouting?.status(workflow) ?? (workflow.ordered<1?'Ordenando el trabajo':workflow.pending?'Resolviendo uno a uno':'Todo completado');
-    if(workflowStatus.textContent!==status)workflowStatus.textContent=status;
     function applyWorkflow(piece) {
       let card = cardWorkflow(workflow, piece.workflowIndex, pieces.length, innerWidth, innerHeight, portrait, piece.width / piece.height);
       if(taskRouting)card=taskRouting.pose(card,piece,workflow);
@@ -297,11 +280,12 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     camera.updateMatrixWorld();
     const lightState = cursorSurface.update(camera, inputState.pointer, pieces.map(piece => piece.mesh), !inputState.hovering, frameDelta);
     cursorLight.intensity *= .028;
-    renderer.info.autoReset = false; renderer.info.reset();
+    renderer.info.autoReset = false;
+    const renderChanged = workflow.backgroundOpacity > 0 || !lastState || lastState.resolution.backgroundOpacity > 0 || shadowsInvalid;
     const shadowsChanged = shadowsInvalid || !lastState || workflow.ordered < 1 || lastState.resolution.ordered < 1 || Math.abs(lastState.resolution.cursor - workflow.cursor) > .00001;
-    renderer.shadowMap.needsUpdate = shadowsChanged; renderer.render(scene, camera); shadowsInvalid = false;
+    if (renderChanged) {renderer.info.reset(); renderer.shadowMap.needsUpdate = shadowsChanged; renderer.render(scene, camera); shadowsInvalid = false;}
     lastState = {progress: scrollProgress, resolution: workflow, visibleItems: pieces.filter(i => i.mesh.visible).length, groupProgress: 0, secondEntryPixels: paperScrollPixels(timing.several * motionHeight), lastEntryPixels: paperScrollPixels((timing.many + timing.manySpread) * motionHeight), lastFallEndPixels: paperScrollPixels((timing.many + timing.manySpread + timing.manyDuration) * motionHeight), orderingPixels: height, scrollRange: height, glass: 0, drawCalls: renderer.info.render.calls, geometries: renderer.info.memory.geometries, reducedMotion: reducedQuery.matches,
-      hero: {position: note.mesh.position.toArray(), rotation: note.mesh.rotation.toArray().slice(0,3), bend: note.mesh.geometry.attributes.position.array[2]}, letterCorners: [0,30,992,1022].map(i => letter.deformedGeometry.attributes.position.array[i*3+2]), version: 4, depthOfField: false, parallax: {x: inputState.x, y: inputState.y, gyro: inputState.orientation}, cursorLight: {...lightState, intensity: cursorLight.intensity}, contentCount: new Set(pieces.map(i => i.subject)).size, totalItems: pieces.length, performance: {pixelRatio: renderer.getPixelRatio(), shadowSize: key.shadow.mapSize.x, shadowsUpdated: shadowsChanged,
+      hero: {position: note.mesh.position.toArray(), rotation: note.mesh.rotation.toArray().slice(0,3), bend: note.mesh.geometry.attributes.position.array[2]}, letterCorners: [0,30,992,1022].map(i => letter.deformedGeometry.attributes.position.array[i*3+2]), version: 4, depthOfField: false, parallax: {x: inputState.x, y: inputState.y, gyro: inputState.orientation}, cursorLight: {...lightState, intensity: cursorLight.intensity}, contentCount: new Set(pieces.map(i => i.subject)).size, totalItems: pieces.length, performance: {pixelRatio: renderer.getPixelRatio(), shadowSize: key.shadow.mapSize.x, shadowsUpdated: renderChanged && shadowsChanged, rendered: renderChanged,
         flatCards: pieces.filter(piece => piece.mesh.geometry !== piece.deformedGeometry).length, triangles: renderer.info.render.triangles}};
   }
   const review = {
@@ -356,7 +340,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
   for (const piece of pieces) {piece.setFlat(false); piece.setWorkflowMaterial(false); piece.mesh.visible = false;}
   renderer.setScissorTest(false); renderer.setViewport(0, 0, innerWidth, innerHeight);
   const preparationState = {...preparation.getState(), durationMs: performance.now() - preparationStart,
-    sharedRenderer: Boolean(graphics), rendererMs, environmentMs, compileMs, warmRenderMs, pendingTextures: pieces.length, completedTextures: pieces.length, shadersReady: true};
+    sharedRenderer: Boolean(graphics), rendererMs, environmentMs, compileMs, warmRenderMs, pendingTextures: pieces.length, completedTextures: 0, shadersReady: true};
   function visibilityChanged() {
     previous = performance.now(); force = true;
     if (document.hidden) {
@@ -400,7 +384,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
       journey: {...paperJourneyState(journeyScroll, layout), target: journeyTarget / layout.totalRange, ...layout}, targetProgress: target, resolutionTarget: workflowTarget, firstSubject: note.subject, firstKind: note.kind, firstEntryPixels: 80}),
     getReview: () => review,
     dispose() {
-      if (disposed) return; disposed = true; attachCanvas(false); input.dispose();
+      if (disposed) return; disposed = true; attachCanvas(false); input.dispose(); taskRouting?.dispose();
       document.removeEventListener('visibilitychange', visibilityChanged);
       canvas.removeEventListener('webglcontextlost', contextLost);
       canvas.removeEventListener('webglcontextrestored', contextRestored);

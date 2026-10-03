@@ -1,4 +1,5 @@
 import './section-three/style.css';
+import './section-four/task-routing.css';
 import './contact.css';
 import {initHeader} from './header.js';
 import {initContactForm} from './contact.js';
@@ -28,7 +29,7 @@ function paperIsVisible(y){return !cityIsHeld()&&y+innerHeight>paperJourney.offs
 function preparePaperSection(){return paperModule??=import('./section-three/scene.js').then(module=>{module.preparePaperFonts().catch(()=>{});return module})}
 async function loadPaperSection(preload=false){
  if(paperScene||paperLoading||(!preload&&!paperIsVisible(lenis?.scroll??scrollY)))return;paperLoading=true;
- try{const {createPaperSection}=await preparePaperSection();if(disposed)return;const graphics=await graphicsReady;if(disposed)return;const scene=await createPaperSection(paperJourney,{graphics});if(disposed){scene.dispose();return}paperScene=scene}
+ try{const {createPaperSection}=await preparePaperSection();if(disposed)return;const graphics=await graphicsReady;if(disposed)return;const scene=await createPaperSection(paperJourney,{graphics,onNavigate:top=>{city.prepareNavigation(false);lenis.reset();lenis.scrollTo(top,{immediate:true,onComplete:()=>city.finishNavigation()})}});if(disposed){scene.dispose();return}paperScene=scene}
  catch(error){console.warn('Paper scene unavailable:',error.message);paperJourney.dataset.paperRender='fallback';paperJourney.querySelector('[data-paper-fallback]').hidden=false}
 }
 // Fetch code/fonts before the city. Build and warm the shared scene while the

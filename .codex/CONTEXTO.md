@@ -1,7 +1,7 @@
 # Contexto
 
-Objetivo: integrar y publicar la propuesta aprobada de IA organizando, resolviendo y derivando tareas. Checkout `puntoes-mobile-card-readability`, rama `feature/ai-task-routing`, base `112bea7` (incluye seis páginas comerciales y navegación reciente).
+Objetivo: sustituir las 47 tarjetas pasando por IA por tres ejemplos útiles y publicar en GitHub Pages. Checkout `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`, base `d98660a` (incluye última revisión de manos).
 
-`index.html`: conserva caída y texto sección 3; resolución muestra pila manual → nodo IA → tres resultados. «La IA organiza. El trabajo avanza.» `src/section-four/task-routing.js/css`, `routing-model.js` y conexión `section-three/scene.js`. Validaciones se derivan al equipo. El recorrido sigue el scroll, también inverso; en móvil es vertical. Prototipo anterior retirado al integrar.
+Se conserva el caos original. Las tarjetas desaparecen juntas; correo, documento e incidencia muestran antes/después con revisión humana y selección directa. Cierre «Menos trabajo repetitivo. Más tiempo para avanzar», integración/formación y contacto. Recorrido IA 125svh, 37,5 % más corto; sin texturas completadas ni renderizados 3D cuando desaparece el campo. Archivos: `section-four/template.js`, workflow/routing, `section-three/scene.js`, CSS, `main.js`, HTML y Vite.
 
-Integración comprobada: 134 pruebas y build correctos. Chrome: escritorio y 320px, primera tarjeta sola, reparto reversible, 47 tareas distribuidas y salida al contacto. Viewport restaurado. Siguiente: publicar Pages y verificar. Vite puerto 5192, sesión 41941. Contacto, seis páginas comerciales y encabezado conservados.
+Comprobado: 133 pruebas, build, Chrome escritorio/móvil/320px/horizontal, WebKit móvil, separación física, reversibilidad, botones y contacto; precarga CPU×4 (47 texturas, cero completadas). Preview 4392. Header, movimiento reducido y alternativa sin WebGL correctos. Siguiente: publicar y verificar URL pública. Seis páginas comerciales y ciudad conservadas.

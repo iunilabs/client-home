@@ -27,7 +27,7 @@ try {
   assert.equal(preparation.active, false, 'preparation happens during the city, before papers become visible');
   assert.equal(preparation.preparation.sharedRenderer, true);
   assert.equal(preparation.preparation.pendingTextures, 47);
-  assert.equal(preparation.preparation.completedTextures, 47);
+  assert.equal(preparation.preparation.completedTextures, 0);
   assert.equal(preparation.preparation.shadersReady, true);
   assert.ok(preparation.preparation.yields > 0, 'construction yields to gestures and rendering');
   const cdp = await context.newCDPSession(page);
@@ -50,7 +50,7 @@ try {
     const {start,chaosRange,workflowRange} = window.__puntoes.getState().paper.journey;
     scrollTo(0, start + chaosRange + workflowRange * .97);
   });
-  await page.waitForFunction(() => window.__puntoes.getState().paper.resolution.completed === 47);
+  await page.waitForFunction(() => window.__puntoes.getState().paper.resolution.completed === 3);
   const resolutionMs = await page.evaluate(() => Math.round(performance.now() - window.__resolutionStart));
   if (process.env.SECTION3_PRELOAD_SCREENSHOT) await page.screenshot({path: process.env.SECTION3_PRELOAD_SCREENSHOT});
   assert.equal(await page.evaluate(() => window.__webglContexts()), contexts, 'sections three/four do not create another WebGL context');
@@ -63,6 +63,6 @@ try {
   await page.waitForFunction(() => window.__puntoes.getState().paper.active);
   assert.equal(await page.evaluate(() => document.querySelector('[data-paper-canvas]') === window.__original3DCanvas), true);
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({entryMs, resolutionMs, contexts, preparation: preparation.preparation, checks: 'preload, completed textures, CPU×4 entry, canvas handoff and reverse passed'}));
+  console.log(JSON.stringify({entryMs, resolutionMs, contexts, preparation: preparation.preparation, checks: 'preload, no unused completed textures, CPU×4 entry, canvas handoff and reverse passed'}));
 } catch (error) {console.error(error); process.exitCode = 1;}
 finally {await Promise.race([browser.close(), new Promise(resolve => setTimeout(resolve, 3000))]); process.exit(process.exitCode || 0);}
