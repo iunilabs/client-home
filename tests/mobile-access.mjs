@@ -1,3 +1,4 @@
+import {navigateByHash} from './navigate-by-hash.mjs';
 // Fast focused regression checks for the final fragment/resize/reduced patch.
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
@@ -15,18 +16,18 @@ try {
     await page.waitForTimeout(3300);
     assert.ok(await page.evaluate(()=>window.__puntoes.getState().tour.active));
     await page.locator('body').click({position:{x:160,y:180}});await page.keyboard.press('ArrowDown');
-    await page.waitForTimeout(reducedMotion==='reduce'?250:1400);
+    await page.waitForFunction(()=>window.__puntoes.getState().tour.currentId==='bbva'&&!window.__puntoes.getState().tour.moving);
     assert.equal(await page.locator('.city-tour-card.is-current').getAttribute('data-client'),'bbva');
     assert.equal(await page.evaluate(()=>window.__puntoes.getState().tour.moving),false);
     const logo=page.locator('.city-client[data-client="cepsa"]');await logo.focus();await logo.tap();
-    await page.waitForTimeout(reducedMotion==='reduce'?250:1400);
+    await page.waitForFunction(()=>window.__puntoes.getState().tour.currentId==='cepsa'&&!window.__puntoes.getState().tour.moving);
     assert.equal(await page.locator('.city-tour-card.is-current').getAttribute('data-client'),'cepsa');
     assert.equal(await page.evaluate(()=>window.__puntoes.getState().reduced),false);
     await page.setViewportSize({width:320,height:528});await page.waitForTimeout(200);
-    await page.locator('#open-clients').click();await page.waitForTimeout(1400);
+    await navigateByHash(page,'#confianza');await page.waitForTimeout(1400);
     assert.ok(await page.evaluate(()=>window.__puntoes.getState().tour.active));
     assert.equal(await page.evaluate(()=>window.__puntoes.getState().tour.currentId),'puntoes');
-    await page.getByRole('link',{name:'El encuentro',exact:false}).click();await page.waitForTimeout(1500);
+    await navigateByHash(page,'#encuentro');await page.waitForTimeout(1500);
     assert.equal(await page.evaluate(()=>window.__puntoes.getState().tour.active),false);
     await page.goBack();await page.waitForFunction(()=>window.__puntoes.getState().tour.active);
     assert.equal(await page.evaluate(()=>window.__puntoes.getState().tour.active),true);

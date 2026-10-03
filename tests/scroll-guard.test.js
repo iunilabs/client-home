@@ -84,6 +84,25 @@ test('wheel grouping uses creation timestamps even when rendering delays deliver
   assert.equal(burst.isPending(wheelEventTime({timeStamp:1200},2300),110),false);
 });
 
+test('an open modal blocks map input even when a wheel targets the page edge, and closing resumes it',()=>{
+  const previousWindow=globalThis.window,handlers=new Map(),steps=[];
+  let modalOpen=true;
+  globalThis.window={addEventListener:(name,handler)=>handlers.set(name,handler),removeEventListener(){},scrollY:1000};
+  const navigation={getState:()=>({active:true}),canRelease:()=>false,step:direction=>steps.push(direction),jump:()=>assert.fail('modal must prevent map jumps')};
+  const input=createMobileTourInput(null,navigation,{blocked:()=>modalOpen});
+  input.update(true,{revealed:1000});
+  const event={timeStamp:100,deltaX:0,deltaY:200,deltaMode:0,target:{closest:()=>null},cancelable:true,
+    touches:[{clientX:100,clientY:200}],preventDefault(){},stopImmediatePropagation(){}};
+  try{
+    handlers.get('wheel')(event);
+    for(const key of ['ArrowDown','Home','End'])handlers.get('keydown')({...event,key});
+    handlers.get('touchstart')(event);handlers.get('touchmove')(event);
+    assert.deepEqual(steps,[]);
+    modalOpen=false;handlers.get('wheel')(event);
+    assert.deepEqual(steps,[1]);
+  }finally{input.dispose();if(previousWindow===undefined)delete globalThis.window;else globalThis.window=previousWindow;}
+});
+
 test('delayed wheel input groups its burst by creation time but starts the camera at delivery',t=>{
   const previousWindow=globalThis.window, handlers=new Map(), steps=[];
   let clock=2000;

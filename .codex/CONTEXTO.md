@@ -1,9 +1,9 @@
 # Contexto
 
-Objetivo: publicar el mensaje comercial de sección 3. Checkout `puntoes-mobile-card-readability`, rama `feature/section3-commercial-copy`.
+Objetivo actual: crear únicamente el header de la nueva web, con menú de escritorio y hamburguesa móvil. Checkout `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`; incorporado remoto `cfbe437` (mapa de escritorio libre, selección sin zoom y fichas accesibles durante salida).
 
-Cambio en `index.html`: «La forma de trabajar ha cambiado.» y párrafo de consultoría, automatización y formación en IA para ganar tiempo, reducir costes y liberar al equipo. Animación, tarjetas, diseño y tiempos conservados.
+Opciones: Consultoría, IA y automatización, Formación, Clientes, Nosotros y Hablemos. Botones provisionales sin destino; logo conserva inicio. Bajo 1100 px, diálogo nativo con cierre, Escape, foco contenido/restaurado, altura dinámica y scroll interno. Suspende Lenis y entradas del mapa al abrir; cerrar o pasar a escritorio los restaura.
 
-Incorporada optimización remota `607d5c0`: inventario `production-assets.json`, recursos activos conservados, estudios locales mediante `build:studies`, DOM editorial actualizado solo al cambiar; 129 pruebas y builds verificados en esa entrega.
+Archivos: `index.html`, `src/header.css`, `src/header.js`, integración en `main.js` y bloqueo modal en ciudad/entrada móvil. Pruebas de capítulos usan enlaces profundos en lugar de antiguos botones retirados.
 
-Build del cambio correcto antes de incorporar remoto. Siguiente: validar escritorio/móvil y build final, publicar a main y verificar Pages. Contacto continúa usando formulario 119 de puntoes.es.
+Verificado: build, 130 pruebas, header en siete tamaños 320–1440/horizontal, gestos, teclado, resize, mapa e historial móvil. Publicación de cambios autorizada en GitHub Pages; comprobar workflow y versión pública al retomar.

@@ -70,6 +70,7 @@ export function createCity(section, options = {}) {
     navigate(top);
   }});
   const input = createMobileTourInput(frame, navigation, {lock: documentLock, boundary, readTarget: options.readScrollTarget,
+    blocked: () => Boolean(document.querySelector('dialog[open]')),
     onInterrupt: () => {mobileEntryPending = false; navigate(window.scrollY)}});
   const detail = createCityDetail(core);
   for (const client of [...cityClients, invitation]) {

@@ -46,10 +46,10 @@ export function createSwipeIntent(x, y, consumed = false) {
   };
 }
 
-export function createMobileTourInput(frame, navigation, {lock = {set() {}}, boundary = {set() {}}, readTarget = () => scrollY, onInterrupt = () => {}} = {}) {
+export function createMobileTourInput(frame, navigation, {lock = {set() {}}, boundary = {set() {}}, readTarget = () => scrollY, onInterrupt = () => {}, blocked = () => false} = {}) {
   const wheel = createWheelBurst();
   let touch = null, geometry, available = false, lastScroll = null, skipEntry = false, navigating = false;
-  const excluded = target => target.closest('input,textarea,select,[contenteditable],dialog[open],[data-lenis-prevent]') ||
+  const excluded = target => blocked() || target.closest('input,textarea,select,[contenteditable],dialog[open],[data-lenis-prevent]') ||
     target.closest('a') && !target.closest('.city-tour-card');
   const eligible = () => available && navigation.getState().active;
   const block = event => {if (event.cancelable) event.preventDefault(); event.stopImmediatePropagation()};
@@ -98,7 +98,7 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, bou
       carousel: Boolean(event.target.closest('.city-carousel'))};
   }
   function onMove(event) {
-    if (!touch || event.touches.length !== 1) {touch = null; return}
+    if (blocked() || !touch || event.touches.length !== 1) {touch = null; return}
     if (touch.native) return;
     const p = event.touches[0], result = touch.intent.move(p.clientX, p.clientY);
     // The carousel alone owns horizontal drags. Diagonal gestures never step.
@@ -119,7 +119,7 @@ export function createMobileTourInput(frame, navigation, {lock = {set() {}}, bou
   }
   function onEnd() {touch = null; if (eligible()) lock.set(true)}
   function onKey(event) {
-    if (!available || event.defaultPrevented || event.target.closest('input,textarea,select,[contenteditable],dialog[open],[data-lenis-prevent]')) return;
+    if (!available || blocked() || event.defaultPrevented || event.target.closest('input,textarea,select,[contenteditable],dialog[open],[data-lenis-prevent]')) return;
     const topKey = event.key === 'Home' || event.metaKey && event.key === 'ArrowUp';
     const endKey = event.key === 'End' || event.metaKey && event.key === 'ArrowDown';
     if (topKey || endKey) {

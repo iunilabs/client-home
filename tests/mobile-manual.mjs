@@ -1,3 +1,4 @@
+import {navigateByHash} from './navigate-by-hash.mjs';
 // Native Chrome touch regression for the manual itinerary override.
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
@@ -51,7 +52,7 @@ async function session(width,height,reducedMotion='no-preference') {
   }
   async function reset({reload=false}={}) {
     const seen=(await state()).collaborationSeen;
-    if(reload)await page.reload();else await page.locator('#open-clients').tap();
+    if(reload)await page.reload();else await navigateByHash(page,'#confianza');
     await page.waitForFunction(()=>window.__puntoes?.getState().tour.active && window.__puntoes.getState().city?.ready);await settled('puntoes');
     assert.equal((await state()).manualId,null);assert.equal((await state()).nextId,'bbva');
     assert.equal((await state()).collaborationSeen,reload?false:seen,'only a page reload clears the invitation visit');

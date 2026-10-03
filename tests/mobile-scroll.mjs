@@ -1,3 +1,4 @@
+import {navigateByHash} from './navigate-by-hash.mjs';
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -259,7 +260,7 @@ try {
     await page.setViewportSize({width:900,height:600});await page.waitForFunction(()=>!document.querySelector('#confianza').classList.contains('city-mobile-tour'));
     assert.equal(await page.locator('#confianza').evaluate(el=>el.classList.contains('city-mobile-tour')),false);
     await page.setViewportSize({width,height});await page.waitForTimeout(300);
-    await page.locator('#open-clients').click();await page.waitForTimeout(1700);
+    await navigateByHash(page,'#confianza');await page.waitForTimeout(1700);
     assert.equal((await state()).currentId,'puntoes');assert.ok((await state()).active);
     await page.locator('body').click({position:{x:width/2,y:180}});
     await page.keyboard.press('End');await page.waitForTimeout(300);
@@ -267,7 +268,7 @@ try {
     assert.ok(await page.evaluate(()=>Math.abs(scrollY-(document.documentElement.scrollHeight-innerHeight))<2));
     await page.keyboard.press('Home');await page.waitForTimeout(300);
     assert.equal((await state()).y,0);
-    await page.locator('#open-clients').click();await page.waitForTimeout(1700);
+    await navigateByHash(page,'#confianza');await page.waitForTimeout(1700);
     assert.equal((await state()).currentId,'puntoes');
     // Reverse release from the hub also gives the next gesture to the page.
     await swipe({distance:-100,y:height*.3,settle:300});
@@ -282,7 +283,7 @@ try {
   await hashPage.waitForFunction(()=>window.__puntoes?.getState().tour.active);
   await hashPage.waitForTimeout(3300);
   assert.ok(await hashPage.evaluate(()=>window.__puntoes.getState().tour.active),'cold fragment stays at hub');
-  await hashPage.getByRole('link',{name:'El encuentro',exact:false}).click();await hashPage.waitForTimeout(1500);
+  await navigateByHash(hashPage,'#encuentro');await hashPage.waitForTimeout(1500);
   assert.ok(await hashPage.evaluate(()=>!window.__puntoes.getState().tour.active));
   await hashPage.goBack();await hashPage.waitForTimeout(1500);
   assert.ok(await hashPage.evaluate(()=>window.__puntoes.getState().tour.active),'history back enters city');

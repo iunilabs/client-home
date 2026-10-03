@@ -1,5 +1,6 @@
 import './section-three/style.css';
 import './contact.css';
+import {initHeader} from './header.js';
 import {initContactForm} from './contact.js';
 import {getPaperJourneyLayout,paperJourneyScrollAt} from './section-three/journey.js';
 import {turnState} from './section-two/turn.js';
@@ -42,6 +43,7 @@ const stateElement=document.querySelector('.render-state'),modal=document.queryS
 const GYROSCOPE_PARALLAX_REDUCTION=1.5;
 history.scrollRestoration='manual';if(!location.hash)window.scrollTo({top:0,behavior:'instant'});
 const lenis=new Lenis({autoRaf:false,lerp:.075,smoothWheel:true,syncTouch:false,overscroll:false});
+const disposeHeader=initHeader(document.querySelector('.header'),{onOpen:()=>lenis.stop(),onClose:()=>lenis.start()});
 let experience=null,perspectiveInput=null,pointer={x:0,y:0},smoothPointer={x:0,y:0},renderProgress=0,lastFrame=0,lastScroll=performance.now(),disposed=false,activeIndex=-1,lastUIProgress=NaN,lastUIHeld=null;
 function updateOffsets(preservePaper=false){
  lastUIProgress=NaN;
@@ -69,7 +71,7 @@ window.addEventListener('keydown',e=>{if(e.defaultPrevented||e.metaKey||e.ctrlKe
 document.querySelectorAll('a[href^="#"]').forEach(link=>link.addEventListener('click',e=>{const target=document.querySelector(link.getAttribute('href'));if(!target)return;e.preventDefault();history.pushState(null,'',link.getAttribute('href'));if(modal.open)modal.close();navigateTo(target);target.setAttribute('tabindex','-1');target.focus({preventScroll:true})}));
 window.addEventListener('hashchange',()=>navigateTo(location.hash?document.querySelector(location.hash):null,true));
 window.addEventListener('popstate',()=>{navigateTo(location.hash?document.querySelector(location.hash):null,true);renderProgress=readProgress(scrollY)});
-document.querySelector('#open-clients').addEventListener('click',()=>{history.pushState(null,'','#confianza');navigateTo(trustSection)});modal.querySelector('.dialog-close').addEventListener('click',()=>modal.close());modal.addEventListener('close',()=>lenis?.start());modal.addEventListener('click',e=>{if(e.target===modal){const r=modal.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)modal.close()}});
+modal.querySelector('.dialog-close').addEventListener('click',()=>modal.close());modal.addEventListener('close',()=>lenis?.start());modal.addEventListener('click',e=>{if(e.target===modal){const r=modal.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)modal.close()}});
 document.body.classList.add('enhanced');
 let lastEditorial=null,lastCity=null;
 function activate(progress){
@@ -124,5 +126,5 @@ function frame(now){
  }
  requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;perspectiveInput?.dispose();lenis?.destroy();paperScene?.dispose();experience?.dispose();city.dispose();paperObserver.disconnect()});
+requestAnimationFrame(frame);window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;disposeHeader();perspectiveInput?.dispose();lenis?.destroy();paperScene?.dispose();experience?.dispose();city.dispose();paperObserver.disconnect()});
 window.__puntoes={getPaperReview:()=>paperScene?.getReview().cards()??[],measureWrenchFraming:()=>experience?.measureWrenchFraming(),measureClearances:()=>experience?.measureClearances(),getState:()=>({render:document.body.dataset.render,progress:readProgress(scrollY),sectionProgress,handoffStart,turnDistance,visualProgress:renderProgress,editorial:lastEditorial,city:lastCity,paper:paperScene?.getState()??null,tour:city.getTourState(),endGuard:city.getEndGuardState(),scroll:{engine:lenis?'lenis':'native',current:lenis?.scroll??scrollY,target:lenis?.targetScroll??scrollY,moving:lenis?.isScrolling??false},reduced:motionPreference.matches,perspectiveInput:perspectiveInput?.getState(),pointer:{...smoothPointer},scene:experience?.getState()})};

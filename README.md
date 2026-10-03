@@ -11,6 +11,8 @@ Se recomienda Node.js 24 y npm.
 
 La portada está en /. Las utilidades de revisión de mano y modelos están en /mano.html y /modelos.html durante el desarrollo local; no se publican en GitHub Pages.
 
+El header presenta Consultoría, IA y automatización, Formación, Clientes, Nosotros y Hablemos. Son opciones provisionales sin destino. Bajo 1100 px se abre un menú modal con hamburguesa, cierre, Escape y ciclo de foco; el mapa no recibe gestos mientras está abierto. Los enlaces profundos a capítulos siguen disponibles. Para verificar el header: `npm run test:header` (`HEADER_URL` permite cambiar la dirección local).
+
 ## Comprobación y compilación
 
     npm test

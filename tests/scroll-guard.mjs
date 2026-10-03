@@ -1,3 +1,4 @@
+import {navigateByHash} from './navigate-by-hash.mjs';
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -68,7 +69,7 @@ try{
     assert.ok(after.y-before>60 && after.y-before<190,'fresh final swipe remains native after overflow unlock');assert.equal(after.tour.active,false);
     await swipe(-240);await wait('collaborate');assert.ok(await page.evaluate(()=>window.__puntoes.getState().tour.active));
     await page.keyboard.press('Home');await page.waitForTimeout(300);assert.equal(await page.evaluate(()=>scrollY),0);
-    await page.locator('#open-clients').click();await page.waitForFunction(()=>window.__puntoes.getState().tour.active);
+    await navigateByHash(page,'#confianza');await page.waitForFunction(()=>window.__puntoes.getState().tour.active);
     await swipe();await wait('bbva');
     let navigated=false;await page.route('**/clientes/bbva/',async route=>{navigated=true;await route.fulfill({body:'Future case',contentType:'text/html'})});
     await page.locator('.city-tour-card.is-current .tour-card-more').tap();await page.waitForURL('**/clientes/bbva/');assert.ok(navigated,'tap link still navigates normally');
