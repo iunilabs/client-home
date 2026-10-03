@@ -75,7 +75,7 @@ try {
         return {width:innerWidth, pageWidth:document.documentElement.scrollWidth, total:p?.totalItems, completed:p?.resolution?.completed, chaosRange:p?.journey.chaosRange};
       });
       assert.ok(state.pageWidth <= width + 1, 'no horizontal overflow');
-      if (scene === 'done') {assert.equal(state.total,47);assert.equal(state.completed,3);assert.equal(state.chaosRange,1900);}
+      if (scene === 'done') {assert.equal(state.total,47);assert.equal(state.completed,47);assert.equal(state.chaosRange,1900);}
       run.scenes.push({scene,...state,idle:await idleMutations(page)});
     }
     await page.goto(base + '#contacto');

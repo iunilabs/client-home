@@ -4,7 +4,6 @@ import {readFileSync,mkdirSync,copyFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 import {pages,siteHeader,siteFooter} from './src/site/templates.js';
-import {renderWorkflow} from './src/section-four/template.js';
 
 // If skin sources change, retain the original calculation until the baked
 // field is regenerated; never use stale colour corrections in production.
@@ -21,7 +20,7 @@ return {
   define:{__SKIN_CACHE_VALID__:JSON.stringify(skinCacheValid)},
   plugins:[{name:'shared-site-navigation',configResolved(config){siteBase=config.base},transformIndexHtml:{order:'pre',handler(html,ctx){
     const current=pages.find(([slug])=>ctx.filename.endsWith(`/${slug}/index.html`))?.[0]??'';
-    return html.replace('<!--site-header-->',siteHeader(current,siteBase)).replace('<!--site-footer-->',siteFooter(siteBase)).replace('<!--paper-workflow-story-->',renderWorkflow());
+    return html.replace('<!--site-header-->',siteHeader(current,siteBase)).replace('<!--site-footer-->',siteFooter(siteBase));
   }}},...(studies?[]:[{name:'commercial-public-assets',apply:'build',configResolved(config){outputDirectory=resolve(config.root,config.build.outDir)},closeBundle(){
     // Fail the build if an approved resource is missing; never publish a
     // partially copied set. The development server still serves all studies.
