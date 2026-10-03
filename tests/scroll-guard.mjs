@@ -88,53 +88,33 @@ try{
     await context.close();
   }
   const page=await browser.newPage({viewport:{width:1440,height:900}});
-  await page.addInitScript(()=>{window.__wheelTimes=[];window.addEventListener('wheel',e=>window.__wheelTimes.push({time:e.timeStamp,trusted:e.isTrusted}),{capture:true,passive:true})});
   await page.goto(base+'?city=.85');await page.waitForFunction(()=>window.__puntoes?.getState().city?.ready);
-  const end=await page.locator('#confianza').evaluate(el=>el.offsetTop+el.offsetHeight-innerHeight);
+  const end=await page.locator('#posibilidades').evaluate(el=>el.offsetTop-innerHeight);
   await page.evaluate(y=>scrollTo({top:y,behavior:'instant'}),end-160);await page.waitForTimeout(300);
+  const logo=page.locator('.city-client[data-client="bbva"]');
+  await logo.focus();await logo.click();
+  await page.waitForFunction(()=>{const f=window.__puntoes.getState().city.focus;return f.client==='bbva'&&!f.moving});
+  assert.equal(await page.locator('.city-tour-card.is-current').getAttribute('data-client'),'bbva');
+  // One arriving wheel burst flows straight into section 3, without a new gesture.
   for(const delta of [500,220,90,35,12]){await page.mouse.wheel(0,delta);await page.waitForTimeout(40)}
   await page.waitForTimeout(1300);
   const first=await page.evaluate(sample);
-  await page.screenshot({path:`${out}/${baseline?'base':'fixed'}-desktop-end.png`});
-  await page.mouse.wheel(0,110);await page.waitForTimeout(650);
-  const released=await page.evaluate(sample);
-  report.desktop.push({end,first,released});console.log(JSON.stringify({mode:'desktop',end,first,released}));
-  if(!baseline){assert.ok(Math.abs(first.y-end)<1,'desktop arriving burst stops at chapter end');assert.equal(first.frameY,0);assert.ok(released.y>end+30 && released.y<end+150,'fresh burst releases proportionally');}
-  if(!baseline){
-    // Runtime CSS emulates the separately owned 405svh layout; the source
-    // stylesheet remains untouched. Resizing causes the guard to read bounds.
-    await page.addStyleTag({content:'#confianza{height:405svh}'});
-    await page.setViewportSize({width:1440,height:901});await page.waitForTimeout(200);
-    const dynamicEnd=await page.locator('#posibilidades').evaluate(el=>el.offsetTop-innerHeight);
-    await page.waitForFunction(()=>window.__puntoes.getState().scroll.moving!=='smooth');
-    await page.evaluate(y=>scrollTo({top:y,behavior:'instant'}),dynamicEnd-250);await page.waitForTimeout(200);
-    await page.evaluate(()=>{window.__desktopRAF=[];window.__desktopRecording=true;const take=()=>{window.__desktopRAF.push({y:scrollY,nextTop:document.querySelector('#posibilidades').getBoundingClientRect().top});if(window.__desktopRecording)requestAnimationFrame(take)};requestAnimationFrame(take)});
-        const desktopCDP=await page.context().newCDPSession(page);
-    await page.evaluate(()=>{window.__wheelTimes=[]});
-    const stamp=Date.now()/1000;
-    await Promise.all(Array.from({length:6},(_,i)=>desktopCDP.send('Input.dispatchMouseEvent',{type:'mouseWheel',x:720,y:400,deltaX:0,deltaY:2000,timestamp:stamp+i*.04})));
-    await page.waitForTimeout(900);
-    const wheelTimes=await page.evaluate(()=>window.__wheelTimes);assert.ok(wheelTimes.every(t=>t.trusted));assert.ok(wheelTimes.at(-1).time-wheelTimes[0].time<=240,'verified native burst cadence');
-    const held=await page.evaluate(sample),frames=await page.evaluate(()=>{window.__desktopRecording=false;return window.__desktopRAF});
-    assert.ok(Math.abs(held.y-dynamicEnd)<1);assert.ok(frames.every(f=>f.y<=dynamicEnd+1 && f.nextTop>=900),'large arriving burst never exposes section3');
-    // Exploring the map and opening/closing a case do not release or trap it.
-    const point=await page.evaluate(()=>{for(let y=200;y<600;y+=100)for(let x=300;x<1000;x+=100)if(document.elementFromPoint(x,y)?.closest('.city-drag-surface'))return{x,y}});assert.ok(point);
-    const mapBefore=await page.locator('.city-world').getAttribute('style');
-    await page.mouse.move(point.x,point.y);await page.mouse.down();await page.mouse.move(point.x+100,point.y+40,{steps:8});await page.mouse.up();await page.waitForTimeout(200);
-    assert.notEqual(await page.locator('.city-world').getAttribute('style'),mapBefore,'desktop map drag remains interactive');
-    assert.equal(await page.evaluate(()=>scrollY),Math.round(dynamicEnd));
-    const logo=page.locator('.city-client[data-client="bbva"]');await page.keyboard.press('Tab');await logo.focus();await logo.click();await page.waitForFunction(()=>window.__puntoes.getState().city.focus?.client==='bbva');assert.equal(await page.locator('.city-tour-card.is-current').getAttribute('data-client'),'bbva');
-    assert.equal(await page.evaluate(()=>scrollY),Math.round(dynamicEnd));await page.keyboard.press('Escape');
-    await page.waitForFunction(()=>!window.__puntoes.getState().city.focus?.moving);await page.mouse.wheel(0,110);await page.waitForTimeout(700);
-    const native=await page.evaluate(sample);assert.ok(native.y>dynamicEnd+30 && native.y<dynamicEnd+160);
-    await page.mouse.wheel(0,-500);await page.waitForTimeout(700);assert.ok(await page.evaluate(()=>scrollY)<dynamicEnd-100);
-    await page.mouse.wheel(0,600);await page.waitForTimeout(500);assert.ok(Math.abs(await page.evaluate(()=>scrollY)-dynamicEnd)<1,'inverse entry rearms next finish');
-    await page.evaluate(()=>{document.activeElement.blur();document.body.tabIndex=-1;document.body.focus()});
-    await page.keyboard.press('Meta+ArrowDown');await page.waitForFunction(end=>scrollY>end+200,dynamicEnd);assert.ok(await page.evaluate(()=>scrollY)>dynamicEnd+200,'Cmd+Down is an external exit');
-    await page.keyboard.press('Meta+ArrowUp');await page.waitForFunction(()=>scrollY<1);
-    await page.locator('a[href="#inicio"]').first().click();await page.waitForFunction(()=>scrollY<1);
-    report.desktop.push({dynamicEnd,height:'405svh',held,native,frames,wheelTimes,mapDrag:true,inlineCard:true,reverse:true,commandKeys:true,chapter:true});
-  }
+  assert.ok(first.y>end+500,'desktop scroll must not stop at the map boundary');
+  assert.equal(await page.evaluate(()=>window.__puntoes.getState().endGuard.held),false);
+  assert.notEqual(await page.evaluate(()=>getComputedStyle(document.documentElement).overflow),'hidden');
+  // Reverse entry does not re-arm a stop; later bursts also exit freely.
+  await page.mouse.wheel(0,-1000);await page.waitForTimeout(1000);
+  assert.ok(await page.evaluate(()=>scrollY)<end-100);
+  await page.mouse.wheel(0,1200);await page.waitForTimeout(1000);
+  assert.ok(await page.evaluate(()=>scrollY)>end+500);
+  await page.waitForFunction(()=>window.__puntoes.getState().scroll.moving!=='smooth');
+  await page.evaluate(y=>scrollTo({top:y,behavior:'instant'}),end+250);await page.waitForTimeout(200);
+  assert.ok(Math.abs(await page.evaluate(()=>scrollY)-(end+250))<2,'programmatic scroll is not corrected');
+  await page.evaluate(y=>{scrollTo({top:y,behavior:'instant'});document.activeElement.blur()},end-100);await page.waitForTimeout(200);
+  await page.keyboard.press('PageDown');await page.waitForTimeout(900);
+  assert.ok(await page.evaluate(()=>scrollY)>end+100,'keyboard scroll crosses the boundary');
+  report.desktop.push({end,first,freeWheel:true,reverse:true,programmatic:true,keyboard:true});
+  await page.screenshot({path:`${out}/desktop-free-scroll.png`});
   await page.close();report.passed=true;
 }catch(error){report.error=error.stack;process.exitCode=1;console.error(error)}
 finally{await fs.writeFile(`${out}/${baseline?'BASELINE':'REPORT'}.json`,JSON.stringify(report,null,2)+'\n');await browser.close()}

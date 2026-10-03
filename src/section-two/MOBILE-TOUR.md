@@ -49,9 +49,9 @@ La reversa desde la obra vuelve al cliente elegido, luego a Puntoes. Una vez vis
 
 Tab y Enter mantienen el foco y activación normales de enlaces y logos. Las flechas verticales, PageUp/PageDown y espacio solicitan una parada cuando el foco no está en un control; se ignora la repetición automática. Home/End y Cmd+Arriba/Abajo permiten abandonar el recorrido, liberan el bloqueo y sincronizan Lenis. Los enlaces de capítulos suspenden el anclaje antes de navegar; el enlace a confianza reinicia en Puntoes en móvil y muestra el texto de entrada en ordenador. Los cambios pequeños de altura conservan el anclaje para tolerar la barra de URL y reservan la altura de la pantalla actual para la salida; cambios superiores al 20 % o de anchura lo recalculan sin perder la parada. Al cruzar 700 px se restablece la navegación de escritorio, y regresar a móvil reinicia su cursor.
 
-En ordenador, pulsar un logo o un marcador muestra la misma tarjeta resumida del móvil, sin diálogo modal. La cámara acerca el edificio y centra su tejado en el espacio libre a la derecha de la tarjeta. Cambiar de cliente parte del encuadre visible; cerrar con el botón o Escape recupera el desplazamiento previo y el zoom general. La tarjeta deja libre la fila de logos y el mapa puede arrastrarse después del acercamiento. Movimiento reducido aplica el encuadre directamente.
+En ordenador, pulsar un logo o un marcador muestra la misma tarjeta resumida del móvil, sin diálogo modal. La cámara desplaza el mapa para centrar el tejado en el espacio libre a la derecha de la tarjeta, hasta donde permite la cobertura de la imagen; seleccionar un cliente no aumenta el zoom. La escala sigue dependiendo del scroll. Cambiar de cliente parte del encuadre visible; cerrar con el botón o Escape recupera el desplazamiento previo y el zoom general. La tarjeta deja libre la fila de logos y el mapa puede arrastrarse después del desplazamiento. Movimiento reducido aplica el encuadre directamente.
 
-En ordenador, el gesto que llega al final del mapa se detiene en ese límite. Su continuación y su inercia quedan consumidas; un gesto nuevo libera el scroll normal hacia la sección 3. El guard distingue los eventos de una misma ráfaga por su instante de creación, aunque JavaScript tarde en procesarlos. Los enlaces de capítulos, tarjetas y navegación explícita siguen disponibles.
+En ordenador, el scroll es libre durante toda la sección y al cruzar hacia la sección 3, también con una tarjeta abierta. No hay captura de ráfagas ni bloqueo del documento. El anclaje y la salida con un gesto nuevo se conservan exclusivamente en móvil.
 
 ## Configuración y arte
 
@@ -67,7 +67,7 @@ La prueba comprueba gestos lentos, largos, diagonales, horizontales y taps; mapa
 
 La regresión de este contrato es `MOBILE_SCROLL_URL=http://127.0.0.1:4314/client-home/ node tests/mobile-manual.mjs`. Comprueba los diez logos desde Puntoes y etapas del itinerario, BBVA ya enfocado, cambio Cepsa → Naturgy, reversa sin empresas intermedias y salida nativa breve.
 
-`SCROLL_GUARD_URL=http://127.0.0.1:4310/client-home/ node tests/scroll-guard.mjs` comprueba la entrada fuerte, la salida con un gesto nuevo, el límite de escritorio y los atajos de teclado sobre el preview compilado.
+`SCROLL_GUARD_URL=http://127.0.0.1:4310/client-home/ node tests/scroll-guard.mjs` comprueba la entrada fuerte, la salida con un gesto nuevo, el scroll libre de escritorio con rueda, navegación programática y teclado sobre el preview compilado.
 
 La regresión `node tests/mobile-section-two-regression.mjs` comprueba gestos rápidos durante viajes, reversa al hub, ausencia de Naturgy al entrar BBVA, CTA una vez y salida nativa anticipada. Chromium usa input CDP nativo; WebKit usa eventos simulados sobre los handlers táctiles para los swipes y taps nativos, sin afirmar arbitraje táctil físico. Configurar `MOBILE_SECTION_TWO_URL`, `MOBILE_SECTION_TWO_OUT` y opcionalmente `MOBILE_SECTION_TWO_WEBKIT` para el ejecutable WebKit instalado.
 
