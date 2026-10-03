@@ -1,9 +1,9 @@
 # Contexto
 
-Objetivo actual: crear únicamente el header de la nueva web, con menú de escritorio y hamburguesa móvil. Checkout `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`; incorporado remoto `cfbe437` (mapa de escritorio libre, selección sin zoom y fichas accesibles durante salida).
+Objetivo: animar el header funcional aprobado, especialmente en móvil. Checkout `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`, base `a932646`. Seis opciones siguen sin destino; logo mantiene inicio.
 
-Opciones: Consultoría, IA y automatización, Formación, Clientes, Nosotros y Hablemos. Botones provisionales sin destino; logo conserva inicio. Bajo 1100 px, diálogo nativo con cierre, Escape, foco contenido/restaurado, altura dinámica y scroll interno. Suspende Lenis y entradas del mapa al abrir; cerrar o pasar a escritorio los restaura.
+Móvil: despliegue circular desde hamburguesa, icono que se convierte en cruz, opciones/números/líneas en cascada, halo azul y cierre inverso. Escritorio: entrada suave, subrayados y detalles de logo/CTA. Animaciones finitas, sin recursos nuevos. Diálogo conserva foco, bloqueo de fondo y scroll interno. Escape interrumpe apertura; desktop cancela inmediatamente; movimiento reducido abre/cierra sin animación.
 
-Archivos: `index.html`, `src/header.css`, `src/header.js`, integración en `main.js` y bloqueo modal en ciudad/entrada móvil. Pruebas de capítulos usan enlaces profundos en lugar de antiguos botones retirados.
+Archivos: `index.html`, `src/header.css`, `src/header.js`, pruebas `header-browser.mjs` y `header-motion.mjs`. Build y funcionalidad en siete tamaños correctos. Prueba de animación: DPR 3, CPU ×4, mediana 17 ms y p95 18 ms; cierres rápidos, resize y movimiento reducido correctos. Sin teléfono físico.
 
-Verificado: build, 130 pruebas, header en siete tamaños 320–1440/horizontal, gestos, teclado, resize, mapa e historial móvil. Publicación de cambios autorizada en GitHub Pages; comprobar workflow y versión pública al retomar.
+Publicación autorizada en GitHub Pages. Al retomar, contrastar último workflow y versión pública.

@@ -13,6 +13,8 @@ La portada está en /. Las utilidades de revisión de mano y modelos están en /
 
 El header presenta Consultoría, IA y automatización, Formación, Clientes, Nosotros y Hablemos. Son opciones provisionales sin destino. Bajo 1100 px se abre un menú modal con hamburguesa, cierre, Escape y ciclo de foco; el mapa no recibe gestos mientras está abierto. Los enlaces profundos a capítulos siguen disponibles. Para verificar el header: `npm run test:header` (`HEADER_URL` permite cambiar la dirección local).
 
+El menú móvil se despliega desde la hamburguesa, introduce opciones y líneas en cascada y se recoge al cerrar. Las animaciones decorativas terminan; Escape puede interrumpir la apertura. Movimiento reducido evita las transiciones. `npm run test:header-motion` comprueba secuencia, interrupciones, cierre, resize y rendimiento móvil emulado con CPU ×4.
+
 ## Comprobación y compilación
 
     npm test
