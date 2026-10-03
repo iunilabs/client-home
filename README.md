@@ -9,7 +9,7 @@ Se recomienda Node.js 24 y npm.
     npm ci
     npm run dev
 
-La portada está en /. Las utilidades de revisión de mano y modelos están en /mano.html y /modelos.html.
+La portada está en /. Las utilidades de revisión de mano y modelos están en /mano.html y /modelos.html durante el desarrollo local; no se publican en GitHub Pages.
 
 ## Comprobación y compilación
 
@@ -18,6 +18,14 @@ La portada está en /. Las utilidades de revisión de mano y modelos están en /
     npm run preview
 
 La compilación se genera en dist. Los modelos, texturas, fuentes y decodificadores necesarios se incluyen como archivos estáticos.
+
+`production-assets.json` enumera los recursos públicos de la web comercial. Los mapas y logos importados se empaquetan automáticamente. Una prueba comprueba las referencias estáticas y el build falla si falta un recurso del inventario. Los modelos exclusivos de estudio permanecen en el repositorio para mantenimiento.
+
+Para compilar también los estudios locales: `npm run build:studies`. Se generan en `dist-studies`, separado de la publicación. Para comparar carga, cambios del DOM en reposo y capturas de todas las secciones: `node tools/audit-production.mjs URL DIRECTORIO_DE_SALIDA`. El informe distingue bytes de carga inicial de tamaño del despliegue; utiliza Chrome con CPU ralentizada y contacto interceptado, sin enviar correos. Emulación no equivale a un móvil físico.
+
+Los mapas sustituidos y capturas históricas retirados en la limpieza se recuperan desde el commit `a034450`. Sus manifiestos de procedencia conservan el historial; la web usa los recursos V17 indicados al principio de la guía de ciudad.
+
+La limpieza de octubre de 2026 reduce el artefacto publicado de 29,32 a 19,96 MiB (31,9 %). La carga inicial se mantiene alrededor de 4,7 MB, conservando los modelos y texturas activos. La auditoría observa cero modificaciones del DOM editorial en reposo, frente a 305 por segundo antes de la optimización; el mapa y el movimiento 3D continúan activos.
 
 ## GitHub Pages
 

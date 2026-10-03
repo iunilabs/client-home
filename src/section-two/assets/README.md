@@ -8,7 +8,7 @@ Los tres nuevos detalles móviles `puntoes-city-mobile-{telefonica,indra,allianz
 
 Fuentes y prompts exactos: [NUEVAS-SEDES-V17.md](NUEVAS-SEDES-V17.md). Rectángulos, hashes, pesos y preservación local: [new-client-buildings-v17-provenance.json](new-client-buildings-v17-provenance.json). image_gen realiza todas las ediciones arquitectónicas; Sharp registra los recortes, suaviza los bordes y codifica WebP. No hay dibujo de edificios con código. Los mapas conservan 1672 × 941 y 941 × 1672; su resolución general no se anuncia como aumentada. Antes de codificar, ningún canal fuera de las áreas de inserción cambia. WebP calidad 96 puede introducir diferencias de compresión.
 
-El resto del documento conserva el historial de elaboración.
+El resto del documento conserva el historial de elaboración. Los mapas y detalles sustituidos se han retirado del árbol activo; sus originales se recuperan desde el commit `a034450`. Las rutas de los manifiestos históricos describen aquella revisión, no recursos que deba cargar la web actual.
 
 2 de octubre de 2026. Edición con la herramienta integrada image_gen, sin CLI ni API externa.
 

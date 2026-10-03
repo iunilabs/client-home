@@ -16,7 +16,7 @@ populateClients();
 initContactForm(document.querySelector('[data-contact-form]'));
 const contactSection=document.querySelector('#contacto');
 const trustSection=document.querySelector('#confianza'),resolutionAnchor=document.querySelector('#resolucion'),paperJourney=document.querySelector('[data-paper-journey]');
-const city=createCity(trustSection,{readScrollTarget:()=>lenis.targetScroll,onExtentChange:()=>{scrollLimit=Math.max(0,document.documentElement.scrollHeight-innerHeight);lenis.resize()},onNavigate:top=>{lenis.reset();lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top)}});
+const city=createCity(trustSection,{readScrollTarget:()=>lenis.targetScroll,onExtentChange:()=>{paperLayout=getPaperJourneyLayout(paperJourney);lastUIProgress=NaN;lenis.resize()},onNavigate:top=>{lenis.reset();lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top)}});
 const motionPreference={matches:false};
 let resolveGraphics;
 const graphicsReady=new Promise(resolve=>{resolveGraphics=resolve});
@@ -37,16 +37,18 @@ paperObserver.observe(trustSection);
 function readProgress(y){return y<=handoffStart?5*y/handoffStart:5+(y-handoffStart)/turnDistance}
 const updateScrollMeter=createScrollMeter(document.querySelector('[data-scroll-meter]'));
 const chapters=[...document.querySelectorAll('[data-scene]')],copies=chapters.map(c=>c.querySelector('.chapter-copy')),labels=['LA APARICIÓN','LA PIEDRA','EL COMPÁS','LA LLAVE','EL ENCUENTRO'];
+const chapterInners=chapters.map(c=>c.querySelector('.chapter-inner')),chapterLabel=document.querySelector('#chapter-label'),chapterCount=document.querySelector('#chapter-count'),replay=document.querySelector('.replay'),scrollCue=document.querySelector('.scroll-cue');
 const stateElement=document.querySelector('.render-state'),modal=document.querySelector('#clients-dialog');
 const GYROSCOPE_PARALLAX_REDUCTION=1.5;
 history.scrollRestoration='manual';if(!location.hash)window.scrollTo({top:0,behavior:'instant'});
 const lenis=new Lenis({autoRaf:false,lerp:.075,smoothWheel:true,syncTouch:false,overscroll:false});
-let experience=null,perspectiveInput=null,offsets=[],scrollLimit=0,pointer={x:0,y:0},smoothPointer={x:0,y:0},renderProgress=0,lastFrame=0,lastScroll=performance.now(),disposed=false,activeIndex=-1;
+let experience=null,perspectiveInput=null,pointer={x:0,y:0},smoothPointer={x:0,y:0},renderProgress=0,lastFrame=0,lastScroll=performance.now(),disposed=false,activeIndex=-1,lastUIProgress=NaN,lastUIHeld=null;
 function updateOffsets(preservePaper=false){
+ lastUIProgress=NaN;
  const contactWasVisible=preservePaper&&document.body.classList.contains('contact-active');
  if(contactWasVisible)city.prepareNavigation(false);
  const previousPaper=preservePaper?paperScene?.getState():null;
- city.resize();paperLayout=getPaperJourneyLayout(paperJourney);paperScene?.resize();scrollLimit=Math.max(0,document.documentElement.scrollHeight-innerHeight);handoffStart=trustSection.offsetTop-innerHeight+90;turnDistance=innerHeight*1.35;offsets=chapters.map(c=>c.offsetTop);offsets.push(Math.max(chapters.at(-1).offsetTop+1,scrollLimit));lenis?.resize();
+ city.resize();paperLayout=getPaperJourneyLayout(paperJourney);paperScene?.resize();handoffStart=trustSection.offsetTop-innerHeight+90;turnDistance=innerHeight*1.35;lenis?.resize();
  if(contactWasVisible){city.finishNavigation();renderProgress=readProgress(scrollY);return;}
  if(previousPaper?.active&&previousPaper.progress>0){
   const resolving=previousPaper.resolutionTarget>0||document.body.classList.contains('resolution-active');
@@ -62,7 +64,7 @@ function navigateTo(target,immediate=false){city.prepareNavigation(target===trus
 const initialLayout=Promise.all([document.fonts.ready,new Promise(resolve=>{if(document.readyState==='complete')resolve();else window.addEventListener('load',resolve,{once:true})})]);
 initialLayout.then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{updateOffsets();const params=new URLSearchParams(location.search),cityMarker=params.get('city'),paperMarker=params.get('paper'),resolutionMarker=params.get('resolution');if(!location.hash&&resolutionMarker!==null&&Number.isFinite(Number(resolutionMarker))){city.prepareNavigation(false);const top=paperJourneyScrollAt(paperLayout,'workflow',Number(resolutionMarker));lenis.reset();lenis.scrollTo(top,{immediate:true,onComplete:()=>city.finishNavigation()});renderProgress=readProgress(top);loadPaperSection()}else if(!location.hash&&paperMarker!==null&&Number.isFinite(Number(paperMarker))){city.prepareNavigation(false);const top=paperJourneyScrollAt(paperLayout,'chaos',Number(paperMarker));lenis.reset();lenis.scrollTo(top,{immediate:true,onComplete:()=>city.finishNavigation()});renderProgress=readProgress(top);loadPaperSection()}else if(!location.hash&&cityMarker!==null&&Number.isFinite(Number(cityMarker))){const top=city.scrollAt(Number(cityMarker));lenis.scrollTo(top,{immediate:true});renderProgress=readProgress(top);city.load()}else if(location.hash)navigateTo(document.querySelector(location.hash),true);else{const marker=params.get('scroll');if(marker!==null&&Number.isFinite(Number(marker))){const top=handoffStart*Math.max(0,Math.min(1000,Number(marker)))/1000;if(lenis)lenis.scrollTo(top,{immediate:true});else scrollTo({top,behavior:'instant'});renderProgress=readProgress(top)}}})));
 perspectiveInput=createPerspectiveInput(window,{onChange(value){pointer=value;document.documentElement.style.setProperty('--mx',`${(value.x+1)*innerWidth/2}px`);document.documentElement.style.setProperty('--my',`${(1-value.y)*innerHeight/2}px`)}});
-window.addEventListener('scroll',()=>{city.anchorScroll(scrollY);lastScroll=performance.now();document.querySelector('.scroll-cue').classList.remove('visible')},{passive:true});
+window.addEventListener('scroll',()=>{city.anchorScroll(scrollY);lastScroll=performance.now();scrollCue.classList.remove('visible')},{passive:true});
 window.addEventListener('keydown',e=>{if(e.defaultPrevented||e.metaKey||e.ctrlKey||e.altKey||modal.open||e.target.closest('input,textarea,select,[contenteditable="true"]'))return;if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(e.key)&&lenis?.isScrolling==='smooth')lenis.scrollTo(lenis.actualScroll,{immediate:true})},{passive:true});
 document.querySelectorAll('a[href^="#"]').forEach(link=>link.addEventListener('click',e=>{const target=document.querySelector(link.getAttribute('href'));if(!target)return;e.preventDefault();history.pushState(null,'',link.getAttribute('href'));if(modal.open)modal.close();navigateTo(target);target.setAttribute('tabindex','-1');target.focus({preventScroll:true})}));
 window.addEventListener('hashchange',()=>navigateTo(location.hash?document.querySelector(location.hash):null,true));
@@ -71,10 +73,15 @@ document.querySelector('#open-clients').addEventListener('click',()=>{history.pu
 document.body.classList.add('enhanced');
 let lastEditorial=null,lastCity=null;
 function activate(progress){
- const editorial=editorialState(Math.min(progress,5)/5),{index}=editorial;
- const transition=turnState(Math.max(0,progress-5),0,motionPreference.matches);
  const visualScroll=progress<=5?progress/5*handoffStart:handoffStart+(progress-5)*turnDistance;
  lastCity=city.update(visualScroll,motionPreference.matches);
+ // City travel, water and parallax stay live. Editorial DOM only changes
+ // with scroll/layout or the city's scroll hold, not with every idle frame.
+ const held=cityIsHeld();
+ if(progress===lastUIProgress&&held===lastUIHeld)return;
+ lastUIProgress=progress;lastUIHeld=held;
+ const editorial=editorialState(Math.min(progress,5)/5),{index}=editorial;
+ const transition=turnState(Math.max(0,progress-5),0,motionPreference.matches);
  document.body.classList.toggle('trust-active',progress>5);
  const entrance=introState(progress);
  document.documentElement.style.setProperty('--reveal-light',String(entrance.lightOpacity));document.documentElement.style.setProperty('--reveal-radius',`${entrance.lightRadius}px`);
@@ -82,15 +89,19 @@ function activate(progress){
  document.body.classList.toggle('intro-active',progress<1);
  lastEditorial=editorial;
  editorial.beats.forEach((beat,i)=>{copies[i].style.setProperty('--copy-opacity',String(beat.opacity*transition.encounterOpacity));copies[i].style.setProperty('--copy-y',`${beat.y}px`);copies[i].style.setProperty('--copy-blur',`${beat.blur}px`)});
- if(index!==activeIndex){activeIndex=index;chapters.forEach((c,i)=>{c.classList.toggle('is-active',i===index);c.querySelector('.chapter-inner').inert=i!==index});document.querySelector('#chapter-label').textContent=labels[index];document.querySelector('#chapter-count').textContent=`${String(index+1).padStart(2,'0')} / 05`}
- chapters.at(-1).querySelector('.chapter-inner').inert=progress>5.22||index!==4;
- chapters.at(-1).querySelector('.chapter-inner').setAttribute('aria-hidden',String(progress>5.22||index!==4));
- document.querySelector('.replay').inert=progress<4.5||progress>5;
- const nextActive=!cityIsHeld()&&visualScroll>=paperJourney.offsetTop-innerHeight*.5;
+ if(index!==activeIndex){activeIndex=index;chapters.forEach((c,i)=>{c.classList.toggle('is-active',i===index);chapterInners[i].inert=i!==index})}
+ const encounterHidden=progress>5.22||index!==4,encounterInner=chapterInners.at(-1);
+ if(encounterInner.inert!==encounterHidden)encounterInner.inert=encounterHidden;
+ if(encounterInner.getAttribute('aria-hidden')!==String(encounterHidden))encounterInner.setAttribute('aria-hidden',String(encounterHidden));
+ replay.inert=progress<4.5||progress>5;
+ const nextActive=!held&&visualScroll>=paperJourney.offsetTop-innerHeight*.5;
  document.body.classList.toggle('next-active',nextActive);
- document.body.classList.toggle('contact-active',!cityIsHeld()&&visualScroll>=contactSection.offsetTop-innerHeight*.25);
+ document.body.classList.toggle('contact-active',!held&&visualScroll>=contactSection.offsetTop-innerHeight*.25);
  const resolving=nextActive&&visualScroll>=(paperLayout.start+paperLayout.chaosRange);document.body.classList.toggle('resolution-active',resolving);
- if(nextActive){document.querySelector('#chapter-label').textContent=resolving?'DEL PENDIENTE AL HECHO':'EL TRABAJO PENDIENTE';document.querySelector('#chapter-count').textContent='03 / 03'}else if(progress>5){document.querySelector('#chapter-label').textContent='UN PUNTO EN COMÚN';document.querySelector('#chapter-count').textContent='02 / 03'}else{document.querySelector('#chapter-label').textContent=labels[index];document.querySelector('#chapter-count').textContent=`${String(index+1).padStart(2,'0')} / 05`}
+ const label=nextActive?(resolving?'DEL PENDIENTE AL HECHO':'EL TRABAJO PENDIENTE'):progress>5?'UN PUNTO EN COMÚN':labels[index];
+ const count=nextActive?'03 / 03':progress>5?'02 / 03':`${String(index+1).padStart(2,'0')} / 05`;
+ if(chapterLabel.textContent!==label)chapterLabel.textContent=label;
+ if(chapterCount.textContent!==count)chapterCount.textContent=count;
 }
 function fallback(error){resolveGraphics(null);console.warn('3D unavailable:',error.message);document.body.classList.add('webgl-fallback');stateElement.textContent='Vista sin 3D';document.body.dataset.render='fallback'}
 import('./scene.js').then(({createExperience})=>createExperience(document.querySelector('#scene'),{onGraphicsReady:resolveGraphics,onReady(){document.body.classList.add('scene-ready');document.body.dataset.render='webgl';stateElement.textContent=''},onFailure:fallback})).then(value=>{experience=value}).catch(fallback);
@@ -109,7 +120,7 @@ function frame(now){
   const parallaxScale=perspectiveInput.getState().source==='orientation'?1/GYROSCOPE_PARALLAX_REDUCTION:1;
   // The city uses a rendered image: stop paying for the hidden hand scene.
   if(!paperVisible&&(!lastCity?.ready||!lastCity.revealed))experience?.render(visual,{x:smoothPointer.x*parallaxScale,y:smoothPointer.y*parallaxScale},now/1000,motionPreference.matches,visual/5,pointer,sectionProgress);
-  document.querySelector('.scroll-cue').classList.toggle('visible',now-lastScroll>2600&&renderProgress<4.5);
+  scrollCue.classList.toggle('visible',now-lastScroll>2600&&renderProgress<4.5);
  }
  requestAnimationFrame(frame);
 }

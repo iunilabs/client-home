@@ -37,6 +37,13 @@ try {
     const j=window.__puntoes.getState().paper.journey;
     return Math.abs(scrollY-j.start-j.chaosRange)<2&&!window.__puntoes.getState().tour.active;
   }));
+  // Releasing the mobile boundary changes the section's document position,
+  // especially now that contact follows it. Navigation must use that layout.
+  for(const [query,phase,value] of [['paper=.9','chaos',.9],['resolution=1','workflow',1]]){
+    await page.goto(origin+'?'+query+'&capture=1');
+    await page.waitForFunction(({phase,value})=>{const p=window.__puntoes?.getState().paper;return p?.active&&Math.abs(p.journey[phase]-value)<.001;},{phase,value});
+    assert.ok(await page.evaluate(()=>{const p=window.__puntoes.getState().paper;return p.journey.start===document.querySelector('[data-paper-journey]').offsetTop;}),'navigation uses the restored document position');
+  }
   assert.deepEqual(errors,[]);
   console.log('One native swipe crosses chaos→ordering; reverse, continuous meter, same 47 papers and legacy anchor passed');
 }catch(error){console.error(error);process.exitCode=1;}

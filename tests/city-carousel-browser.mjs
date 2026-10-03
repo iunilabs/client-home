@@ -9,7 +9,7 @@ const browser = await chromium.launch({headless: true,
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']});
 const report = {url: base, passed: false, input: 'Chrome DevTools Protocol Input.dispatchTouchEvent', positions: []};
 const stable = value => JSON.parse(JSON.stringify(value, (key, item) => typeof item === 'number' ? Math.round(item * 100) / 100 : item));
-const ids = ['accenture', 'bbva', 'canal', 'cepsa', 'mapfre', 'mediaset', 'ree', 'siemens', 'naturgy', 'sabadell'];
+const ids = ['accenture', 'bbva', 'canal', 'cepsa', 'mapfre', 'mediaset', 'ree', 'siemens', 'naturgy', 'sabadell', 'telefonica', 'indra', 'allianz'];
 
 try {
   await mkdir(out, {recursive: true});
@@ -19,10 +19,10 @@ try {
   await page.waitForFunction(() => window.__puntoes?.getState().city?.ready && !document.querySelector('.city-carousel').inert);
   await page.waitForTimeout(200);
   const strip = page.locator('.city-carousel');
-  assert.equal(await strip.locator('.city-client').count(), 10);
+  assert.equal(await strip.locator('.city-client').count(), ids.length);
   const initialIds = await strip.locator('.city-client').evaluateAll(nodes => nodes.map(node => node.dataset.client));
-  assert.deepEqual([...initialIds].sort(), [...ids].sort(), 'the actual ten client buttons exist exactly once');
-  assert.equal(new Set(initialIds).size, 10);
+  assert.deepEqual([...initialIds].sort(), [...ids].sort(), 'the actual client buttons exist exactly once');
+  assert.equal(new Set(initialIds).size, ids.length);
   const logoStyle = await strip.locator('.city-client img').first().evaluate(image => ({filter: getComputedStyle(image).filter, loaded: image.complete && image.naturalWidth > 0}));
   assert.match(logoStyle.filter, /invert\(1\)/);
   assert.equal(logoStyle.loaded, true);
@@ -31,12 +31,12 @@ try {
   // the viewport, while the native scroll viewport keeps focus visible.
   await page.evaluate(() => document.activeElement.blur());
   const keyboardReached = new Set();
-  for (let index = 0; index < 90 && keyboardReached.size < 10; index++) {
+  for (let index = 0; index < 90 && keyboardReached.size < ids.length; index++) {
     await page.keyboard.press('Tab');
     const focused = await page.evaluate(() => document.activeElement?.dataset?.client || null);
     if (focused) keyboardReached.add(focused);
   }
-  assert.deepEqual([...keyboardReached].sort(), [...ids].sort(), 'Tab reaches all ten clients in the real document');
+  assert.deepEqual([...keyboardReached].sort(), [...ids].sort(), 'Tab reaches all clients in the real document');
   await page.waitForFunction(() => document.querySelector('.city-carousel').dataset.paused === 'true');
   assert.equal(await strip.getAttribute('data-paused'), 'true', 'keyboard focus pauses motion');
   await page.keyboard.press('Escape');
@@ -135,15 +135,15 @@ try {
   assert.ok(right.continuity.every(sample => Math.abs(sample.actual - sample.expected) < 2), 'reverse recycling preserves visible identity and position');
   assert.equal(right.released.phase, 'inertia', 'fast release enters inertial motion before automatic movement');
   assert.equal(right.released.scrollY, baselineScroll, 'reverse horizontal drag never moves the document');
-  assert.ok([...left.frames, ...right.frames].every(frame => frame.clients.length === 10 && new Set(frame.clients.map(client => client.id)).size === 10), 'recycling retains one accessible DOM button per client');
+  assert.ok([...left.frames, ...right.frames].every(frame => frame.clients.length === ids.length && new Set(frame.clients.map(client => client.id)).size === ids.length), 'recycling retains one accessible DOM button per client');
   const seen = new Set([...right.before.clients, ...right.frames.flatMap(frame => frame.clients)].map(client => client.id));
-  assert.deepEqual([...seen].sort(), [...ids].sort(), 'real button nodes cover all ten IDs while recycling in either direction');
+  assert.deepEqual([...seen].sort(), [...ids].sort(), 'real button nodes cover all IDs while recycling in either direction');
   await page.screenshot({path: `${out}/finger-right-inertia.png`});
 
   // Touch-generated focus/hover must not strand the carousel in keyboard mode.
   await page.waitForTimeout(2200);
   assert.notEqual(await strip.getAttribute('data-paused'), 'true');
-  assert.equal(await strip.locator('.city-client').count(), 10);
+  assert.equal(await strip.locator('.city-client').count(), ids.length);
   await context.close();
 
   const desktopContext = await browser.newContext({viewport: {width: 1440, height: 900}});
@@ -242,7 +242,7 @@ try {
     afterIdle: stable(entry.afterIdle)
   }));
   await writeFile(`${out}/REPORT.json`, JSON.stringify(report, null, 2) + '\n');
-  console.log(`PASS: 10 keyboard reachable; native touch both directions; no document scroll; held pause and delayed resume. Evidence: ${out}/REPORT.json`);
+  console.log(`PASS: 13 keyboard reachable; native touch both directions; no document scroll; held pause and delayed resume. Evidence: ${out}/REPORT.json`);
 } catch (error) {
   report.error = error.stack;
   await mkdir(out, {recursive: true});

@@ -73,7 +73,7 @@ try{
     let navigated=false;await page.route('**/clientes/bbva/',async route=>{navigated=true;await route.fulfill({body:'Future case',contentType:'text/html'})});
     await page.locator('.city-tour-card.is-current .tour-card-more').tap();await page.waitForURL('**/clientes/bbva/');assert.ok(navigated,'tap link still navigates normally');
     // Asset readiness must not decide whether a long entering gesture is owned.
-    await page.route('**/puntoes-city-mobile-v13-tour-*.webp',async route=>{await new Promise(resolve=>setTimeout(resolve,1600));await route.continue()});
+    await page.route('**/puntoes-city-mobile-v17-new-clients-*.webp',async route=>{await new Promise(resolve=>setTimeout(resolve,1600));await route.continue()});
     await page.goto(base+'?scroll=970');await page.waitForFunction(()=>window.__puntoes?.getState().progress>4.7);
     const lateAnchor=mobileTourGeometry({top:await page.locator('#confianza').evaluate(el=>el.offsetTop),viewport:648}).revealed;
     await page.waitForFunction(()=>window.__puntoes.getState().scroll.moving!=='smooth');
@@ -83,7 +83,7 @@ try{
     const lateAfter=await page.evaluate(sample);
     assert.equal(lateAfter.tour.currentId,'puntoes');assert.ok(lateAfter.tour.active);assert.equal(lateAfter.frameY,0);
     assert.ok(lateAfter.nextTop>=648-1);
-    await page.unroute('**/puntoes-city-mobile-v13-tour-*.webp');
+    await page.unroute('**/puntoes-city-mobile-v17-new-clients-*.webp');
     report.mobileExtra={linkSwipe:true,linkTap:true,toolbar:taller,nativeExit:{before,after},reverse:true,home:true,lateAssets:{wasReady,lateAfter}};
     await context.close();
   }

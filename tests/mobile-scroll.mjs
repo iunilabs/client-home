@@ -189,7 +189,7 @@ try {
     const cepsaCamera=await page.locator('.city-world').getAttribute('style');
     await page.waitForTimeout(600); assert.equal(await page.locator('.city-world').getAttribute('style'),cepsaCamera);
     assert.equal((await state()).nextId,null,'after reading Hablemos, a newly selected client goes directly to native exit');
-    // All 11 cards remain unique, including recovered manual clients.
+    // All 14 cards remain unique, including recovered manual clients.
     for (const id of ['accenture','bbva','canal','cepsa','mapfre','mediaset','ree','siemens','naturgy','sabadell']) {
       const logo=page.locator(`.city-client[data-client="${id}"]`);
       await logo.focus(); await logo.tap(); await waitForTourArrival(page,id);
@@ -199,7 +199,7 @@ try {
       assert.ok(bounds.rect.bottom<footer.y && bounds.rect.y>100,`fits ${id}`);
       assert.ok(bounds.overflow<=1,`no clipped content ${id}`);
     }
-    assert.equal(new Set(await page.locator('.city-tour-card').evaluateAll(els=>els.map(e=>e.dataset.client))).size,11);
+    assert.equal(new Set(await page.locator('.city-tour-card').evaluateAll(els=>els.map(e=>e.dataset.client))).size,14);
     // Verify real link navigation without creating the future destination.
     let destination;
     await page.route('**/clientes/sabadell/',async route=>{destination=route.request().url();await route.fulfill({contentType:'text/html',body:'Future case destination'});});
@@ -256,7 +256,7 @@ try {
     // Active anchor follows a height resize; crossing 700px restores desktop.
     await page.setViewportSize({width,height:height+80});await page.waitForTimeout(300);
     assert.ok((await state()).active);assert.equal((await state()).currentId,'naturgy');
-    await page.setViewportSize({width:900,height:600});await page.waitForTimeout(300);
+    await page.setViewportSize({width:900,height:600});await page.waitForFunction(()=>!document.querySelector('#confianza').classList.contains('city-mobile-tour'));
     assert.equal(await page.locator('#confianza').evaluate(el=>el.classList.contains('city-mobile-tour')),false);
     await page.setViewportSize({width,height});await page.waitForTimeout(300);
     await page.locator('#open-clients').click();await page.waitForTimeout(1700);

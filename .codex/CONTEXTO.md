@@ -1,7 +1,9 @@
 # Contexto
 
-Objetivo: última sección de contacto, integrada con el estilo de Puntoes y publicada en GitHub Pages. Rama `feature/contact-section`, base inicial `10189cd`, integrado con `53b4e67`, checkout `puntoes-mobile-card-readability`.
+Objetivo: optimizar el proyecto completo, retirar recursos obsoletos, verificar y publicar en GitHub Pages. Checkout `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`, base `a034450`; incorpora trece clientes y contacto.
 
-Nueva sección `#contacto` tras los papeles: titular serif, fondo azul suave y formulario responsive. Campos nombre, email, tema y mensaje; envío al Contact Form 7 existente de puntoes.es (formulario 119), multipart sin credenciales. Validación real vacía confirma CORS y rechazo sin correo. Éxito solo con `mail_sent`; errores conservan texto, controles bloqueados durante envío y aviso accesible. Alternativa email y fallback nativo. Invitación del mapa enlaza aquí.
+Conservados diseño, texturas, modelos activos y recorrido único de 47 tarjetas. Estudios `/mano.html` y `/modelos.html` exclusivamente locales (`build:studies`). Inventario `production-assets.json` controla recursos comerciales; prueba y build detectan ausencias. Retirados 23 archivos históricos recuperables en Git. Publicación: 29,32→19,96 MiB, −31,9 %. DOM editorial se actualiza únicamente cuando cambia; corregida posición de tarjetas al liberar el mapa móvil.
 
-Archivos: `index.html`, `main.js`, `contact.js`, `contact.css`, `mobile-tour-deck.js`, prueba de contacto. 128 pruebas/build correctos. Chrome: escritorio, 320, 390 y horizontal; respuestas interceptadas para validación/error/éxito, sin enviar correos reales. Resize conserva contacto. Intercepción y viewport restaurados. Siguiente: publicar y verificar web pública.
+Archivos principales: `vite.config.js`, `src/main.js`, `src/section-three/scene.js`, inventario, auditoría y pruebas. Pasan 129 pruebas, ambos builds, arranque, carrusel, zoom, gestos 320/390/430, físicas, transferencias, precarga, contacto interceptado y estudios. Rendimiento emulado: 60 fps; sin comprobación en teléfono físico.
+
+Publicación autorizada en `main`. Al retomar, consultar último workflow y contrastar versión pública.

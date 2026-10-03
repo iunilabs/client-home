@@ -143,8 +143,10 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     return out.set(x * h * camera.aspect, y * h, z);
   }
   function updateTarget(y = scrollY) {
+    // The city's scroll boundary temporarily moves the whole journey.
+    layout.start=journey.offsetTop;
     height = layout.chaosRange;
-    const state = paperJourneyState(y - journey.offsetTop, layout);
+    const state = paperJourneyState(y - layout.start, layout);
     journeyTarget = state.local; target = state.chaos; workflowTarget = state.workflow;
   }
   function resize() {
@@ -250,13 +252,16 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     if (key.shadow.mapSize.x !== shadowSize) shadowsInvalid = true;
     key.shadow.mapSize.setScalar(shadowSize);
     // Local pixels keep the editorial entrance consistent across viewports.
-    stageElement.style.setProperty('--paper-copy-reveal', (smooth(920, 1420, copyScroll) * (1 - smooth(2000, 2240, copyScroll)) * (1 - smooth(0, .24, resolutionProgress))).toFixed(4));
-    workflowElement.style.setProperty('--workflow-reveal', workflow.reveal.toFixed(4));
-    pendingCount.textContent = workflow.pending;
-    doneCount.textContent = workflow.completed;
-    workflowTotal.textContent = `${workflow.completed} / ${pieces.length}`;
-    workflowStatus.textContent = workflow.ordered < 1 ? 'Ordenando el trabajo' : workflow.pending ? 'Resolviendo uno a uno' : 'Todo completado';
-    workflowFill.style.width = `${workflow.fraction * 100}%`;
+    const copyReveal=(smooth(920,1420,copyScroll)*(1-smooth(0,.24,resolutionProgress))).toFixed(4);
+    if(stageElement.style.getPropertyValue('--paper-copy-reveal')!==copyReveal)stageElement.style.setProperty('--paper-copy-reveal',copyReveal);
+    if(lastState?.resolution.reveal!==workflow.reveal)workflowElement.style.setProperty('--workflow-reveal',workflow.reveal.toFixed(4));
+    if(lastState?.resolution.completed!==workflow.completed){
+      pendingCount.textContent=workflow.pending;doneCount.textContent=workflow.completed;
+      workflowTotal.textContent=`${workflow.completed} / ${pieces.length}`;
+      workflowFill.style.width=`${workflow.fraction*100}%`;
+    }
+    const status=workflow.ordered<1?'Ordenando el trabajo':workflow.pending?'Resolviendo uno a uno':'Todo completado';
+    if(workflowStatus.textContent!==status)workflowStatus.textContent=status;
     function applyWorkflow(piece) {
       const card = cardWorkflow(workflow, piece.workflowIndex, pieces.length, innerWidth, innerHeight, portrait, piece.width / piece.height);
       if (workflow.ordered > 0) orderedPose(piece, workflow, card);
