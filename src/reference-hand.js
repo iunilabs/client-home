@@ -100,7 +100,7 @@ export async function createReferenceHand(renderer,{artificial=false,detail=2,su
   // layout. Use its first tile; the green matcap is replaced with porcelain.
   if(atlas){atlas.colorSpace=THREE.SRGBColorSpace;if(surface==='original'){atlas.offset.set(0,1);atlas.repeat.set(.25,-.25);atlas.updateMatrix()}atlas.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy())}
   if(epidermisMap){epidermisMap.flipY=false;epidermisMap.wrapS=epidermisMap.wrapT=THREE.RepeatWrapping;epidermisMap.minFilter=THREE.LinearMipmapLinearFilter;epidermisMap.magFilter=THREE.LinearFilter;}
-  const material=artificial?new THREE.MeshPhysicalMaterial({color:'#f2eee4',roughness:.23,metalness:0,ior:1.5,clearcoat:.55,clearcoatRoughness:.18,envMapIntensity:.8}):createHumanSkin(atlas,{blendForearm:false,reliefScale:.12,guidedCreases:true,epidermisMap,natural:surface==='adapted'});skin.material=material;
+  const material=artificial?new THREE.MeshPhysicalMaterial({color:'#f2eee4',roughness:.23,metalness:0,ior:1.5,clearcoat:.55,clearcoatRoughness:.18,envMapIntensity:.8}):createHumanSkin(atlas,{blendForearm:false,reliefScale:.3,guidedCreases:true,epidermisMap});skin.material=material;
   if(!artificial)material.userData.textureOrigin='Zero supplied UV atlas; AI-adapted neutral skin available alongside the original KTX2 texture';
   const hair=artificial?null:createHandHair(skin,{count:detail>1?2400:900});if(hair)scene.add(hair);
   const nails=addFittedNails(skin,nailBeds,{artificial});
@@ -152,7 +152,6 @@ export async function createReferenceHand(renderer,{artificial=false,detail=2,su
     if(uniforms.fingerPadFixEnabled)uniforms.fingerPadFixEnabled.value=kind==='adapted'?1:0;
     if(uniforms.skinContinuityEnabled)uniforms.skinContinuityEnabled.value=kind==='adapted'?1:0;
     uniforms.skinCreaseGuidance.value=kind==='adapted'?1:0;
-    uniforms.skinNaturalStrength.value=kind==='adapted'?1:0;
     uniforms.skinPhotoStep.value.set(1/map.image.width,1/map.image.height);material.needsUpdate=true;surfaceMode=kind;
   }
   pose([0,0,0,0,0]);

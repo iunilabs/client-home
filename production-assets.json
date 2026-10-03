@@ -42,7 +42,7 @@
     "models/zero/human_hands.ktx2",
     "models/zero/provenance.json",
     "textures/mano/epidermis-v1.webp",
-    "textures/mano/forearm-albedo-v1-lossless.webp",
+    "textures/mano/forearm-albedo-v2-lossless.webp",
     "textures/mano/skin-seams-v1.json",
     "textures/mano/zero-skin-albedo-v4-lossless.webp"
   ]
