@@ -74,4 +74,9 @@ try{
   await page.keyboard.press('ArrowDown');
   await page.waitForFunction(()=>window.__puntoes.getState().tour.currentId==='bbva'&&!window.__puntoes.getState().tour.moving);
   console.log('PASS map: modal pauses background input and closing restores client navigation');
+  await page.evaluate(()=>{window.__headerTestInstance=window.__puntoes});
+  await page.locator('.header>.brand').tap();
+  await page.waitForFunction(()=>scrollY<2&&!window.__puntoes.getState().tour.active);
+  assert.equal(await page.evaluate(()=>window.__headerTestInstance===window.__puntoes),true,'the homepage logo returns through its existing scroll controller without reloading');
+  console.log('PASS homepage logo: returns to intro without reloading the scene');
 }finally{await browser.close();}

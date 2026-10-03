@@ -7,7 +7,7 @@ export const pages = [
 export function siteHeader(current, base) {
   const links = mobile => pages.map(([slug, label], i) => `<li><a href="${base}${slug}/"${current === slug ? ' aria-current="page"' : ''}${slug === 'hablemos' ? ' class="header-contact"' : ''}>${mobile ? `<span class="header-menu-number" aria-hidden="true">0${i + 1}</span><span class="header-menu-label">${label}</span>` : label}${slug === 'hablemos' ? `<span${mobile ? ' class="header-menu-arrow"' : ''} aria-hidden="true">↗</span>` : ''}</a></li>`).join('\n');
   return `<header class="header">
-    <a class="brand" href="${base}${current ? '' : '#inicio'}" aria-label="Puntoes, inicio"><img src="/images/logo-puntoes.png" width="118" height="51" alt="Puntoes" /></a>
+    <a class="brand" href="${current ? base : '#inicio'}" aria-label="Puntoes, inicio"><img src="/images/logo-puntoes.png" width="118" height="51" alt="Puntoes" /></a>
     <nav class="header-desktop-nav" aria-label="Principal"><ul class="header-links">${links(false)}</ul></nav>
     <button class="header-menu-toggle" type="button" aria-label="Abrir menú" aria-haspopup="dialog" aria-controls="header-mobile-menu" aria-expanded="false" hidden><span class="header-menu-symbol" aria-hidden="true"><span></span><span></span></span></button>
     <dialog class="header-mobile-menu" id="header-mobile-menu" aria-label="Menú de Puntoes" data-lenis-prevent>
