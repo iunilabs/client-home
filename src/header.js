@@ -38,6 +38,8 @@ export function initHeader(header,{onOpen=()=>{},onClose=()=>{}}={}){
   function closed(){
     if(menu.open||!active)return;
     stopReveal();active=false;closing=false;menu.classList.remove('is-closing');
+    menu.removeAttribute('aria-busy');
+    menu.querySelectorAll('a.is-navigating').forEach(link=>link.classList.remove('is-navigating'));
     toggle.setAttribute('aria-expanded','false');
     onClose();
     if(!desktop.matches)toggle.focus({preventScroll:true});
@@ -45,7 +47,18 @@ export function initHeader(header,{onOpen=()=>{},onClose=()=>{}}={}){
   }
   function resized(event){if(event.matches)closeMenu({immediate:true});}
   function cancelled(event){event.preventDefault();closeMenu();}
-  function selected(event){if(event.target.closest('a[href]'))closeMenu({immediate:true});}
+  function selected(event){
+    const link=event.target.closest('a[href]');
+    if(!link||event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||link.hasAttribute('download')||link.target&&link.target!=='_self')return;
+    const destination=new URL(link.href,location.href);
+    const localAnchor=destination.hash&&destination.origin===location.origin&&destination.pathname===location.pathname&&destination.search===location.search;
+    if(localAnchor||!['http:','https:'].includes(destination.protocol)){closeMenu({immediate:true});return;}
+    // Keep the current screen covered until native document navigation commits.
+    menu.querySelectorAll('a.is-navigating').forEach(item=>item.classList.remove('is-navigating'));
+    link.classList.add('is-navigating');menu.setAttribute('aria-busy','true');
+  }
+  function leaving(){closeMenu({immediate:true});}
+  function restored(event){if(event.persisted)closeMenu({immediate:true});}
   function keepFocus(event){
     if(event.key!=='Tab')return;
     const controls=[...menu.querySelectorAll('button:not([disabled]),a[href]')];
@@ -61,6 +74,8 @@ export function initHeader(header,{onOpen=()=>{},onClose=()=>{}}={}){
   menu.addEventListener('keydown',keepFocus);
   menu.addEventListener('click',selected);
   desktop.addEventListener('change',resized);
+  addEventListener('pagehide',leaving);
+  addEventListener('pageshow',restored);
   return ()=>{
     closeMenu({immediate:true});
     toggle.removeEventListener('click',openMenu);
@@ -70,5 +85,7 @@ export function initHeader(header,{onOpen=()=>{},onClose=()=>{}}={}){
     menu.removeEventListener('keydown',keepFocus);
     menu.removeEventListener('click',selected);
     desktop.removeEventListener('change',resized);
+    removeEventListener('pagehide',leaving);
+    removeEventListener('pageshow',restored);
   };
 }

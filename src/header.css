@@ -54,6 +54,7 @@
 .header-mobile-menu[open] .header-menu-footer .blue-dot{animation:header-dot-pulse .7s ease .55s 2}
 .header .header-mobile-menu .header-links a:active .header-menu-label{transform:translateX(6px)}
 .header .header-mobile-menu .header-links a:focus-visible .header-menu-label{animation:none}
+.header .header-mobile-menu a.is-navigating .header-menu-label{animation:none;color:#087ca9;transform:translateX(6px)}
 .header-mobile-menu.is-closing .header-menu-label,.header-mobile-menu.is-closing .header-menu-number,.header-mobile-menu.is-closing .header-menu-footer,.header-mobile-menu.is-closing .header-menu-arrow{animation:none;opacity:0;transform:translateY(-10px)}
 .header-mobile-menu.is-closing .header-links li::after{animation:none;transform:scaleX(0)}
 .header-mobile-menu.is-closing::backdrop{animation:none;opacity:0;transition:opacity .22s}

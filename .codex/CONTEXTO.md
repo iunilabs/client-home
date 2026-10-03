@@ -1,7 +1,7 @@
 # Contexto
 
-Objetivo: restaurar por petición expresa la sección 4 anterior, con las 47 cartas originales agrupadas pasando por un círculo «IA» y repartidas entre Organiza, Resuelve y Deriva. Checkout `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`.
+Objetivo: corregir el destello de la pantalla anterior al seleccionar una página desde el menú móvil. Checkout `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`, base `e31407c` (47 cartas y círculo IA restaurados).
 
-Revertido el rediseño de tres ejemplos (`ba145ff`), conservando la revisión de manos `d98660a`. Código de producto idéntico a esa versión anterior; se recuperan sus textos, pila, animación, contadores y duración. Secciones 1–3, seis páginas comerciales, menú y contacto conservados.
+`src/header.js`: navegación nativa entre documentos mantiene el diálogo abierto hasta `pagehide`; el enlace elegido recibe estado visual y `aria-busy`. Anclas locales y correo/teléfono cierran normalmente. Eventos modificados o cancelados conservan comportamiento nativo. Limpieza al salir/restaurar evita menú y bloqueo residual con Atrás. `src/header.css` añade señal discreta al enlace elegido.
 
-Comprobado: 134 pruebas y build correctos; Chrome escritorio/móvil y WebKit móvil, las 47 transferencias, separación física, contadores y scroll inverso hasta la primera tarjeta. Capturas e informe en `/tmp/puntoes-restored-ia`. Preview 4392. Siguiente: publicar en GitHub Pages y confirmar la versión pública.
+Comprobado: 134 pruebas, build, header en siete tamaños y navegación ciudad. `tests/header-navigation.mjs` prueba carga bloqueada, clic cancelado, destino, Atrás, Escape y anclas desde home y página interior en Chrome/WebKit. Comando `npm run test:header-navigation`; `HEADER_WEBKIT=1` opcional. Preview 4392. Pendiente publicar y verificar URL pública. Ciudad, tarjetas y seis páginas conservadas.

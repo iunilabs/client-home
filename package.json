@@ -12,6 +12,7 @@
     "test:browser": "node tests/browser.mjs",
     "test:production": "node tools/audit-production.mjs",
     "test:header": "node tests/header-browser.mjs",
+    "test:header-navigation": "node tests/header-navigation.mjs",
     "test:header-motion": "node tests/header-motion.mjs",
     "test:mobile-scroll": "node tests/mobile-scroll.mjs",
     "test:paper-integration": "node tests/section-three-integration.mjs",
