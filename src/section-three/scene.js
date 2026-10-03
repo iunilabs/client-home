@@ -11,6 +11,7 @@ import {assignPaperLanes, paperDepthHalf} from './separation.js';
 import {workflowState, cardWorkflow} from '../section-four/workflow.js';
 import {createPreparationQueue} from './preparation.js';
 import './style.css';
+import {createTaskRouting} from '../section-four/task-routing.js';
 import {getPaperJourneyLayout,paperJourneyState,paperJourneyScrollAt} from './journey.js';
 
 let fontsReady;
@@ -41,6 +42,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
   const workflowStatus = journey.querySelector('[data-workflow-status]');
   const workflowTotal = journey.querySelector('[data-workflow-total]');
   const workflowFill = journey.querySelector('[data-workflow-fill]');
+  const taskRouting = createTaskRouting(journey);
   const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
   const capture = new URLSearchParams(location.search).has('capture');
   let renderer;
@@ -244,6 +246,7 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
     const copyScroll = scrollProgress * height, motionHeight = fallMotionHeight;
     const timing = paperTiming(motionHeight);
     const workflow = workflowState(resolutionProgress, pieces.length);
+    taskRouting?.update(workflow,pieces);
     const fallProgress = paperMotionPixels(copyScroll) / motionHeight;
     // Remaining falls settle while ordering; no card teleports or appears late.
     const p = mix(fallProgress, Math.max(fallProgress, timing.many + timing.manySpread + timing.manyDuration), workflow.ordered);
@@ -262,12 +265,14 @@ export async function createPaperSection(journey, {graphics = null} = {}) {
       workflowTotal.textContent=`${workflow.completed} / ${pieces.length}`;
       workflowFill.style.width=`${workflow.fraction*100}%`;
     }
-    const status=workflow.ordered<1?'Ordenando el trabajo':workflow.pending?'Resolviendo uno a uno':'Todo completado';
+    const status=taskRouting?.status(workflow) ?? (workflow.ordered<1?'Ordenando el trabajo':workflow.pending?'Resolviendo uno a uno':'Todo completado');
     if(workflowStatus.textContent!==status)workflowStatus.textContent=status;
     function applyWorkflow(piece) {
-      const card = cardWorkflow(workflow, piece.workflowIndex, pieces.length, innerWidth, innerHeight, portrait, piece.width / piece.height);
+      let card = cardWorkflow(workflow, piece.workflowIndex, pieces.length, innerWidth, innerHeight, portrait, piece.width / piece.height);
+      if(taskRouting)card=taskRouting.pose(card,piece,workflow);
       if (workflow.ordered > 0) orderedPose(piece, workflow, card);
       piece.setCompleted(card.done); piece.completed = card.done; piece.travel = card.travel;
+      taskRouting?.appearance(piece,card,workflow);
     }
     if (workflow.ordered === 1) {
       for (const piece of pieces) {piece.mesh.visible = true; piece.spawnProgress = 1; applyWorkflow(piece);}

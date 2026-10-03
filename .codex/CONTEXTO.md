@@ -1,11 +1,7 @@
 # Contexto
 
-Objetivo: crear y publicar todas las páginas del menú. Checkout `puntoes-mobile-section2-fixes`, rama `fix/mobile-section-two`, base `a956832` (conserva texto final de tarjetas).
+Objetivo: integrar y publicar la propuesta aprobada de IA organizando, resolviendo y derivando tareas. Checkout `puntoes-mobile-card-readability`, rama `feature/ai-task-routing`, base `112bea7` (incluye seis páginas comerciales y navegación reciente).
 
-Seis entradas HTML: consultoria, ia-automatizacion, formacion, clientes, nosotros, hablemos. Diseño responsive azul, textos comerciales basados en fuentes oficiales documentadas en `src/site/SOURCES.md`. Sin cifras, testimonios ni casos de IA inventados. BBVA identifica la publicación histórica. Formulario reutiliza el endpoint existente; CTAs preseleccionan tema. Formación filtra diez programas.
+`index.html`: conserva caída y texto sección 3; resolución muestra pila manual → nodo IA → tres resultados. «La IA organiza. El trabajo avanza.» `src/section-four/task-routing.js/css`, `routing-model.js` y conexión `section-three/scene.js`. Validaciones se derivan al equipo. El recorrido sigue el scroll, también inverso; en móvil es vertical. Prototipo anterior retirado al integrar.
 
-`src/site/templates.js` comparte navegación/footer en Vite; `site.css` y `main.js` son ligeros, sin Three/Lenis/modelos. Header conserva animación y foco; enlaces cierran el modal para retorno con historial.
-
-Verificado: 130 unitarias, build Pages, seis vistas a 320/390/1440, rutas/enlaces/imágenes/back, filtros y contacto interceptado. Header en siete tamaños y animación CPU×4: mediana17/p9518ms. Sin teléfono físico.
-
-Entrega en https://iunilabs.github.io/client-home/. Al retomar, contrastar main y último workflow antes de nuevos cambios.
+Integración comprobada: 134 pruebas y build correctos. Chrome: escritorio y 320px, primera tarjeta sola, reparto reversible, 47 tareas distribuidas y salida al contacto. Viewport restaurado. Siguiente: publicar Pages y verificar. Vite puerto 5192, sesión 41941. Contacto, seis páginas comerciales y encabezado conservados.

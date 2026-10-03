@@ -1,0 +1,60 @@
+.task-routing .paper-resolution-copy h2{font-size:clamp(30px,3.2vw,50px)}
+.task-routing .paper-workflow-progress{bottom:18%}
+.task-routing .paper-pending-label{width:28%;font-size:12px}
+.routing-lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible;opacity:var(--routing-reveal,0)}
+.routing-lines path{fill:none;stroke:#a4b9c8;stroke-width:1.3;vector-effect:non-scaling-stroke;transition:stroke .18s}
+.routing-lines path.is-active{stroke:#008fc9;stroke-width:2.5}
+.routing-lines-mobile{display:none}
+.routing-hub{position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:12px;opacity:var(--routing-reveal,0)}
+.routing-hub-core{display:grid;place-items:center;width:68px;height:68px;border-radius:50%;background:#f8fcff;border:1px solid #8ac6e0;box-shadow:0 0 0 9px #eaf5fc,0 0 0 10px #8ac6e030,0 8px 30px #5e98b826;color:#007da7;font:600 24px Manrope,Arial}
+.routing-hub-label{position:absolute;top:85px;width:150px;text-align:center;font:500 11px Manrope,Arial;color:#52758b}
+.routing-outcomes{position:absolute;left:64%;right:8%;top:28%;bottom:28%;display:grid;grid-template-rows:repeat(3,1fr);gap:14px;opacity:var(--routing-reveal,0)}
+.routing-outcome{position:relative;display:flex;flex-direction:column;justify-content:center;padding:14px 20px;border:1px solid #b4c9d660;border-radius:14px;background:#ffffffdf;box-shadow:0 8px 20px #46748608;transition:border-color .18s,box-shadow .18s;color:#315d77}
+.routing-outcome.is-active{border-color:#6bb6d0;box-shadow:0 8px 25px #46748614}
+.routing-outcome-heading{display:flex;align-items:center;gap:10px}
+.routing-outcome h3{font:600 17px Manrope,Arial;margin:0;color:#315d77}
+.routing-icon{display:grid;place-items:center;width:27px;height:27px;border-radius:8px;background:#edf5fb;color:#2d85b1;font:500 20px Manrope,Arial}
+.routing-outcome[data-route='1'] .routing-icon{color:#288064;background:#e5f3eb}
+.routing-outcome[data-route='2'] .routing-icon{color:#7060a9;background:#efebfa}
+.routing-outcome [data-route-count]{margin-left:auto;color:#69899b;font:500 12px Manrope,Arial;font-variant-numeric:tabular-nums}
+.routing-outcome-caption{font:500 11px Manrope,Arial;color:#7190a2;margin:5px 0 0 37px}
+.routing-example{font:400 13px/1.4 Manrope,Arial;color:#426a82;margin:10px 0 0}
+@media(max-width:699px){
+ .task-routing .paper-resolution-copy h2{font-size:clamp(25px,6.8vw,36px)}
+ .task-routing .paper-pending-label{left:7%;top:26%;width:86%;font-size:11px}
+ .routing-lines-desktop{display:none}.routing-lines-mobile{display:block}
+ .routing-hub{top:54%}.routing-hub-core{width:42px;height:42px;font-size:18px;box-shadow:0 0 0 5px #eaf5fc,0 0 0 6px #8ac6e030}
+ .routing-hub-label{top:52px;font-size:10px;width:150px}
+ .routing-outcomes{left:7%;right:7%;top:64%;bottom:20%;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr;gap:6px}
+ .routing-outcome{justify-content:flex-start;padding:12px 6px;border-radius:10px;text-align:center}
+ .routing-outcome-heading{flex-wrap:wrap;justify-content:center;gap:5px}
+ .routing-outcome h3{font-size:12px;flex-basis:100%}
+ .routing-icon{width:23px;height:23px;font-size:16px}
+ .routing-outcome [data-route-count]{position:absolute;top:8px;right:7px;margin:0;font-size:10px}
+ .routing-outcome-caption{margin:7px 0 0;font-size:10px;line-height:1.4}
+ .routing-example{display:none}
+ .task-routing .paper-workflow-progress{bottom:18%;left:7%;right:7%;font-size:9px;gap:5px}
+ .task-routing .paper-resolution-copy p{bottom:5%;font-size:13px;line-height:1.5}
+}
+@media(max-height:620px) and (max-width:699px){
+ .task-routing .paper-resolution-copy h2{top:13%;font-size:25px}
+ .routing-outcomes{top:61%;bottom:24%}.routing-outcome{padding:6px 4px}
+ .routing-icon{width:20px;height:20px}.routing-outcome-heading{gap:4px}
+ .routing-outcome-caption{font-size:9px;margin-top:5px}
+ .task-routing .paper-resolution-copy p{bottom:6%;font-size:12px}
+ .task-routing .paper-workflow-progress{bottom:17%;gap:4px}
+ .routing-hub-label{top:48px;font-size:9px}
+}
+@media(max-height:460px) and (min-width:600px){
+ .task-routing .paper-resolution-copy h2{font-size:25px}
+ .routing-lines-desktop{transform:translateY(7%)}
+ .routing-outcomes{top:35%;bottom:21%;gap:6px}
+ .routing-outcome{padding:5px 10px;border-radius:8px}
+ .routing-outcome h3{font-size:12px}.routing-icon{width:20px;height:20px;font-size:15px}
+ .routing-outcome-caption,.routing-example{display:none}
+ .routing-hub{top:62%}.routing-hub-core{width:42px;height:42px;font-size:18px}
+ .routing-hub-label{top:52px;font-size:9px}
+ .task-routing .paper-pending-label{top:34%;font-size:11px}
+ .task-routing .paper-workflow-progress{bottom:12%}
+}
+@media(prefers-reduced-motion:reduce){.routing-outcome,.routing-lines path{transition:none}}
